@@ -1,46 +1,46 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 
-export async function getAllBookings(req: Request, res: Response): Promise<void> {
+export async function getAllBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
   } 
   catch (error) {
-    console.error(error);
+    next(error);
   }
 }
 
-export async function addBooking(req: Request, res: Response): Promise<void> {
+export async function addBooking(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
   } 
   catch (error) {
-    console.error(error);
+    next(error);
   }
 }
 
-export async function updateBooking(req: Request, res: Response): Promise<void> {
+export async function updateBooking(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
   } 
   catch (error) {
-    console.error(error);
+    next(error);
   }
 }
 
-export async function deleteBooking(req: Request, res: Response): Promise<void> {
+export async function deleteBooking(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
   } 
   catch (error) {
-    console.error(error);
+    next(error);
   }
 }
 
-export async function exportBookings(req: Request, res: Response): Promise<void> {
+export async function exportBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
   } 
   catch (error) {
-    console.error(error);
+    next(error);
   }
 }

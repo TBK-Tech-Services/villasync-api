@@ -8,6 +8,7 @@ import villasRoutes from '../src/routes/villas.routes.ts';
 import adminDashboardRoutes from '../src/routes/adminDashboard.routes.ts';
 import settingsRoutes from '../src/routes/settings.routes.ts';
 import agentRoutes from '../src/routes/agent.routes.ts';
+import { globalErrorHandler } from './middlewares/globalErrorHandler.ts';
 
 const app = express();
 
@@ -23,5 +24,8 @@ app.use("/settings/v1" , settingsRoutes);
 
 // Routes for Agent Landing Page
 app.use("/agent/v1" , agentRoutes);
+
+// Global Error Middleware
+app.use(globalErrorHandler);
 
 export default app;
