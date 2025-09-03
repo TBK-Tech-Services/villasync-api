@@ -1,6 +1,6 @@
 export async function getAllVillasForLandingService(): Promise<void> {
     try {
-
+        
     } 
     catch (error) { 
         console.error(error); 
