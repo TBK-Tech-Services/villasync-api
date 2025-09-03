@@ -1,6 +1,5 @@
 import express from 'express';
 import authRoutes from '../src/routes/auth.routes.ts';
-import automationRoutes from '../src/routes/automation.routes.ts';
 import bookingsRoutes from '../src/routes/bookings.routes.ts';
 import expensesRoutes from '../src/routes/expenses.routes.ts';
 import financeRoutes from '../src/routes/finance.routes.ts';
@@ -21,7 +20,6 @@ app.use("/expenses/v1" , expensesRoutes);
 app.use("/finance/v1" , financeRoutes);
 app.use("/users/v1" , usersRoutes);
 app.use("/settings/v1" , settingsRoutes);
-app.use("/automation/v1" , automationRoutes);
 
 // Routes for Agent Landing Page
 app.use("/agent/v1" , agentRoutes);

@@ -1,4 +1,4 @@
-export async function getFinanceDashboardService(): Promise<void> {
+export async function getAllVillasForLandingService(): Promise<void> {
     try {
 
     } 
@@ -7,7 +7,7 @@ export async function getFinanceDashboardService(): Promise<void> {
     }
 }
   
-export async function getAllVillasForFinanceService(): Promise<void> {
+export async function searchVillasService(): Promise<void> {
     try {
 
     } 

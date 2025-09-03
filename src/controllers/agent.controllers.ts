@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 
-export async function getFinanceDashboard(req: Request, res: Response): Promise<void> {
+export async function getAllVillasForLanding(req: Request, res: Response): Promise<void> {
   try {
     
   } 
@@ -9,7 +9,7 @@ export async function getFinanceDashboard(req: Request, res: Response): Promise<
   }
 }
 
-export async function getAllVillasForFinance(req: Request, res: Response): Promise<void> {
+export async function searchVillas(req: Request, res: Response): Promise<void> {
   try {
     
   } 
