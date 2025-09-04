@@ -8,7 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Goal - Design a Scalable Schema
+// -----Enums-----
 
 enum Role{
   ADMIN
@@ -62,54 +62,100 @@ enum Amenities{
   BALCONY
 }
 
-
-model User{
-  id Int @default(autoincrement()) @unique
-  firstname String
-  lastname String
-  email String @unique
-  password String
-  role Role
+enum Payment_Status{
+  PAID
+  PENDING
 }
 
-model Image{
-  id Int @default(autoincrement()) @unique
-  link String
+// -----Tables-----
+
+model User {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model Villa{
-  id Int @default(autoincrement()) @unique
-  name String
-  location String
-  price Int
-  max_guest Int
-  bedroom Int
-  bathroom Int
+model VillaImage {
+  id      Int    @id @default(autoincrement())
+  link    String
+  villa   Villa  @relation(fields: [villaId], references: [id])
+  villaId Int
+}
+
+model Villa {
+  id          Int       @id @default(autoincrement())
+  name        String
+  location    String
+  price       Int
+  maxGuests   Int
+  bedrooms    Int
+  bathrooms   Int
   description String
-  amenities Amenities[]
-  images Image[] 
+  status      Villa_Status
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  amenities   VillaAmenity[]
+  images      VillaImage[]
+  bookings    Booking[]
+  expenses    Expense[]
 }
 
-model Booking{
-  id Int @default(autoincrement()) @unique
-  name String
-  email String
-  phone String
-  villa Villa_Name
-  check_in DateTime
-  check_out DateTime
-  total_guest Int
-  special_request String? 
-  booking_status Booking_Status
+model Amenity {
+  id      Int      @id @default(autoincrement())
+  name    Amenities
+  villas  VillaAmenity[]
 }
 
-model Expense{
-  id Int @default(autoincrement()) @unique
-  expense_type Expense_Type
-  title String
-  amount Int
-  date DateTime
-  expense_category Expense_Category
-  villa Villa_Name?
-  villas Villa[]?
+model VillaAmenity {
+  villa   Villa   @relation(fields: [villaId], references: [id])
+  villaId Int
+  amenity Amenity @relation(fields: [amenityId], references: [id])
+  amenityId Int
+  @@id([villaId, amenityId])
+}
+
+model Booking {
+  id             Int           @id @default(autoincrement())
+  guestName      String
+  guestEmail     String
+  guestPhone     String
+  villa          Villa         @relation(fields: [villaId], references: [id])
+  villaId        Int
+  checkIn        DateTime
+  checkOut       DateTime
+  totalGuests    Int
+  specialRequest String?
+  bookingStatus  Booking_Status
+  paymentStatus  Payment_Status
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  expenses       BookingExpense[]
+}
+
+model Expense {
+  id           Int           @id @default(autoincrement())
+  title        String
+  amount       Int
+  date         DateTime
+  type         Expense_Type
+  category     Expense_Category
+  villa        Villa?        @relation(fields: [villaId], references: [id])
+  villaId      Int?
+  bookings     BookingExpense[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model BookingExpense {
+  id        Int      @id @default(autoincrement())
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  bookingId Int
+  expense   Expense  @relation(fields: [expenseId], references: [id])
+  expenseId Int
+  amount    Int
 }
