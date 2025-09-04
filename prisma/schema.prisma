@@ -7,3 +7,109 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+// Goal - Design a Scalable Schema
+
+enum Role{
+  ADMIN
+  STAFF
+}
+
+enum Villa_Name{
+  VILLA_1
+  VILLA_2
+  VILLA_3
+  VILLA_4
+  VILLA_5
+  VILLA_6
+}
+
+enum Booking_Status{
+  CONFIRMED
+  PENDING
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+enum Villa_Status{
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum Expense_Type{
+  SPLIT
+  INDIVIDUAL
+}
+
+enum Expense_Category{
+  MAINTENANCE
+  CLEANING
+  MARKETING
+  UTILITIES
+  OTHERS
+}
+
+enum Amenities{
+  WIFI
+  POOL
+  PARKING
+  BEACH_ACCESS
+  KITCHEN
+  AC
+  TV
+  BALCONY
+}
+
+
+model User{
+  id Int @default(autoincrement()) @unique
+  firstname String
+  lastname String
+  email String @unique
+  password String
+  role Role
+}
+
+model Image{
+  id Int @default(autoincrement()) @unique
+  link String
+}
+
+model Villa{
+  id Int @default(autoincrement()) @unique
+  name String
+  location String
+  price Int
+  max_guest Int
+  bedroom Int
+  bathroom Int
+  description String
+  amenities Amenities[]
+  images Image[] 
+}
+
+model Booking{
+  id Int @default(autoincrement()) @unique
+  name String
+  email String
+  phone String
+  villa Villa_Name
+  check_in DateTime
+  check_out DateTime
+  total_guest Int
+  special_request String? 
+  booking_status Booking_Status
+}
+
+model Expense{
+  id Int @default(autoincrement()) @unique
+  expense_type Expense_Type
+  title String
+  amount Int
+  date DateTime
+  expense_category Expense_Category
+  villa Villa_Name?
+  villas Villa[]?
+}
