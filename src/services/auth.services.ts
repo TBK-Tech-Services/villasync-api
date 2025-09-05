@@ -1,3 +1,13 @@
+
+export async function signupUserService(): Promise<void> {
+  try {
+    
+  } 
+  catch (error) {
+    console.error(error);
+  }
+}
+
 export async function loginUserService(): Promise<void> {
     try {
       
@@ -5,7 +15,7 @@ export async function loginUserService(): Promise<void> {
     catch (error) {
       console.error(error);
     }
-  }
+}
   
 export async function logoutUserService(): Promise<void> {
     try {

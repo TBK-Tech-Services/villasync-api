@@ -1,5 +1,14 @@
 import type { NextFunction, Request, Response } from "express";
 
+export async function signupUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
 export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
