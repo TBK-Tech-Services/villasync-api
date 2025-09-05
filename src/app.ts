@@ -12,6 +12,9 @@ import { globalErrorHandler } from './middlewares/globalErrorHandler.ts';
 
 const app = express();
 
+// Middlewares
+app.use(express.json());
+
 // Routes for Admin Dashboard
 app.use("/auth/v1" , authRoutes);
 app.use("/dashboard/v1" , adminDashboardRoutes);
