@@ -60,15 +60,6 @@ export async function signupUserService({firstName , lastName , email , password
     throw new Error(`Error while signing up : ${message}`);
   }
 }
-
-export async function loginUserService(): Promise<void> {
-    try {
-      
-    } 
-    catch (error) {
-      console.error(error);
-    }
-}
   
 export async function logoutUserService(): Promise<void> {
     try {

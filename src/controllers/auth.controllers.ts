@@ -2,6 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
 import { getUserService, signupUserService } from "../services/auth.services.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
+import { comparePassword } from "../utils/auth/comparePassword.ts";
+import { generateJWT } from "../utils/auth/generateJWT.ts";
 
 export async function signupUser(req: Request, res: Response, next: NextFunction): Promise<Response> {
   try {
@@ -38,12 +40,44 @@ export async function signupUser(req: Request, res: Response, next: NextFunction
   }
 }
 
-export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<Response> {
   try {
-    
+    const {
+      email,
+      password
+    } = req.body;
+
+    if(!email || !password){
+      return sendError(res, "Fill all fields to continue...", 400);
+    }
+
+    const user = await getUserService({email});
+
+    if(!user){
+      return sendError(res, "User doesnt exist...", 404);
+    }
+
+    const passwordMatch = await comparePassword({password , hashedPassword : user.password});
+
+    if(!passwordMatch){
+      return sendError(res , "Invalid credentials..." , 401);
+    }
+
+    const jwt = generateJWT({firstName : user.firstName , lastName : user.lastName , email : user.email , role : user.role});
+
+    if(!jwt){
+      return sendError(res , "JWT doesnt exist..." , 500);
+    }
+
+    res.cookie('jwt' , jwt);
+
+    const {password : _ , ...safeUser} = user;
+
+    return sendSuccess(res , safeUser , "User login successfull" , 200);
   } 
   catch (error) {
     next(error);
+    return res;
   }
 }
 

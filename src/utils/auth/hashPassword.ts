@@ -6,8 +6,8 @@ export async function hashPassword(password:string): Promise<string> {
         const hash = bcrypt.hash(password , saltRounds);
         return hash;
     } 
-    catch (err) {
-        console.log(`Error while Hashing Password : ${err}`);
-        throw err;
+    catch (error) {
+        console.log(`Error while Hashing Password : ${error}`);
+        throw new Error(`Error While Hashing Password : ${error}`);
     }
 }

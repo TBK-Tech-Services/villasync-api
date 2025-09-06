@@ -9,11 +9,13 @@ import adminDashboardRoutes from '../src/routes/adminDashboard.routes.ts';
 import settingsRoutes from '../src/routes/settings.routes.ts';
 import agentRoutes from '../src/routes/agent.routes.ts';
 import { globalErrorHandler } from './middlewares/globalErrorHandler.ts';
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 // Middlewares
 app.use(express.json());
+app.use(cookieParser());
 
 // Routes for Admin Dashboard
 app.use("/auth/v1" , authRoutes);
