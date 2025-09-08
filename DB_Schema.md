@@ -2,180 +2,262 @@
 * This document provides a comprehensive overview of the database schema for the TBK Services.
 * The schema is designed to manage villas, user roles, bookings, expenses, and amenities.
 
-### **1. Schema Overview**
+---
 
-The schema is built around a set of interconnected tables that model the core entities of the system. The relationships between these tables are crucial for maintaining data integrity and enabling efficient queries. The key entities are:
+## 1️⃣ User Table
 
-* **Users**: Manages staff and admin accounts.
+**Table Name:** `User`  
+**Purpose:** Stores all system users (admin, staff, etc.)
 
-* **Villas**: Details about each rental property.
+| Column       | Type      | Description |
+|-------------|-----------|-------------|
+| id          | Int       | Primary key, auto-incremented |
+| firstName   | String    | User’s first name |
+| lastName    | String    | User’s last name |
+| email       | String    | Unique email of the user |
+| password    | String    | Hashed password |
+| roleId      | Int?      | Foreign key to `Role` table (nullable) |
+| createdAt   | DateTime  | Timestamp of creation |
+| updatedAt   | DateTime  | Timestamp of last update |
 
-* **Bookings**: Information about guest reservations.
+**Relationships:**
 
-* **Expenses**: Tracks costs associated with villas and bookings.
+- `User → Role` : Many-to-One (Many users can have the same role)  
+- `User → UserPermission` : One-to-Many (User can have multiple explicit permissions)
 
-* **Amenities**: Defines features available at villas.
+---
 
-### **2. Table Descriptions**
+## 2️⃣ Role Table
 
-#### **`User`**
+**Table Name:** `Role`  
+**Purpose:** Defines roles in the system (Admin, Staff, etc.)
 
-* **Description**: Stores information about system users, including staff and administrators.
+| Column       | Type      | Description |
+|-------------|-----------|-------------|
+| id           | Int      | Primary key, auto-incremented |
+| name         | String   | Unique role name |
+| createdAt    | DateTime | Timestamp of creation |
+| updatedAt    | DateTime | Timestamp of last update |
 
-* **Fields**:
+**Relationships:**
 
-  * `id`: Unique identifier for the user.
+- `Role → User` : One-to-Many (One role can have many users)  
+- `Role → RolePermission` : One-to-Many (Role can have multiple permissions mapped)
 
-  * `firstName`, `lastName`: User's name.
+---
 
-  * `email`: User's unique email address.
+## 3️⃣ Permission Table
 
-  * `password`: Hashed password for secure authentication.
+**Table Name:** `Permission`  
+**Purpose:** Defines all possible permissions in the system
 
-  * `role`: The user's role, defined by the `Role` enum (`ADMIN`, `STAFF`).
+| Column       | Type      | Description |
+|-------------|-----------|-------------|
+| permissionId | Int      | Primary key |
+| name         | String   | Unique permission name |
+| createdAt    | DateTime | Timestamp of creation |
+| updatedAt    | DateTime | Timestamp of last update |
 
-  * `createdAt`, `updatedAt`: Timestamps for creation and last update.
+**Relationships:**
 
-#### **`Villa`**
+- `Permission → RolePermission` : One-to-Many (Permission can be assigned to multiple roles)  
+- `Permission → UserPermission` : One-to-Many (Permission can be assigned to multiple users directly)
 
-* **Description**: Holds details for each rental villa.
+---
 
-* **Fields**:
+## 4️⃣ RolePermission Table
 
-  * `id`: Unique identifier for the villa.
+**Purpose:** Mapping table for Role → Permission (Many-to-Many via intermediate table)
 
-  * `name`, `location`: Basic villa information.
+| Column         | Type      | Description |
+|----------------|-----------|-------------|
+| rolePermissionId | Int     | Primary key |
+| roleId          | Int     | FK to Role |
+| permissionId    | Int     | FK to Permission |
+| createdAt       | DateTime |
+| updatedAt       | DateTime |
 
-  * `price`: Rental price.
+**Relationship type:** Many-to-Many between `Role` and `Permission` via `RolePermission`.
 
-  * `maxGuests`, `bedrooms`, `bathrooms`: Property specifications.
+---
 
-  * `description`: A detailed description of the villa.
+## 5️⃣ UserPermission Table
 
-  * `status`: The current availability status, defined by the `Villa_Status` enum (`AVAILABLE`, `OCCUPIED`, `MAINTENANCE`).
+**Purpose:** Optional mapping of direct permissions to users (overrides or adds to role permissions)
 
-  * `createdAt`, `updatedAt`: Timestamps for creation and last update.
+| Column        | Type      | Description |
+|---------------|-----------|-------------|
+| id            | Int       | Primary key |
+| userId        | Int       | FK to User |
+| permissionId  | Int       | FK to Permission |
+| createdAt     | DateTime  |
+| updatedAt     | DateTime  |
 
-#### **`VillaImage`**
+**Relationship type:**  
 
-* **Description**: Stores image links for each villa.
+- Many-to-Many between `User` and `Permission` via `UserPermission`.  
+- Unique constraint: `[userId, permissionId]` ensures no duplicates.
 
-* **Fields**:
+---
 
-  * `id`: Unique identifier for the image.
+## 6️⃣ Villa Table
 
-  * `link`: The URL to the image file.
+**Purpose:** Stores all villas in the system
 
-  * `villaId`: Foreign key linking to the `Villa` table.
+| Column       | Type      | Description |
+|-------------|-----------|-------------|
+| id          | Int       | PK, auto-increment |
+| name        | String    | Name of villa |
+| location    | String    | Villa location |
+| price       | Int       | Price per night |
+| maxGuests   | Int       | Maximum guests allowed |
+| bedrooms    | Int       | Number of bedrooms |
+| bathrooms   | Int       | Number of bathrooms |
+| description | String    | Villa description |
+| status      | Enum      | Villa status (AVAILABLE, OCCUPIED, MAINTENANCE) |
+| createdAt   | DateTime  |
+| updatedAt   | DateTime  |
 
-#### **`Amenity`**
+**Relationships:**
 
-* **Description**: A lookup table for all available amenities.
+- `Villa → VillaImage` : One-to-Many (Villa can have multiple images)  
+- `Villa → VillaAmenity` : One-to-Many (Villa can have multiple amenities)  
+- `Villa → Booking` : One-to-Many (Villa can have multiple bookings)  
+- `Villa → Expense` : One-to-Many (Villa can have multiple expenses)
 
-* **Fields**:
+---
 
-  * `id`: Unique identifier for the amenity.
+## 7️⃣ VillaImage Table
 
-  * `name`: The amenity's name, from the `Amenities` enum (`WIFI`, `POOL`, etc.).
+**Purpose:** Stores images for each villa  
 
-#### **`VillaAmenity`**
+| Column    | Type   | Description |
+|-----------|--------|-------------|
+| id        | Int    | PK |
+| link      | String | Image URL |
+| villaId   | Int    | FK to Villa |
 
-* **Description**: This is a **join table** that links `Villa` and `Amenity` in a many-to-many relationship.
+**Relationship type:** Many-to-One with Villa
 
-* **Fields**:
+---
 
-  * `villaId`: Foreign key linking to the `Villa` table.
+## 8️⃣ Amenity Table
 
-  * `amenityId`: Foreign key linking to the `Amenity` table.
+**Purpose:** Defines all available amenities
 
-  * **Primary Key**: A composite key of `(villaId, amenityId)` ensures each villa-amenity pair is unique.
+| Column | Type   | Description |
+|--------|--------|-------------|
+| id     | Int    | PK |
+| name   | Enum   | Amenity type (WIFI, POOL, etc.) |
 
-#### **`Booking`**
+**Relationship:** Many-to-Many with Villa via `VillaAmenity`
 
-* **Description**: Records guest bookings for villas.
+---
 
-* **Fields**:
+## 9️⃣ VillaAmenity Table
 
-  * `id`: Unique identifier for the booking.
+**Purpose:** Mapping table for Many-to-Many between Villa and Amenity
 
-  * `guestName`, `guestEmail`, `guestPhone`: Guest contact details.
+| Column    | Type | Description |
+|-----------|------|-------------|
+| villaId   | Int  | FK to Villa |
+| amenityId | Int  | FK to Amenity |
 
-  * `villaId`: Foreign key linking to the booked `Villa`.
+**Constraints:** Composite PK: `[villaId, amenityId]`  
+**Relationship type:** Many-to-Many
 
-  * `checkIn`, `checkOut`: The booking period.
+---
 
-  * `totalGuests`: Number of guests.
+## 🔟 Booking Table
 
-  * `specialRequest`: Optional field for any guest requests.
+**Purpose:** Stores booking information  
 
-  * `bookingStatus`: Current status of the booking, from the `Booking_Status` enum.
+| Column         | Type      | Description |
+|----------------|-----------|-------------|
+| id             | Int       | PK |
+| guestName      | String    | Guest full name |
+| guestEmail     | String    | Guest email |
+| guestPhone     | String    | Guest phone |
+| villaId        | Int       | FK to Villa |
+| checkIn        | DateTime  | Check-in date |
+| checkOut       | DateTime  | Check-out date |
+| totalGuests    | Int       | Number of guests |
+| specialRequest | String?   | Optional requests |
+| bookingStatus  | Enum      | CONFIRMED, PENDING, etc. |
+| paymentStatus  | Enum      | PAID, PENDING |
+| createdAt      | DateTime  |
+| updatedAt      | DateTime  |
 
-  * `paymentStatus`: Payment status, from the `Payment_Status` enum.
+**Relationships:**
 
-  * `createdAt`, `updatedAt`: Timestamps for creation and last update.
+- `Booking → Villa` : Many-to-One  
+- `Booking → BookingExpense` : One-to-Many
 
-#### **`Expense`**
+---
 
-* **Description**: Tracks costs associated with the business. Expenses can be linked to a specific villa or be general.
+## 11️⃣ Expense Table
 
-* **Fields**:
+**Purpose:** Tracks all expenses  
 
-  * `id`: Unique identifier for the expense.
+| Column    | Type      | Description |
+|-----------|-----------|-------------|
+| id        | Int       | PK |
+| title     | String    | Expense title |
+| amount    | Int       | Expense amount |
+| date      | DateTime  | Expense date |
+| type      | Enum      | SPLIT or INDIVIDUAL |
+| category  | Enum      | Maintenance, Cleaning, etc. |
+| villaId   | Int?      | Optional FK to Villa |
+| createdAt | DateTime  |
+| updatedAt | DateTime  |
 
-  * `title`, `amount`: Expense details.
+**Relationships:**
 
-  * `date`: The date the expense occurred.
+- `Expense → Villa` : Many-to-One (optional)  
+- `Expense → BookingExpense` : One-to-Many
 
-  * `type`: Expense type, from the `Expense_Type` enum (`SPLIT`, `INDIVIDUAL`).
+---
 
-  * `category`: Expense category, from the `Expense_Category` enum.
+## 12️⃣ BookingExpense Table
 
-  * `villaId`: Optional foreign key linking to a `Villa`.
+**Purpose:** Mapping table between Booking and Expense  
 
-  * `createdAt`, `updatedAt`: Timestamps for creation and last update.
+| Column    | Type  | Description |
+|-----------|-------|-------------|
+| id        | Int   | PK |
+| bookingId | Int   | FK to Booking |
+| expenseId | Int   | FK to Expense |
+| amount    | Int   | Amount applicable for this booking |
 
-#### **`BookingExpense`**
+**Relationships:**
 
-* **Description**: This is a **join table** that links `Booking` and `Expense` in a many-to-many relationship.
+- Many-to-Many between `Booking` and `Expense`  
+- One booking can have multiple expenses, one expense can belong to multiple bookings
 
-* **Fields**:
+---
 
-  * `id`: Unique identifier for the join record.
+# Relationships Summary
 
-  * `bookingId`: Foreign key linking to the `Booking` table.
+| Table 1         | Table 2         | Type       |
+|-----------------|----------------|------------|
+| User            | Role            | Many-to-One |
+| User            | UserPermission  | One-to-Many |
+| Role            | RolePermission  | One-to-Many |
+| Permission      | RolePermission  | One-to-Many |
+| Permission      | UserPermission  | One-to-Many |
+| Villa           | VillaImage      | One-to-Many |
+| Villa           | VillaAmenity    | One-to-Many |
+| Villa           | Booking         | One-to-Many |
+| Villa           | Expense         | One-to-Many |
+| Villa           | Amenity         | Many-to-Many via VillaAmenity |
+| Booking         | BookingExpense  | One-to-Many |
+| Expense         | BookingExpense  | One-to-Many |
 
-  * `expenseId`: Foreign key linking to the `Expense` table.
+---
 
-  * `amount`: The specific amount of the expense being applied to this booking.
+# ✅ Key Points / Design Notes
 
-### **3. Relationship Details**
-
-Here is a breakdown of the key relationships in the schema:
-
-| Relationship Name | Tables Involved | Relationship Type | Description |
-|---|---|---|---|
-| Villa Images | `Villa` & `VillaImage` | One-to-Many | A single villa can have multiple images associated with it. |
-| Villa Bookings | `Villa` & `Booking` | One-to-Many | One villa can have many bookings over time. |
-| Villa Expenses | `Villa` & `Expense` | One-to-Many (Optional) | One villa can have multiple expenses. The link is optional. |
-| Villa Amenities | `Villa` & `Amenity` | Many-to-Many | A villa can have multiple amenities, and an amenity can be in multiple villas. This is handled by the `VillaAmenity` join table. |
-| Booking Expenses | `Booking` & `Expense` | Many-to-Many | A booking can have multiple expenses, and an expense can be split across multiple bookings. This is handled by the `BookingExpense` join table. |
-
-### **4. Enums**
-
-The schema uses enums to constrain field values, ensuring data consistency and validity.
-
-* `Role`: `ADMIN`, `STAFF`
-
-* `Villa_Name`: `VILLA_1` through `VILLA_6`
-
-* `Booking_Status`: `CONFIRMED`, `PENDING`, `CHECKED_IN`, `CHECKED_OUT`, `CANCELLED`
-
-* `Villa_Status`: `AVAILABLE`, `OCCUPIED`, `MAINTENANCE`
-
-* `Expense_Type`: `SPLIT`, `INDIVIDUAL`
-
-* `Expense_Category`: `MAINTENANCE`, `CLEANING`, `MARKETING`, `UTILITIES`, `OTHERS`
-
-* `Amenities`: `WIFI`, `POOL`, `PARKING`, `BEACH_ACCESS`, `KITCHEN`, `AC`, `TV`, `BALCONY`
-
-* `Payment_Status`: `PAID`, `PENDING`
+1. **Roles & Permissions:** Flexible M:N mapping for both role-permission and user-permission. Admin can assign default role permissions or override per user.  
+2. **Villa Management:** Villas are fully customizable with images, amenities, and expenses.  
+3. **Booking Management:** Bookings are linked to villas, and expenses can be split across bookings.  
+4. **Extensible Design:** Adding new roles, permissions, amenities, or villas is easy without altering the schema.  
