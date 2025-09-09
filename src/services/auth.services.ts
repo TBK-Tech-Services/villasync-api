@@ -9,6 +9,7 @@ export async function getUserService({ email } : {email : string}): Promise<User
         email : email
       },
       select : {
+        id : true,
         firstName : true,
         lastName : true,
         email : true,
@@ -47,6 +48,7 @@ export async function getAdminService({ email , role } : {email : string , role 
         }
       },
       select : {
+        id : true,
         firstName : true,
         lastName : true,
         email : true,
