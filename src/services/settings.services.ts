@@ -1,3 +1,22 @@
+
+export async function inviteNewUserService(): Promise<void> {
+    try {
+
+    } 
+    catch (error) { 
+        console.error(error); 
+    }
+}
+
+export async function updateUserService(): Promise<void> {
+    try {
+
+    } 
+    catch (error) { 
+        console.error(error); 
+    }
+}
+
 export async function getGeneralSettingsService(): Promise<void> {
     try {
 
@@ -39,22 +58,6 @@ export async function updateNotificationSettingsService(): Promise<void> {
     }
 }
 export async function getAllUsersService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-export async function updateUserRoleService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-export async function inviteNewUserService(): Promise<void> {
     try {
 
     } 

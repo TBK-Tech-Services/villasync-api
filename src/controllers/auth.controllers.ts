@@ -1,11 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
-import { getUserService, signupUserService } from "../services/auth.services.ts";
+import { createAdminService, getAdminService  } from "../services/auth.services.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
-import { comparePassword } from "../utils/auth/comparePassword.ts";
-import { generateJWT } from "../utils/auth/generateJWT.ts";
+// import { comparePassword } from "../utils/auth/comparePassword.ts";
+// import { generateJWT } from "../utils/auth/generateJWT.ts";
 
-export async function signupUser(req: Request, res: Response, next: NextFunction): Promise<Response> {
+export async function createAdmin(req: Request, res: Response, next: NextFunction): Promise<Response> {
   try {
     const {
       firstName,
@@ -25,14 +25,15 @@ export async function signupUser(req: Request, res: Response, next: NextFunction
       return sendError(res, "Failed to hash password...", 500);
     }
 
-    const user = await getUserService({email});
+    const admin = await getAdminService({email , role});
 
-    if(user){
-      return sendError(res, "User already exists...", 409);
+    if(admin){
+      return sendError(res, "Admin with same email already exists...", 409);
     }
 
-    const newUser = await signupUserService({firstName , lastName , email , password: hashedPassword , role});
-    return sendSuccess(res, newUser, "User created successfully", 201);
+    const newAdmin = await createAdminService({firstName , lastName , email , password: hashedPassword , role});
+
+    return sendSuccess(res, newAdmin, "Admin created successfully", 201);
   } 
   catch (error) {
     next(error);
@@ -40,46 +41,46 @@ export async function signupUser(req: Request, res: Response, next: NextFunction
   }
 }
 
-export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<Response> {
-  try {
-    const {
-      email,
-      password
-    } = req.body;
+// export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<Response> {
+//   try {
+//     const {
+//       email,
+//       password
+//     } = req.body;
 
-    if(!email || !password){
-      return sendError(res, "Fill all fields to continue...", 400);
-    }
+//     if(!email || !password){
+//       return sendError(res, "Fill all fields to continue...", 400);
+//     }
 
-    const user = await getUserService({email});
+//     const user = await getUserService({email});
 
-    if(!user){
-      return sendError(res, "User doesnt exist...", 404);
-    }
+//     if(!user){
+//       return sendError(res, "User doesnt exist...", 404);
+//     }
 
-    const passwordMatch = await comparePassword({password , hashedPassword : user.password});
+//     const passwordMatch = await comparePassword({password , hashedPassword : user.password});
 
-    if(!passwordMatch){
-      return sendError(res , "Invalid credentials..." , 401);
-    }
+//     if(!passwordMatch){
+//       return sendError(res , "Invalid credentials..." , 401);
+//     }
 
-    const jwt = generateJWT({firstName : user.firstName , lastName : user.lastName , email : user.email , role : user.role});
+//     const jwt = generateJWT({firstName : user.firstName , lastName : user.lastName , email : user.email , role : user.role});
 
-    if(!jwt){
-      return sendError(res , "JWT doesnt exist..." , 500);
-    }
+//     if(!jwt){
+//       return sendError(res , "JWT doesnt exist..." , 500);
+//     }
 
-    res.cookie('jwt' , jwt);
+//     res.cookie('jwt' , jwt);
 
-    const {password : _ , ...safeUser} = user;
+//     const {password : _ , ...safeUser} = user;
 
-    return sendSuccess(res , safeUser , "User login successfull" , 200);
-  } 
-  catch (error) {
-    next(error);
-    return res;
-  }
-}
+//     return sendSuccess(res , safeUser , "User login successfull" , 200);
+//   } 
+//   catch (error) {
+//     next(error);
+//     return res;
+//   }
+// }
 
 export async function logoutUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

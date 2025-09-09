@@ -5,12 +5,16 @@ import {
   getAllVillasSettings,
   updateVillaSettings,
   updateBackupSettings,
-  exportAllData
+  exportAllData,
+  inviteNewUser,
+  updateUser
 } from "../controllers/settings.controllers.ts";
 
 const router = Router();
 
 // API endpoints
+router.post("/user-management/invite-user", inviteNewUser);  
+router.put("/user-management/update-user" , updateUser);
 router.get("/general", getGeneralSettings);  
 router.put("/general", updateGeneralSettings);  
 router.get("/villas", getAllVillasSettings);  
