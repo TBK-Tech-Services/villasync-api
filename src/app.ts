@@ -10,12 +10,17 @@ import settingsRoutes from '../src/routes/settings.routes.ts';
 import agentRoutes from '../src/routes/agent.routes.ts';
 import { globalErrorHandler } from './middlewares/globalErrorHandler.ts';
 import cookieParser from "cookie-parser";
+import cors from 'cors';
 
 const app = express();
 
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({
+    origin : 'http://localhost:5173',
+    credentials : true
+}));
 
 // Routes for Admin Dashboard
 app.use("/auth/v1" , authRoutes);
