@@ -64,7 +64,7 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
       return sendError(res , "Invalid credentials..." , 401);
     }
 
-    const jwt = generateJWT({firstName : user.firstName , lastName : user.lastName , email : user.email , role : user.role});
+    const jwt = await generateJWT({firstName : user.firstName , lastName : user.lastName , email : user.email , role : user.role});
 
     if(!jwt){
       return sendError(res , "JWT doesnt exist..." , 500);
@@ -82,12 +82,14 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
   }
 }
 
-export async function logoutUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function logoutUser(req: Request, res: Response, next: NextFunction): Promise<Response> {
   try {
-  
+    res.clearCookie('jwt');
+    return sendSuccess(res , null , "User logout successfull" , 200);
   } 
   catch (error) {
     next(error);
+    return res;
   }
 }
 
