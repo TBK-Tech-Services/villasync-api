@@ -5,7 +5,7 @@ import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { comparePassword } from "../utils/auth/comparePassword.ts";
 import { generateJWT } from "../utils/auth/generateJWT.ts";
 
-export async function createAdmin(req: Request, res: Response, next: NextFunction): Promise<Response> {
+export async function createAdmin(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
     const {
       firstName,
@@ -37,11 +37,10 @@ export async function createAdmin(req: Request, res: Response, next: NextFunctio
   } 
   catch (error) {
     next(error);
-    return res;
   }
 }
 
-export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<Response> {
+export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
     const {
       email,
@@ -78,18 +77,16 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
   } 
   catch (error) {
     next(error);
-    return res;
   }
 }
 
-export async function logoutUser(req: Request, res: Response, next: NextFunction): Promise<Response> {
+export async function logoutUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
     res.clearCookie('jwt');
     return sendSuccess(res , null , "User logout successfull" , 200);
   } 
   catch (error) {
     next(error);
-    return res;
   }
 }
 

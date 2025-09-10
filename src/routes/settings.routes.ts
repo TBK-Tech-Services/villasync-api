@@ -7,12 +7,14 @@ import {
   updateBackupSettings,
   exportAllData,
   inviteNewUser,
-  updateUser
+  updateUser,
+  getAllPermissions
 } from "../controllers/settings.controllers.ts";
 
 const router = Router();
 
 // API endpoints
+router.get("/user-management/permissions", getAllPermissions);  
 router.post("/user-management/invite-user", inviteNewUser);  
 router.put("/user-management/update-user" , updateUser);
 router.get("/general", getGeneralSettings);  
