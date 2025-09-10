@@ -8,12 +8,14 @@ import {
   exportAllData,
   inviteNewUser,
   updateUser,
-  getAllPermissions
+  getAllPermissions,
+  getAllRoles
 } from "../controllers/settings.controllers.ts";
 
 const router = Router();
 
 // API endpoints
+router.get("/user-management/roles", getAllRoles);  
 router.get("/user-management/permissions", getAllPermissions);  
 router.post("/user-management/invite-user", inviteNewUser);  
 router.put("/user-management/update-user" , updateUser);

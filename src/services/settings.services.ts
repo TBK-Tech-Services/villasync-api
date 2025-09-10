@@ -1,5 +1,17 @@
-import type { Permission } from "@prisma/client";
+import type { Permission, Role } from "@prisma/client";
 import prisma from "../db/DB.ts";
+
+export async function getAllRolesService(): Promise<Role[]> {
+    try {
+        const roles = await prisma.role.findMany();
+        return roles;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting all Roles : ${message}`);
+        throw new Error(`Error while getting all Roles : ${message}`);
+    }
+}
 
 export async function getAllPermissionsService(): Promise<Permission[]> {
     try {

@@ -1,6 +1,21 @@
 import type { NextFunction, Request, Response } from "express";
-import { getAllPermissionsService } from "../services/settings.services.ts";
+import { getAllPermissionsService, getAllRolesService } from "../services/settings.services.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
+
+export async function getAllRoles(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try { 
+        const roles = await getAllRolesService();
+
+        if(roles.length === 0){
+            return sendError(res , "No Roles Available..." , 404);
+        }
+
+        return sendSuccess(res , roles , "Successfully retrieved roles" , 200);
+    }
+    catch (error) { 
+        next(error);
+    }
+}
 
 export async function getAllPermissions(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try { 
