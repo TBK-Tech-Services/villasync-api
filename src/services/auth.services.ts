@@ -1,10 +1,11 @@
+import type { PrismaClient } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { User } from "../types/general/userData.ts";
 import { createAdminSchema, type createAdminData, } from "../validators/data-validators/auth/createAdmin.ts";
 
-export async function getUserService({ email } : {email : string}): Promise<User | null> {
+export async function getUserService({ email } : {email : string} , client: PrismaClient | any = prisma): Promise<User | null> {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await client.user.findUnique({
       where : {
         email : email
       },
