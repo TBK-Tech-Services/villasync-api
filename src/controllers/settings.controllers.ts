@@ -34,7 +34,16 @@ export async function getAllPermissions(req: Request, res: Response, next: NextF
 
 export async function inviteNewUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
-        
+        const {firstName , lastName , email , password , role , permissions} = req.body;
+
+        if(!firstName || !lastName || !email || !password || !role){
+            // send error
+        }
+
+        // find the type of role - string or number
+        // if string -> first create a role 
+        // if number -> that means role exist already ----> dhyan se because iss role se related already kuch permissions ho skte hai , agr admin kuch kuch bhi select krta hai to code futega
+        // think about how to solve agr number hai role 
     } 
     catch (error) { 
         next(error);

@@ -1,4 +1,4 @@
-import z from 'zod';
+import z, { string } from 'zod';
 
 export const inviteUserSchema = z.object({
     firstName: z.string().min(1, "First name is required").max(50),
@@ -12,6 +12,14 @@ export const inviteUserSchema = z.object({
     permissions : z.array(
         z.number().int().positive()
     ).optional(),
-})
+}).refine((data) => {
+    if (typeof data.role === 'string' && (!data.permissions || data.permissions.length === 0)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Permissions are required when creating a new role",
+    path: ["permissions"]
+});
 
 export type inviteUserData = z.infer<typeof inviteUserSchema>;

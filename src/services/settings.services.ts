@@ -27,7 +27,7 @@ export async function getAllPermissionsService(): Promise<Permission[]> {
 
 export async function inviteNewUserService(): Promise<void> {
     try {
-
+        
     } 
     catch (error) { 
         console.error(error); 
