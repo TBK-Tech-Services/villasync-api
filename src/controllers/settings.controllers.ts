@@ -47,66 +47,60 @@ export async function inviteNewUser(req: Request, res: Response, next: NextFunct
             const user = await getUserService({email} , tx);
 
             if(user){
-                return sendError(res, "User already exists with this email.", 409);
+                throw { status: 409, message: "User already exists with this email." };
             };
+
+            const hashedPassword = await hashPassword(password);
+
+            if(!hashedPassword){
+                throw { status: 500, message: "Failed to hash password." };
+            }
 
             if(typeof role === 'number'){
                 const roleData = await checkRoleExistanceService(role , tx);
 
                 if(!roleData){
-                    return sendError(res, "Selected role does not exist.", 400);
-                }
-
-                const hashedPassword = await hashPassword(password);
-
-                if(!hashedPassword){
-                    return sendError(res, "Failed to hash password.", 500);
+                    throw { status: 400, message: "Selected role does not exist." };
                 }
 
                 const newUser = await createNewUserService({firstName , lastName , email , password: hashedPassword , roleId: role} , tx);
 
-                if(!newUser){
-                    return sendError(res, "Failed to create user.", 500);
-                }
-
-                return sendSuccess(res, newUser, "User created successfully.", 201);
+                return { newUser, message: "User created successfully." };
             }
             else if(typeof role === 'string'){
                 const roleData = await checkIfSameRoleNameExistService(role , tx);
 
                 if(roleData){
-                    return sendError(res, "Role with the same name already exists.", 409);
-                }
-
-                const hashedPassword = await hashPassword(password);
-
-                if(!hashedPassword){
-                    return sendError(res, "Failed to hash password.", 500);
+                    throw { status: 409, message: "Role with the same name already exists." };
                 }
 
                 const newRole = await createNewRoleService(role , tx);
 
                 if(!newRole){
-                    return sendError(res, "Failed to create new role.", 500);
+                    throw { status: 500, message: "Failed to create new role." };
                 }
 
                 const newUser = await createNewUserService({firstName , lastName , email , password: hashedPassword , roleId: newRole?.id} , tx);
 
-                if (!newUser) {
-                    return sendError(res, "Failed to create user.", 500);
+                if (!newUser) {                    
+                    throw { status: 500, message: "Failed to create user." };
                 }
 
                 if (!newUser.roleId) {
-                    return sendError(res, "User created but roleId is missing.", 500);
+                    throw { status: 500, message: "User created but roleId is missing." };
                 }
                             
                 await assignPermissionsToRoleService({roleId: newUser?.roleId , permissionIds: permissions} , tx);
 
-                return sendSuccess(res, newUser, "User & role created successfully.", 201);
+                return { newUser, message: "User & role created successfully." };
             }
         });
 
-        return result;
+        if (!result) {
+            return sendError(res, "Unexpected error, no result from transaction.", 500);
+        }
+        
+        return sendSuccess(res, result.newUser, result.message, 201);
     } 
     catch (error) { 
         next(error);
