@@ -69,7 +69,7 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
       return sendError(res , "JWT doesnt exist..." , 500);
     }
 
-    res.cookie('jwt' , jwt);
+    res.cookie('jwt', jwt);
 
     const {password : _ , ...safeUser} = user;
 
@@ -82,8 +82,8 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
 
 export async function logoutUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    res.clearCookie('jwt');
-    return sendSuccess(res , null , "User logout successfull" , 200);
+      res.clearCookie('jwt');
+      return sendSuccess(res , null , "User logout successfull" , 200);
   } 
   catch (error) {
     next(error);

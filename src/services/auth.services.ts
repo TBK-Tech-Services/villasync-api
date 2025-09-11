@@ -153,3 +153,25 @@ export async function changePasswordService(): Promise<void> {
       console.error(error);
     }
 }
+
+export async function getPermissionsByRole(role: string): Promise<string[] | void> {
+    try {
+      const permissions = await prisma.rolePermission.findMany({
+        where : {
+          role : {
+            name : role
+          }
+        },
+        include : {
+          permission : true
+        }
+      });
+
+      return permissions.map((rp) => rp.permission.name);
+    } 
+    catch (error) {
+      const message = error instanceof Error ? (error.message) : String(error);
+      console.error(`Error while getting permissions by role : ${message}`);
+      throw new Error(`Error while getting permissions by role : ${message}`);
+    }
+}
