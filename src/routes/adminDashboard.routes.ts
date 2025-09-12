@@ -19,7 +19,7 @@ import {
 
 const router = Router();
 
-// API endpoints
+// Admin Page Endpoints
 router.get("/kpis/villas-count", getTotalVillasCount);
 router.get("/kpis/bookings-count", getTotalBookingsCount);
 router.get("/kpis/revenue", getTotalRevenue);

@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getAllUsersService } from "../services/users.services.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
 
+// Controller to get All Users
 export async function getAllUsers(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
     const users = await getAllUsersService();
@@ -17,6 +18,7 @@ export async function getAllUsers(req: Request, res: Response, next: NextFunctio
   }
 }
 
+// Controller to Update a User Role
 export async function updateUserRole(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
@@ -26,6 +28,7 @@ export async function updateUserRole(req: Request, res: Response, next: NextFunc
   }
 }
 
+// Controller to Invite New User
 export async function inviteNewUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     

@@ -11,7 +11,7 @@ import {
 
 const router = Router();
 
-// API endpoints
+// Villas Endpoints
 router.get("/", getAllVillas);  
 router.post("/", addVilla);  
 router.get("/:id", getSingleVilla);  

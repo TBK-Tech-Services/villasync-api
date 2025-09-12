@@ -5,6 +5,7 @@ import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
 import prisma from "../db/DB.ts";
 
+// Controller to get All Roles
 export async function getAllRoles(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try { 
         const roles = await getAllRolesService();
@@ -20,6 +21,7 @@ export async function getAllRoles(req: Request, res: Response, next: NextFunctio
     }
 }
 
+// Controller to get All Permissions
 export async function getAllPermissions(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try { 
         const permissions = await getAllPermissionsService();
@@ -35,6 +37,7 @@ export async function getAllPermissions(req: Request, res: Response, next: NextF
     }
 }
 
+// Controller to Invite a New User
 export async function inviteNewUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try { 
         const {firstName , lastName , email , password , role , permissions} = req.body;
@@ -107,6 +110,7 @@ export async function inviteNewUser(req: Request, res: Response, next: NextFunct
     }
 }
 
+// Controller to Update an Existing User
 export async function updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
@@ -115,6 +119,8 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
         next(error);
     }
 }
+
+// Controller to get General Settings
 export async function getGeneralSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
@@ -123,6 +129,8 @@ export async function getGeneralSettings(req: Request, res: Response, next: Next
         next(error);
     }
 }
+
+// Controller to Update General Settings 
 export async function updateGeneralSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
@@ -131,6 +139,8 @@ export async function updateGeneralSettings(req: Request, res: Response, next: N
         next(error);
     }
 }
+
+// Controller to get All Villas Settings
 export async function getAllVillasSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
@@ -139,6 +149,8 @@ export async function getAllVillasSettings(req: Request, res: Response, next: Ne
         next(error);
     }
 }
+
+// Controller to Update a Villa Settings
 export async function updateVillaSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
@@ -147,6 +159,8 @@ export async function updateVillaSettings(req: Request, res: Response, next: Nex
         next(error);
     }
 }
+
+// Controller to get All Users
 export async function getAllUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
@@ -155,6 +169,8 @@ export async function getAllUsers(req: Request, res: Response, next: NextFunctio
         next(error);
     }
 }
+
+// Controller to Update Backup Settings
 export async function updateBackupSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
@@ -163,6 +179,8 @@ export async function updateBackupSettings(req: Request, res: Response, next: Ne
         next(error);
     }
 }
+
+// Controller to Export All Data
 export async function exportAllData(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         

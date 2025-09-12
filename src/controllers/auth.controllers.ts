@@ -5,6 +5,8 @@ import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { comparePassword } from "../utils/auth/comparePassword.ts";
 import { generateJWT } from "../utils/auth/generateJWT.ts";
 
+
+// Controller to Create Admin
 export async function createAdmin(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
     const {
@@ -40,6 +42,7 @@ export async function createAdmin(req: Request, res: Response, next: NextFunctio
   }
 }
 
+// Controller to Login User
 export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
     const {
@@ -80,6 +83,7 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
   }
 }
 
+// Controller to Logout User
 export async function logoutUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
       res.clearCookie('jwt');
@@ -90,6 +94,7 @@ export async function logoutUser(req: Request, res: Response, next: NextFunction
   }
 }
 
+// Controller to Forgot Password
 export async function forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
@@ -99,6 +104,7 @@ export async function forgotPassword(req: Request, res: Response, next: NextFunc
   }
 }
 
+// Controller to Change Password
 export async function changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     

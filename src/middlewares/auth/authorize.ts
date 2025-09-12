@@ -3,6 +3,7 @@ import { sendError } from "../../utils/general/response.ts";
 import { getPermissionsByRole } from "../../services/auth.services.ts";
 import type { JWT_Payload } from "../../types/auth/payload.ts";
 
+// Middleware to Check If a User is Authorized to Perform a Certain Task
 export function authorize(requiredPermission: string) {
     return async (req: Request , res: Response , next: NextFunction): Promise<Response | void> => {
         try {

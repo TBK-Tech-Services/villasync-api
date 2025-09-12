@@ -1,3 +1,5 @@
+
+// Service to get ALl Villas For Landing Page
 export async function getAllVillasForLandingService(): Promise<void> {
     try {
         
@@ -7,6 +9,7 @@ export async function getAllVillasForLandingService(): Promise<void> {
     }
 }
   
+// Service to Search Villas
 export async function searchVillasService(): Promise<void> {
     try {
 

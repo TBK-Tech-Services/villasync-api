@@ -1,3 +1,5 @@
+
+// Service to get All Villas
 export async function getAllVillasService(): Promise<void> {
     try {
 
@@ -7,6 +9,7 @@ export async function getAllVillasService(): Promise<void> {
     }
 }
   
+// Service to Add a Villa
 export async function addVillaService(): Promise<void> {
     try {
 
@@ -16,6 +19,7 @@ export async function addVillaService(): Promise<void> {
     }
 }
   
+// Service to get a Single Villa
 export async function getSingleVillaService(): Promise<void> {
     try {
 
@@ -25,6 +29,7 @@ export async function getSingleVillaService(): Promise<void> {
     }
 }
   
+// Service to Update a Villa
 export async function updateVillaService(): Promise<void> {
     try {
 
@@ -34,6 +39,7 @@ export async function updateVillaService(): Promise<void> {
     }
 }
   
+// Service to get Recent Bookings of a Villa
 export async function getVillaRecentBookingsService(): Promise<void> {
     try {
 
@@ -43,6 +49,7 @@ export async function getVillaRecentBookingsService(): Promise<void> {
     }
 }
   
+// Service to get Monthly Revenue of a Villa
 export async function getVillaMonthlyRevenueService(): Promise<void> {
     try {
 
@@ -52,6 +59,7 @@ export async function getVillaMonthlyRevenueService(): Promise<void> {
     }
 }
   
+// Service to get Availability of a Villa
 export async function getVillaAvailabilityService(): Promise<void> {
     try {
 

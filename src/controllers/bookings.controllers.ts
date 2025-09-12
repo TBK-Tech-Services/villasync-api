@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 
+// Controller to get All Bookings
 export async function getAllBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
@@ -9,6 +10,7 @@ export async function getAllBookings(req: Request, res: Response, next: NextFunc
   }
 }
 
+// Controller to Add a Booking
 export async function addBooking(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
@@ -18,6 +20,7 @@ export async function addBooking(req: Request, res: Response, next: NextFunction
   }
 }
 
+// Controller to Update a Booking
 export async function updateBooking(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
@@ -27,6 +30,7 @@ export async function updateBooking(req: Request, res: Response, next: NextFunct
   }
 }
 
+// Controller to Delete a Booking
 export async function deleteBooking(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
@@ -36,6 +40,7 @@ export async function deleteBooking(req: Request, res: Response, next: NextFunct
   }
 }
 
+// Controller to Export Bookings
 export async function exportBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     

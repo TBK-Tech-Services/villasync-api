@@ -13,6 +13,7 @@ declare global {
     }
 }
 
+// Midleware to Check If a User is Authenticated or Not
 export async function authenticate(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
         if (!SECRET_KEY) {

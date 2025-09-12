@@ -9,7 +9,7 @@ import {
 
 const router = Router();
 
-// API endpoints
+// Expense Endpoints
 router.get("/", getAllExpenses);  
 router.post("/", addExpense);  
 router.put("/:id", updateExpense);  

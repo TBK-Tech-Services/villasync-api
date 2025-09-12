@@ -7,7 +7,7 @@ import {
 
 const router = Router();
 
-// API endpoints
+// Users Endpoints
 router.get("/", getAllUsers);  
 router.put("/:id/role", updateUserRole);  
 router.post("/invite", inviteNewUser);  

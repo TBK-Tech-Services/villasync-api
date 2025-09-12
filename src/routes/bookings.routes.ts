@@ -9,7 +9,7 @@ import {
 
 const router = Router();
 
-// API endpoints
+// Bookings Endpoints
 router.get("/", getAllBookings);  
 router.post("/", addBooking);  
 router.put("/:id", updateBooking);  

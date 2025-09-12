@@ -1,3 +1,5 @@
+
+// Service to get All Bookings
 export async function getAllBookingsService(): Promise<void> {
     try {
 
@@ -7,6 +9,7 @@ export async function getAllBookingsService(): Promise<void> {
     }
 }
   
+// Service to Add a Booking
 export async function addBookingService(): Promise<void> {
     try {
 
@@ -16,6 +19,7 @@ export async function addBookingService(): Promise<void> {
     }
 }
   
+// Service to Update a Booking
 export async function updateBookingService(): Promise<void> {
     try {
 
@@ -25,6 +29,7 @@ export async function updateBookingService(): Promise<void> {
     }
 }
   
+// Service to Delete a Booking
 export async function deleteBookingService(): Promise<void> {
     try {
 
@@ -34,6 +39,7 @@ export async function deleteBookingService(): Promise<void> {
     }
 }
   
+// Service to Export Bookings
 export async function exportBookingsService(): Promise<void> {
     try {
 

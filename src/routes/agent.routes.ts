@@ -6,7 +6,7 @@ import {
 
 const router = Router();
 
-// API endpoints
+// Agent Endpoint
 router.get("/villas", getAllVillasForLanding);
 router.get("/villas/search", searchVillas);
 

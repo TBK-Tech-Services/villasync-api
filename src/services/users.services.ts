@@ -1,6 +1,7 @@
 import type { User } from "@prisma/client";
 import prisma from "../db/DB.ts";
 
+// Service to get All Users
 export async function getAllUsersService(): Promise<User[]> {
     try {
       const users = await prisma.user.findMany({
@@ -21,6 +22,7 @@ export async function getAllUsersService(): Promise<User[]> {
     }
 }
   
+// Service to Update a User Role
 export async function updateUserRoleService(): Promise<void> {
     try {
       
@@ -30,6 +32,7 @@ export async function updateUserRoleService(): Promise<void> {
     }
 }
   
+// Service to Invite New User
 export async function inviteNewUserService(): Promise<void> {
     try {
       

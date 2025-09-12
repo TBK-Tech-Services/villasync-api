@@ -3,6 +3,7 @@ import prisma from "../db/DB.ts";
 import type { User } from "../types/general/userData.ts";
 import { createAdminSchema, type createAdminData, } from "../validators/data-validators/auth/createAdmin.ts";
 
+// Service to Get a User
 export async function getUserService({ email } : {email : string} , client: PrismaClient | any = prisma): Promise<User | null> {
   try {
     const user = await client.user.findUnique({
@@ -39,6 +40,7 @@ export async function getUserService({ email } : {email : string} , client: Pris
   }
 }
 
+// Service to Get an Admin
 export async function getAdminService({ email , role } : {email : string , role : string}): Promise<createAdminData | null> {
   try {
     const user = await prisma.user.findUnique({
@@ -74,6 +76,7 @@ export async function getAdminService({ email , role } : {email : string , role 
   }
 }
 
+// Service to Create an Admin
 export async function createAdminService({firstName , lastName , email , password , role} : createAdminData): Promise<createAdminData | null> {
   try {
     const adminRole = await prisma.role.findUnique({
@@ -127,15 +130,7 @@ export async function createAdminService({firstName , lastName , email , passwor
   }
 }
   
-export async function logoutUserService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) {
-      console.error(error);
-    }
-}
-  
+// Service to Forgot Password
 export async function forgotPasswordService(): Promise<void> {
     try {
 
@@ -145,6 +140,7 @@ export async function forgotPasswordService(): Promise<void> {
     }
 }
   
+// Service to Change Password
 export async function changePasswordService(): Promise<void> {
     try {
 
@@ -154,6 +150,7 @@ export async function changePasswordService(): Promise<void> {
     }
 }
 
+// Service to Get Permissions By Role
 export async function getPermissionsByRole(role: string): Promise<string[] | void> {
     try {
       const permissions = await prisma.rolePermission.findMany({

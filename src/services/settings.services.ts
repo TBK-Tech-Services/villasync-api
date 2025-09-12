@@ -3,6 +3,7 @@ import prisma from "../db/DB.ts";
 import type { createUserData } from "../validators/data-validators/settings/createUser.ts";
 import type { AssignRolePermissionsInput } from "../validators/data-validators/settings/assignRolePermissionsInput.ts";
 
+// Service to get All Roles
 export async function getAllRolesService(): Promise<Role[]> {
     try {
         const roles = await prisma.role.findMany();
@@ -15,6 +16,7 @@ export async function getAllRolesService(): Promise<Role[]> {
     }
 }
 
+// Service to get All Permissions
 export async function getAllPermissionsService(): Promise<Permission[]> {
     try {
         const permissions = await prisma.permission.findMany();
@@ -27,6 +29,7 @@ export async function getAllPermissionsService(): Promise<Permission[]> {
     }
 }
 
+// Service to Check an Existance of a Role
 export async function checkRoleExistanceService(role : number , client: PrismaClient | any = prisma): Promise<Role | null> {
     try {
         const roleData = await client.role.findUnique({
@@ -44,6 +47,7 @@ export async function checkRoleExistanceService(role : number , client: PrismaCl
     }
 }
 
+// Service to Create a New Role
 export async function createNewRoleService(role : string , client: PrismaClient | any = prisma): Promise<Role | null> {
     try {
         const newRole = await client.role.create({
@@ -61,6 +65,7 @@ export async function createNewRoleService(role : string , client: PrismaClient 
     }
 }
 
+// Service to Check If The Same Role Name Exist
 export async function checkIfSameRoleNameExistService(role : string , client: PrismaClient | any = prisma): Promise<Role | null> {
     try {
         const roleData = await client.role.findFirst({
@@ -78,6 +83,7 @@ export async function checkIfSameRoleNameExistService(role : string , client: Pr
     }
 }
 
+// Service to Create a New User
 export async function createNewUserService({firstName , lastName , email , password , roleId}: createUserData , client: PrismaClient | any = prisma): Promise<User | null> {
     try {
         const newUser = await client.user.create({
@@ -99,6 +105,7 @@ export async function createNewUserService({firstName , lastName , email , passw
     }
 }
 
+// Service to Assign Permissions to a Role
 export async function assignPermissionsToRoleService({roleId , permissionIds}: AssignRolePermissionsInput , client: PrismaClient | any = prisma): Promise<void> {
     try {
         if (!permissionIds || permissionIds.length === 0) {
@@ -124,6 +131,7 @@ export async function assignPermissionsToRoleService({roleId , permissionIds}: A
     }
 }
 
+// Service to Update an Existance User
 export async function updateUserService(): Promise<void> {
     try {
 
@@ -132,6 +140,8 @@ export async function updateUserService(): Promise<void> {
         console.error(error); 
     }
 }
+
+// Service to get General Settings
 export async function getGeneralSettingsService(): Promise<void> {
     try {
 
@@ -140,6 +150,8 @@ export async function getGeneralSettingsService(): Promise<void> {
         console.error(error); 
     }
 }
+
+// Service to Update general Settings
 export async function updateGeneralSettingsService(): Promise<void>{
     try {
 
@@ -148,6 +160,8 @@ export async function updateGeneralSettingsService(): Promise<void>{
         console.error(error); 
     }
 }
+
+// Service to get All Villas Settings
 export async function getAllVillasSettingsService(): Promise<void> {
     try {
 
@@ -156,6 +170,8 @@ export async function getAllVillasSettingsService(): Promise<void> {
         console.error(error); 
     }
 }
+
+// Service to Update a Villa Settings
 export async function updateVillaSettingsService(): Promise<void> {
     try {
 
@@ -164,14 +180,8 @@ export async function updateVillaSettingsService(): Promise<void> {
         console.error(error); 
     }
 }
-export async function updateNotificationSettingsService(): Promise<void> {
-    try {
 
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
+// Service to get All Users
 export async function getAllUsersService(): Promise<void> {
     try {
 
@@ -180,6 +190,8 @@ export async function getAllUsersService(): Promise<void> {
         console.error(error); 
     }
 }
+
+// Service to Update Backup Settings
 export async function updateBackupSettingsService(): Promise<void> {
     try {
 
@@ -188,6 +200,8 @@ export async function updateBackupSettingsService(): Promise<void> {
         console.error(error); 
     }
 }
+
+// Service to Export All Data
 export async function exportAllDataService(): Promise<void> {
     try {
 

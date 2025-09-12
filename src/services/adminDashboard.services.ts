@@ -1,3 +1,5 @@
+
+// Service to get Total Count of Villas 
 export async function getTotalVillasCountService(): Promise<void> {
     try {
 
@@ -7,6 +9,7 @@ export async function getTotalVillasCountService(): Promise<void> {
     }
 }
   
+// Service to Get Total Count of Bookings
 export async function getTotalBookingsCountService(): Promise<void> {
     try {
 
@@ -16,6 +19,7 @@ export async function getTotalBookingsCountService(): Promise<void> {
     }
 }
   
+// Service to Get Total Revenue
 export async function getTotalRevenueService(): Promise<void> {
     try {
 
@@ -25,6 +29,7 @@ export async function getTotalRevenueService(): Promise<void> {
     }
 }
   
+// Service to Get Total Count of Guest
 export async function getTotalGuestsCountService(): Promise<void> {
     try {
 
@@ -34,6 +39,7 @@ export async function getTotalGuestsCountService(): Promise<void> {
     }
 }
   
+// Service to Get Count of Pending Bookings
 export async function getPendingBookingsCountService(): Promise<void> {
     try {
 
@@ -43,6 +49,7 @@ export async function getPendingBookingsCountService(): Promise<void> {
     }
 }
   
+// Service to Get Count of Cancellations
 export async function getCancellationsCountService(): Promise<void> {
     try {
 
@@ -51,7 +58,8 @@ export async function getCancellationsCountService(): Promise<void> {
         console.error(error); 
     }
 }
-  
+
+// Service to Get Count of Recent Bookings
 export async function getRecentBookingsService(): Promise<void> {
     try {
 
@@ -61,6 +69,7 @@ export async function getRecentBookingsService(): Promise<void> {
     }
 }
   
+// Service to Get Todays Checkins
 export async function getTodaysCheckinsService(): Promise<void> {
     try {
 
@@ -70,6 +79,7 @@ export async function getTodaysCheckinsService(): Promise<void> {
     }
 }
   
+// Service to Get Tommorows Checkins
 export async function getTomorrowsCheckinsService(): Promise<void> {
     try {
 
@@ -79,6 +89,7 @@ export async function getTomorrowsCheckinsService(): Promise<void> {
     }
 }
   
+// Service to Get Weeks Checkins
 export async function getWeeksCheckinsService(): Promise<void> {
     try {
 
@@ -87,7 +98,8 @@ export async function getWeeksCheckinsService(): Promise<void> {
         console.error(error); 
     }
 }
-  
+ 
+// Service to Get This Month Revenue
 export async function getThisMonthRevenueService(): Promise<void> {
     try {
 
@@ -96,7 +108,8 @@ export async function getThisMonthRevenueService(): Promise<void> {
         console.error(error); 
     }
 }
-  
+ 
+// Service to Get Last Month Revenue
 export async function getLastMonthRevenueService(): Promise<void> {
     try {
 
@@ -106,6 +119,7 @@ export async function getLastMonthRevenueService(): Promise<void> {
     }
 }
   
+// Service to Get Average Daily Revenue
 export async function getAverageDailyRevenueService(): Promise<void> {
     try {
 
@@ -115,6 +129,7 @@ export async function getAverageDailyRevenueService(): Promise<void> {
     }
 }
   
+// Service to Get Monthly growth Rate
 export async function getMonthlyGrowthRateService(): Promise<void> {
     try {
 
@@ -124,6 +139,7 @@ export async function getMonthlyGrowthRateService(): Promise<void> {
     }
 }
   
+// Service to Get All Villas Occupancy
 export async function getAllVillasOccupancyService(): Promise<void> {
     try {
 

@@ -3,6 +3,7 @@ import { changePassword, createAdmin, forgotPassword, loginUser, logoutUser } fr
 
 const router = Router();
 
+// Auth Endpoints
 router.post("/create-admin", createAdmin);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);

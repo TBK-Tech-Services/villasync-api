@@ -6,7 +6,7 @@ import {
 
 const router = Router();
 
-// API endpoints
+// Finance Endpoints
 router.get("/dashboard", getFinanceDashboard);  
 router.get("/villas", getAllVillasForFinance);  
 

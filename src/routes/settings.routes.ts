@@ -16,7 +16,7 @@ import { authorize } from "../middlewares/auth/authorize.ts";
 
 const router = Router();
 
-// API endpoints
+// Settings Endpoints
 router.get("/user-management/roles", authenticate , getAllRoles);  
 router.get("/user-management/permissions", authenticate , getAllPermissions);  
 router.post("/user-management/invite-user", authenticate , authorize('INVITE_USER') , inviteNewUser);  
