@@ -1,15 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
 
-// Controller to get All Villas
-export async function getAllVillas(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
 // Controller to Add a Villa
 export async function addVilla(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -20,8 +10,8 @@ export async function addVilla(req: Request, res: Response, next: NextFunction):
   }
 }
 
-// Controller to get a Single Villa
-export async function getSingleVilla(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to Update a Villa
+export async function updateVilla(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
   } 
@@ -30,8 +20,18 @@ export async function getSingleVilla(req: Request, res: Response, next: NextFunc
   }
 }
 
-// Controller to Update a Villa
-export async function updateVilla(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to get All Villas
+export async function getAllVillas(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to get a Single Villa
+export async function getSingleVilla(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
   } 

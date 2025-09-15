@@ -12,10 +12,10 @@ import {
 const router = Router();
 
 // Villas Endpoints
-router.get("/", getAllVillas);  
 router.post("/", addVilla);  
-router.get("/:id", getSingleVilla);  
-router.put("/:id", updateVilla);  
+router.put("/:id", updateVilla);
+router.get("/", getAllVillas);  
+router.get("/:id", getSingleVilla);    
 router.get("/:id/bookings", getVillaRecentBookings);  
 router.get("/:id/revenue", getVillaMonthlyRevenue);  
 router.get("/:id/calender", getVillaAvailability);  
