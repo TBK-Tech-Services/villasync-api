@@ -11,7 +11,6 @@ export const addVillaSchema = z.object({
         message: "Status must be one of: AVAILABLE, OCCUPIED, MAINTENANCE"
     }),
     amenities: z.array(z.number().min(1, "Amenity ID must be valid")).min(1, "At least one amenity is required"),
-    customAmenities: z.array(z.string().min(1, "Custom amenity cannot be empty")).optional(),
     description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
     images: z.array(z.string().refine((val) => {
         try {
