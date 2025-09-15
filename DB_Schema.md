@@ -1,6 +1,6 @@
 # TBK Services DB Design
 * This document provides a comprehensive overview of the database schema for the TBK Services.
-* The schema is designed to manage villas, user roles, bookings, expenses, and amenities.
+* The schema is designed to manage villas, user roles, bookings, expenses, and categorized amenities.
 
 ---
 
@@ -12,8 +12,8 @@
 | Column       | Type      | Description |
 |-------------|-----------|-------------|
 | id          | Int       | Primary key, auto-incremented |
-| firstName   | String    | User’s first name |
-| lastName    | String    | User’s last name |
+| firstName   | String    | User's first name |
+| lastName    | String    | User's last name |
 | email       | String    | Unique email of the user |
 | password    | String    | Hashed password |
 | roleId      | Int?      | Foreign key to `Role` table (nullable) |
@@ -141,34 +141,63 @@
 
 ---
 
-## 8️⃣ Amenity Table
+## 8️⃣ AmenityCategory Table ⭐ **NEW**
 
-**Purpose:** Defines all available amenities
+**Purpose:** Defines categories for grouping amenities (e.g., Bathroom, Kitchen, Entertainment)
 
-| Column | Type   | Description |
-|--------|--------|-------------|
-| id     | Int    | PK |
-| name   | Enum   | Amenity type (WIFI, POOL, etc.) |
+| Column      | Type     | Description |
+|-------------|----------|-------------|
+| id          | Int      | PK, auto-increment |
+| name        | String   | Unique category name |
+| description | String?  | Optional category description |
+| icon        | String?  | Optional icon name for UI |
+| createdAt   | DateTime | Timestamp of creation |
+| updatedAt   | DateTime | Timestamp of last update |
 
-**Relationship:** Many-to-Many with Villa via `VillaAmenity`
+**Relationships:**
+
+- `AmenityCategory → Amenity` : One-to-Many (One category can have multiple amenities)
 
 ---
 
-## 9️⃣ VillaAmenity Table
+## 9️⃣ Amenity Table ⭐ **UPDATED**
+
+**Purpose:** Defines individual amenities under categories
+
+| Column      | Type     | Description |
+|-------------|----------|-------------|
+| id          | Int      | PK, auto-increment |
+| name        | String   | Amenity name |
+| description | String?  | Optional description |
+| categoryId  | Int      | FK to AmenityCategory |
+| createdAt   | DateTime | Timestamp of creation |
+| updatedAt   | DateTime | Timestamp of last update |
+
+**Constraints:**
+- Unique constraint: `[name, categoryId]` (Same amenity name can exist in different categories)
+
+**Relationships:**
+- `Amenity → AmenityCategory` : Many-to-One
+- `Amenity → VillaAmenity` : One-to-Many
+
+---
+
+## 🔟 VillaAmenity Table ⭐ **UPDATED**
 
 **Purpose:** Mapping table for Many-to-Many between Villa and Amenity
 
-| Column    | Type | Description |
-|-----------|------|-------------|
-| villaId   | Int  | FK to Villa |
-| amenityId | Int  | FK to Amenity |
+| Column    | Type     | Description |
+|-----------|----------|-------------|
+| villaId   | Int      | FK to Villa |
+| amenityId | Int      | FK to Amenity |
+| createdAt | DateTime | Timestamp when amenity was added to villa |
 
 **Constraints:** Composite PK: `[villaId, amenityId]`  
-**Relationship type:** Many-to-Many
+**Relationship type:** Many-to-Many between Villa and Amenity
 
 ---
 
-## 🔟 Booking Table
+## 11️⃣ Booking Table
 
 **Purpose:** Stores booking information  
 
@@ -195,7 +224,7 @@
 
 ---
 
-## 11️⃣ Expense Table
+## 12️⃣ Expense Table
 
 **Purpose:** Tracks all expenses  
 
@@ -218,7 +247,7 @@
 
 ---
 
-## 12️⃣ BookingExpense Table
+## 13️⃣ BookingExpense Table
 
 **Purpose:** Mapping table between Booking and Expense  
 
@@ -236,7 +265,7 @@
 
 ---
 
-# Relationships Summary
+# Relationships Summary ⭐ **UPDATED**
 
 | Table 1         | Table 2         | Type       |
 |-----------------|----------------|------------|
@@ -249,6 +278,8 @@
 | Villa           | VillaAmenity    | One-to-Many |
 | Villa           | Booking         | One-to-Many |
 | Villa           | Expense         | One-to-Many |
+| **AmenityCategory** | **Amenity**         | **One-to-Many** ⭐ |
+| **Amenity**         | **VillaAmenity**    | **One-to-Many** ⭐ |
 | Villa           | Amenity         | Many-to-Many via VillaAmenity |
 | Booking         | BookingExpense  | One-to-Many |
 | Expense         | BookingExpense  | One-to-Many |
@@ -259,5 +290,8 @@
 
 1. **Roles & Permissions:** Flexible M:N mapping for both role-permission and user-permission. Admin can assign default role permissions or override per user.  
 2. **Villa Management:** Villas are fully customizable with images, amenities, and expenses.  
-3. **Booking Management:** Bookings are linked to villas, and expenses can be split across bookings.  
-4. **Extensible Design:** Adding new roles, permissions, amenities, or villas is easy without altering the schema.  
+3. **Categorized Amenities:** ⭐ **NEW** - Amenities are now organized by categories (Bathroom, Kitchen, Entertainment, etc.) for better UI organization and user experience.
+4. **Booking Management:** Bookings are linked to villas, and expenses can be split across bookings.  
+5. **Extensible Design:** Adding new roles, permissions, amenities, categories, or villas is easy without altering the schema.  
+6. **Amenity Flexibility:** ⭐ **NEW** - Same amenity names can exist in different categories, and categories can have unlimited amenities.
+

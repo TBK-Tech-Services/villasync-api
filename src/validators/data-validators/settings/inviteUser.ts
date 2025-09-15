@@ -12,7 +12,8 @@ export const inviteUserSchema = z.object({
     permissions : z.array(
         z.number().int().positive()
     ).optional(),
-}).refine((data) => {
+})
+.refine((data) => {
     if (typeof data.role === 'string' && (!data.permissions || data.permissions.length === 0)) {
         return false;
     }
