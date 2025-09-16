@@ -13,10 +13,7 @@ export const createBookingSchema = z.object({
     }),
     totalGuests: z.number().int().positive("At least 1 guest required"),
     specialRequest: z.string().max(500).optional(),
-    subTotalAmount: z.number().int().nonnegative(),
     isGSTIncluded: z.boolean().default(false),
-    totalTax: z.number().int().nonnegative().default(0),
-    totalPayableAmount: z.number().int().nonnegative(),
 });
 
-export type createBookingData = z.infer<typeof createBookingSchema>;
+export type createBookingData = z.infer<typeof createBookingSchema>; 

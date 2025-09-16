@@ -3,6 +3,28 @@ import prisma from "../db/DB.ts";
 import type { addVillaData } from "../validators/data-validators/villa/addVilla.ts";
 import type { updateVillaBodyData } from "../validators/data-validators/villa/updateVillaBody.ts";
 
+// Service to Check If Villa Already Exist By VillaID
+export async function isVillaPresentService({ villaId }: {villaId : number} ): Promise<Villa | null> {
+    try {
+        const villa = await prisma.villa.findUnique({
+            where : {
+                id : villaId
+            }
+        });
+
+        if(!villa){
+            return null;
+        }
+
+        return villa;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while checking villa existance : ${message}`);
+        throw new Error(`Error while checking villa existance : ${message}`);
+    }
+}
+
 // Service to Check If Villa Already Exist
 export async function checkIfVillaExistService(villaName: string): Promise<Villa | null> {
     try {
