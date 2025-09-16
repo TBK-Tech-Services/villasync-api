@@ -1,6 +1,7 @@
 import type { Booking } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { Booking_Data } from "../utils/booking/bookingData.ts";
+import type { searchAndFilterBookingData } from "../validators/data-validators/booking/searchAndFilterBooking.ts";
 
 // Service to check if a booking exist
 export async function checkIfBookingExistService(bookingId : number): Promise<Booking | null> {
@@ -191,6 +192,43 @@ export async function getABookingService(bookingId: number): Promise<Booking | n
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error getting a booking : ${message}`);
         throw new Error(`Error getting a booking : ${message}`);
+    }
+}
+
+// Service to Search and Filter Bookings
+export async function searchAndFilterBookingsService(validatedData: searchAndFilterBookingData): Promise<Booking[] | null> {
+    try {
+        let where = {};
+
+        if (validatedData.searchText !== undefined) {
+            where = {
+                ...where,
+                guestName: {
+                    contains: validatedData.searchText,
+                }
+            };
+        }
+
+        if (validatedData.status !== undefined) {
+            where = {
+                ...where,
+                bookingStatus: validatedData.status
+            };
+        }
+
+        const bookings = await prisma.booking.findMany({
+            where: where,
+            include: {
+                villa: true
+            }
+        });
+
+        return bookings;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error searching and filtering bookings : ${message}`);
+        throw new Error(`Error searching and filtering bookings : ${message}`);
     }
 }
         

@@ -4,11 +4,12 @@ import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { isVillaPresentService } from "../services/villas.services.ts";
 import { parseBookingDates } from "../utils/booking/parseBookingDates.ts";
 import { getTotalDaysOfStay } from "../utils/booking/calculateTotalDaysOfStay.ts";
-import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, deleteBookingService, getABookingService, getAllBookingsService, updateBookingService } from "../services/bookings.services.ts";
+import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, deleteBookingService, getABookingService, getAllBookingsService, searchAndFilterBookingsService, updateBookingService } from "../services/bookings.services.ts";
 import { deleteBookingSchema } from "../validators/data-validators/booking/deleteBooking.ts";
 import { updateBookingParamsSchema } from "../validators/data-validators/booking/updateBookingParam.ts";
 import { updateBookingBodySchema } from "../validators/data-validators/booking/updateBookingBody.ts";
 import { getBookingSchema } from "../validators/data-validators/booking/getBooking.ts";
+import { searchAndFilterBookingSchema } from "../validators/data-validators/booking/searchAndFilterBooking.ts";
 
 // Controller to Add a Booking
 export async function addBooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -272,6 +273,29 @@ export async function getABooking(req: Request, res: Response, next: NextFunctio
 
     return sendSuccess(res , booking , "Successfully Retrieved A Booking !!!" , 200);
   } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to Search and Filter Bookings
+export async function searchAndFilterBookings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const validationResult = searchAndFilterBookingSchema.safeParse(req.query);
+    if(!validationResult.success){
+      return sendError(res , "Validation Failed !!!" , 400 , validationResult.error);
+    }
+
+    const validatedData = validationResult.data;
+
+    const results = await searchAndFilterBookingsService(validatedData);
+
+    if(!results){
+      return sendError(res , "Error Getting Search and Filter Results !!!" , 500 , null);
+    }
+
+    return sendSuccess(res , results , "Successfully Retireved Search and Filter Bookings" , 200);
+  }
   catch (error) {
     next(error);
   }
