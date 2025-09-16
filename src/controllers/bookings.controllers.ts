@@ -4,8 +4,10 @@ import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { isVillaPresentService } from "../services/villas.services.ts";
 import { parseBookingDates } from "../utils/booking/parseBookingDates.ts";
 import { getTotalDaysOfStay } from "../utils/booking/calculateTotalDaysOfStay.ts";
-import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityService, deleteBookingService } from "../services/bookings.services.ts";
+import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, deleteBookingService, updateBookingService } from "../services/bookings.services.ts";
 import { deleteBookingSchema } from "../validators/data-validators/booking/deleteBooking.ts";
+import { updateBookingParamsSchema } from "../validators/data-validators/booking/updateBookingParam.ts";
+import { updateBookingBodySchema } from "../validators/data-validators/booking/updateBookingBody.ts";
 
 // Controller to Add a Booking
 export async function addBooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -88,20 +90,118 @@ export async function addBooking(req: Request, res: Response, next: NextFunction
   }
 }
 
-// Controller to get All Bookings
-export async function getAllBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
 // Controller to Update a Booking
-export async function updateBooking(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function updateBooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
+    const paramsValidation = updateBookingParamsSchema.safeParse(req.params);
     
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid booking ID", 400, paramsValidation.error);
+    }
+    
+    const bookingId = paramsValidation.data.id;
+    
+    const bodyValidation = updateBookingBodySchema.safeParse(req.body);
+
+    if (!bodyValidation.success) {
+      return sendError(res, "Validation Failed", 400, bodyValidation.error);
+    }
+    
+    const updatedData = bodyValidation.data;
+
+    const existingBooking = await checkIfBookingExistService(bookingId);
+    if (!existingBooking) {
+      return sendError(res, "Booking with this id doesn't exist !!!", 404, null);
+    }
+
+    if (updatedData.villaId) {
+      const villa = await isVillaPresentService({villaId: updatedData.villaId});
+      if (!villa) {
+        return sendError(res, "Villa with this id doesn't exist !!!", 404, null);
+      }
+
+      if ((updatedData.totalGuests) && (updatedData.totalGuests > villa.maxGuests)) {
+        return sendError(res, "Number of guest exceed the max capacity of a villa !!!", 400, null);
+      }
+    }
+
+    let checkInDate, checkOutDate, totalDaysOfStay;
+
+    if (updatedData.checkIn && updatedData.checkOut) {
+      const parsedDates = parseBookingDates(updatedData.checkIn, updatedData.checkOut);
+      checkInDate = parsedDates.checkInDate;
+      checkOutDate = parsedDates.checkOutDate;
+
+      if (!(checkOutDate.getTime() > checkInDate.getTime())) {
+        return sendError(res, "Checkout date must be after checkin date !!!", 400);
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (checkInDate.getTime() < today.getTime()) {
+        return sendError(res, "Checkin date cannot be in the past !!!", 400);
+      }
+
+      totalDaysOfStay = getTotalDaysOfStay(checkInDate, checkOutDate);
+
+      const villaId = updatedData.villaId || existingBooking.villaId;
+      const isVillaAvailable = await checkVillaAvailabilityForUpdateService({villaId, checkInDate, checkOutDate,  excludeBookingId: bookingId});
+
+      if (!isVillaAvailable) {
+        return sendError(res, "Villa is not available for selected dates !!!", 409);
+      }
+    }
+
+    let calculatedData = {};
+    if (updatedData.villaId || updatedData.checkIn || updatedData.checkOut || updatedData.isGSTIncluded !== undefined) {
+      const villa = updatedData.villaId ?
+        await isVillaPresentService({villaId: updatedData.villaId})
+        : 
+        await isVillaPresentService({villaId: existingBooking.villaId});
+
+      if (!villa) {
+        return sendError(res, "Villa not found !!!", 404, null);
+      };
+
+      const days = totalDaysOfStay || getTotalDaysOfStay( checkInDate || existingBooking.checkIn , checkOutDate || existingBooking.checkOut );
+
+      const subTotal = villa.price * days;
+
+      const isGSTIncluded = (updatedData.isGSTIncluded !== undefined) ?
+        updatedData.isGSTIncluded 
+        :
+        existingBooking.isGSTIncluded;
+
+      let totalGST = 0;
+      let totalAmountToPay = 0;
+
+      if (isGSTIncluded) {
+        totalGST = (subTotal * 18) / 100;
+        totalAmountToPay = subTotal + totalGST;
+      } 
+      else {
+        totalGST = 0;
+        totalAmountToPay = subTotal;
+      }
+
+      calculatedData = {
+        subTotalAmount: subTotal,
+        totalTax: totalGST,
+        totalPayableAmount: totalAmountToPay
+      };
+    }
+
+    const finalUpdateData = {
+      ...updatedData,
+      ...calculatedData,
+      checkIn: checkInDate,
+      checkOut: checkOutDate
+    };
+
+    const updatedBooking = await updateBookingService(bookingId, finalUpdateData);
+
+    return sendSuccess(res, updatedBooking, "Successfully Updated Booking", 200);
   } 
   catch (error) {
     next(error);
@@ -128,6 +228,16 @@ export async function deleteBooking(req: Request, res: Response, next: NextFunct
     const deletedBooking = await deleteBookingService(bookingId);
 
     return sendSuccess(res , deletedBooking , "Successfully Deleted a Booking" , 200);
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to get All Bookings
+export async function getAllBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    
   } 
   catch (error) {
     next(error);

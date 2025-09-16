@@ -65,6 +65,50 @@ export async function checkVillaAvailabilityService({villaId, checkInDate, check
     }
 }
 
+// Service to check if a villa is available during a duration
+export async function checkVillaAvailabilityForUpdateService({villaId, checkInDate, checkOutDate, excludeBookingId}: {villaId: number, checkInDate: Date, checkOutDate: Date, excludeBookingId: number}): Promise<boolean> {
+    try {
+        const villa = await prisma.villa.findUnique({
+            where: { id: villaId },
+            include: {
+                bookings: {
+                    where: {
+                        bookingStatus: { 
+                            in: ['CONFIRMED', 'CHECKED_IN'] 
+                        },
+                        id: { 
+                            not: excludeBookingId 
+                        } 
+                    },
+                    select: {
+                        checkIn: true,
+                        checkOut: true,
+                        bookingStatus: true
+                    }
+                }
+            }
+        });
+
+        if (!villa) {
+            return false;
+        };
+
+        for (const booking of villa.bookings) {
+            const hasOverlap = (checkInDate < booking.checkOut) && (checkOutDate > booking.checkIn);
+            if (hasOverlap){
+                return false;
+            };
+        }
+        
+        return true;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Error checking villa availability: ${message}`);
+        throw new Error(`Error checking villa availability: ${message}`);
+    }
+}
+
 // Service to Add a Booking
 export async function addBookingService(formData : Booking_Data): Promise<Booking> {
     try {
@@ -92,12 +136,21 @@ export async function getAllBookingsService(): Promise<void> {
 }
     
 // Service to Update a Booking
-export async function updateBookingService(): Promise<void> {
+export async function updateBookingService(bookingId: number, updateData: any): Promise<Booking> {
     try {
+        const updatedBooking = await prisma.booking.update({
+            where: { 
+                id: bookingId 
+            },
+            data: updateData
+        });
 
-    } 
+        return updatedBooking;
+    }
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Error updating a booking: ${message}`);
+        throw new Error(`Error updating a booking: ${message}`);
     }
 }
   
