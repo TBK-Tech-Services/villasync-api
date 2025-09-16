@@ -65,7 +65,7 @@ export async function checkVillaAvailabilityService({villaId, checkInDate, check
     }
 }
 
-// Service to check if a villa is available during a duration
+// Service to check if a villa is available during a duration While Updating a Booking
 export async function checkVillaAvailabilityForUpdateService({villaId, checkInDate, checkOutDate, excludeBookingId}: {villaId: number, checkInDate: Date, checkOutDate: Date, excludeBookingId: number}): Promise<boolean> {
     try {
         const villa = await prisma.villa.findUnique({
@@ -125,16 +125,6 @@ export async function addBookingService(formData : Booking_Data): Promise<Bookin
     }
 }
 
-// Service to get All Bookings
-export async function getAllBookingsService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-    
 // Service to Update a Booking
 export async function updateBookingService(bookingId: number, updateData: any): Promise<Booking> {
     try {
@@ -153,7 +143,7 @@ export async function updateBookingService(bookingId: number, updateData: any): 
         throw new Error(`Error updating a booking: ${message}`);
     }
 }
-  
+
 // Service to Delete a Booking
 export async function deleteBookingService(bookingId: number): Promise<Booking> {
     try {
@@ -167,11 +157,43 @@ export async function deleteBookingService(bookingId: number): Promise<Booking> 
     } 
     catch (error) { 
         const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error deleting a villa : ${message}`);
-        throw new Error(`Error deleting a villa : ${message}`);
+        console.error(`Error deleting a booking : ${message}`);
+        throw new Error(`Error deleting a booking : ${message}`);
     }
 }
-  
+
+// Service to get All Bookings
+export async function getAllBookingsService(): Promise<Booking[] | null> {
+    try {
+        const bookings = await prisma.booking.findMany();
+
+        return bookings;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting all bookings : ${message}`);
+        throw new Error(`Error getting all bookings : ${message}`);
+    }
+}
+
+// Service to get All Bookings
+export async function getABookingService(bookingId: number): Promise<Booking | null> {
+    try {
+        const booking = await prisma.booking.findUnique({
+            where : {
+                id : bookingId
+            }
+        });
+
+        return booking;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting a booking : ${message}`);
+        throw new Error(`Error getting a booking : ${message}`);
+    }
+}
+        
 // Service to Export Bookings
 export async function exportBookingsService(): Promise<void> {
     try {

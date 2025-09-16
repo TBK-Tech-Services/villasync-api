@@ -4,10 +4,11 @@ import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { isVillaPresentService } from "../services/villas.services.ts";
 import { parseBookingDates } from "../utils/booking/parseBookingDates.ts";
 import { getTotalDaysOfStay } from "../utils/booking/calculateTotalDaysOfStay.ts";
-import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, deleteBookingService, updateBookingService } from "../services/bookings.services.ts";
+import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, deleteBookingService, getABookingService, getAllBookingsService, updateBookingService } from "../services/bookings.services.ts";
 import { deleteBookingSchema } from "../validators/data-validators/booking/deleteBooking.ts";
 import { updateBookingParamsSchema } from "../validators/data-validators/booking/updateBookingParam.ts";
 import { updateBookingBodySchema } from "../validators/data-validators/booking/updateBookingBody.ts";
+import { getBookingSchema } from "../validators/data-validators/booking/getBooking.ts";
 
 // Controller to Add a Booking
 export async function addBooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -116,6 +117,7 @@ export async function updateBooking(req: Request, res: Response, next: NextFunct
 
     if (updatedData.villaId) {
       const villa = await isVillaPresentService({villaId: updatedData.villaId});
+
       if (!villa) {
         return sendError(res, "Villa with this id doesn't exist !!!", 404, null);
       }
@@ -146,6 +148,7 @@ export async function updateBooking(req: Request, res: Response, next: NextFunct
       totalDaysOfStay = getTotalDaysOfStay(checkInDate, checkOutDate);
 
       const villaId = updatedData.villaId || existingBooking.villaId;
+
       const isVillaAvailable = await checkVillaAvailabilityForUpdateService({villaId, checkInDate, checkOutDate,  excludeBookingId: bookingId});
 
       if (!isVillaAvailable) {
@@ -235,9 +238,39 @@ export async function deleteBooking(req: Request, res: Response, next: NextFunct
 }
 
 // Controller to get All Bookings
-export async function getAllBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getAllBookings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
+    const bookings = await getAllBookingsService();
+
+    if(!bookings){
+      return sendError(res , "No Bookings Exist !!!" , 404 , null);
+    }
+
+    return sendSuccess(res , bookings , "Successfully Retrieved All Bookings !!!" , 200);
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to get a Booking
+export async function getABooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const paramsValidation = getBookingSchema.safeParse(req.params);
     
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid booking ID", 400, paramsValidation.error);
+    }
+    
+    const bookingId = paramsValidation.data.id;
+
+    const booking = await getABookingService(bookingId);
+
+    if(!booking){
+      return sendError(res , "Booking Doesnt Exist !!!" , 404 , null);
+    }
+
+    return sendSuccess(res , booking , "Successfully Retrieved A Booking !!!" , 200);
   } 
   catch (error) {
     next(error);
