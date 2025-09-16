@@ -11,7 +11,6 @@ datasource db {
 
 enum Booking_Status{
   CONFIRMED
-  PENDING
   CHECKED_IN
   CHECKED_OUT
   CANCELLED
@@ -149,22 +148,27 @@ model VillaImage {
   villaId Int    @map("villa_id")
 }
 
+// Table to Store Bookings for Villa
 model Booking {
-  id             Int           @id @default(autoincrement())
-  guestName      String        @db.VarChar(100)
-  guestEmail     String        @db.VarChar(100)
-  guestPhone     String        @db.VarChar(20)
-  villa          Villa         @relation(fields: [villaId], references: [id])
-  villaId        Int
-  checkIn        DateTime
-  checkOut       DateTime
-  totalGuests    Int
-  specialRequest String?       @db.VarChar(500)
-  bookingStatus  Booking_Status
-  paymentStatus  Payment_Status
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  expenses       BookingExpense[]
+  id                 Int            @id @default(autoincrement())
+  guestName          String         @db.VarChar(100)
+  guestEmail         String         @db.VarChar(100)
+  guestPhone         String         @db.VarChar(20)
+  villa              Villa          @relation(fields: [villaId], references: [id])
+  villaId            Int
+  checkIn            DateTime
+  checkOut           DateTime
+  totalGuests        Int
+  specialRequest     String?        @db.VarChar(500)
+  bookingStatus      Booking_Status @default(CONFIRMED)
+  paymentStatus      Payment_Status @default(PENDING)
+  subTotalAmount     Int
+  isGSTIncluded      Boolean        @default(false)
+  totalTax           Int
+  totalPayableAmount Int
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  expenses           BookingExpense[]
 }
 
 model Expense {

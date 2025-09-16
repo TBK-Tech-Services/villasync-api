@@ -1,14 +1,4 @@
 
-// Service to get All Bookings
-export async function getAllBookingsService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-  
 // Service to Add a Booking
 export async function addBookingService(): Promise<void> {
     try {
@@ -18,7 +8,17 @@ export async function addBookingService(): Promise<void> {
         console.error(error); 
     }
 }
-  
+
+// Service to get All Bookings
+export async function getAllBookingsService(): Promise<void> {
+    try {
+
+    } 
+    catch (error) { 
+        console.error(error); 
+    }
+}
+    
 // Service to Update a Booking
 export async function updateBookingService(): Promise<void> {
     try {

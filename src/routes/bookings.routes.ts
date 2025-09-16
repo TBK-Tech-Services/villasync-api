@@ -10,8 +10,8 @@ import {
 const router = Router();
 
 // Bookings Endpoints
-router.get("/", getAllBookings);  
 router.post("/", addBooking);  
+router.get("/", getAllBookings);  
 router.put("/:id", updateBooking);  
 router.delete("/:id", deleteBooking);  
 router.get("/export", exportBookings);  
