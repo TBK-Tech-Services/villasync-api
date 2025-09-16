@@ -4,7 +4,8 @@ import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { isVillaPresentService } from "../services/villas.services.ts";
 import { parseBookingDates } from "../utils/booking/parseBookingDates.ts";
 import { getTotalDaysOfStay } from "../utils/booking/calculateTotalDaysOfStay.ts";
-import { addBookingService, checkVillaAvailabilityService } from "../services/bookings.services.ts";
+import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityService, deleteBookingService } from "../services/bookings.services.ts";
+import { deleteBookingSchema } from "../validators/data-validators/booking/deleteBooking.ts";
 
 // Controller to Add a Booking
 export async function addBooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -108,9 +109,25 @@ export async function updateBooking(req: Request, res: Response, next: NextFunct
 }
 
 // Controller to Delete a Booking
-export async function deleteBooking(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function deleteBooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
+    const paramsValidation = deleteBookingSchema.safeParse(req.params);
     
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid Booking ID !!!", 400, paramsValidation.error);
+    }
+    
+    const bookingId = paramsValidation.data.id;
+
+    const bookingExistance = await checkIfBookingExistService(bookingId);
+
+    if(!bookingExistance){
+      return sendError(res, "Booking Doesnt Exist !!!", 404, null);
+    }
+
+    const deletedBooking = await deleteBookingService(bookingId);
+
+    return sendSuccess(res , deletedBooking , "Successfully Deleted a Booking" , 200);
   } 
   catch (error) {
     next(error);

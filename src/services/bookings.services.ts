@@ -2,6 +2,24 @@ import type { Booking } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { Booking_Data } from "../utils/booking/bookingData.ts";
 
+// Service to check if a booking exist
+export async function checkIfBookingExistService(bookingId : number): Promise<Booking | null> {
+    try {
+        const booking = await prisma.booking.findUnique({
+            where : {
+                id : bookingId
+            }
+        });
+
+        return booking;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error checking villa availability : ${message}`);
+        throw new Error(`Error checking villa availability : ${message}`);
+    }
+}
+
 // Service to check if a villa is available during a duration
 export async function checkVillaAvailabilityService({villaId, checkInDate, checkOutDate}: {villaId: number, checkInDate: Date, checkOutDate: Date}): Promise<boolean> {
     try {
@@ -39,7 +57,8 @@ export async function checkVillaAvailabilityService({villaId, checkInDate, check
         
         return true;
         
-    } catch (error) { 
+    } 
+    catch (error) { 
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error checking villa availability : ${message}`);
         throw new Error(`Error checking villa availability : ${message}`);
@@ -83,12 +102,20 @@ export async function updateBookingService(): Promise<void> {
 }
   
 // Service to Delete a Booking
-export async function deleteBookingService(): Promise<void> {
+export async function deleteBookingService(bookingId: number): Promise<Booking> {
     try {
+        const deletedBooking = await prisma.booking.delete({
+            where : {
+                id : bookingId
+            }
+        });
 
+        return deletedBooking;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error deleting a villa : ${message}`);
+        throw new Error(`Error deleting a villa : ${message}`);
     }
 }
   
