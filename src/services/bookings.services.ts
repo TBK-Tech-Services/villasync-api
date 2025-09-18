@@ -183,6 +183,9 @@ export async function getABookingService(bookingId: number): Promise<Booking | n
         const booking = await prisma.booking.findUnique({
             where : {
                 id : bookingId
+            },
+            include : {
+                villa: true
             }
         });
 
@@ -198,22 +201,16 @@ export async function getABookingService(bookingId: number): Promise<Booking | n
 // Service to Search and Filter Bookings
 export async function searchAndFilterBookingsService(validatedData: searchAndFilterBookingData): Promise<Booking[] | null> {
     try {
-        let where = {};
+        let where: any = {};
 
-        if (validatedData.searchText !== undefined) {
-            where = {
-                ...where,
-                guestName: {
-                    contains: validatedData.searchText,
-                }
+        if (validatedData.searchText && validatedData.searchText.trim()) {
+            where.guestName = {
+                contains: validatedData.searchText,
             };
         }
 
-        if (validatedData.status !== undefined) {
-            where = {
-                ...where,
-                bookingStatus: validatedData.status
-            };
+        if (validatedData.status && validatedData.status.trim()) {
+            where.bookingStatus = validatedData.status;
         }
 
         const bookings = await prisma.booking.findMany({
