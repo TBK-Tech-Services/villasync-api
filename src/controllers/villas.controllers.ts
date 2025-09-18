@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addVillaService, checkIfVillaExistService, getAllVillasService, getSingleVillaService, updateVillaService } from "../services/villas.services.ts";
+import { addVillaService, checkIfVillaExistService, getAllAmenityCategoriesService, getAllVillasService, getSingleVillaService, updateVillaService } from "../services/villas.services.ts";
 import { addVillaSchema } from "../validators/data-validators/villa/addVilla.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { getVillaSchema } from "../validators/data-validators/villa/getVilla.ts";
@@ -54,7 +54,7 @@ export async function getAllVillas(req: Request, res: Response, next: NextFuncti
 }
 
 // Controller to get a Single Villa
-export async function getSingleVilla(req: Request, res: Response, next: NextFunction) {
+export async function getSingleVilla(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
     const paramId = req.params.id;
 
@@ -78,6 +78,22 @@ export async function getSingleVilla(req: Request, res: Response, next: NextFunc
 
     return sendSuccess(res , villa , "Successfully Retrieved Villa Details" , 200);
   } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to get All Amenity Categories
+export async function getAllAmenityCategories(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const amenitiesCategories = await getAllAmenityCategoriesService();
+
+    if(!amenitiesCategories || amenitiesCategories.length === 0){
+      return sendError(res , "No Amenity Categories Found" , 404);
+    }
+
+    return sendSuccess(res , amenitiesCategories , "Successfully Retrieved All Amenities Categories" , 200);
+  }
   catch (error) {
     next(error);
   }

@@ -116,6 +116,31 @@ export async function getAllVillasService(): Promise<Villa[] | null> {
         throw new Error(`Error while getting all villas : ${message}`);
     }
 }
+
+// Service to get All Amenities Categories
+export async function getAllAmenityCategoriesService() {
+    try {
+        const amenitiesCategories = await prisma.amenityCategory.findMany({
+            include: {
+                amenities: {
+                    orderBy: { 
+                        name: 'asc'
+                    }
+                }
+            },
+            orderBy: { 
+                name: 'asc' 
+            },
+        });
+
+        return amenitiesCategories;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting all amenities categories : ${message}`);
+        throw new Error(`Error while getting all amenities categories : ${message}`);
+    }
+}
     
 // Service to get a Single Villa
 export async function getSingleVillaService(villaId : number): Promise<Villa | null> {
