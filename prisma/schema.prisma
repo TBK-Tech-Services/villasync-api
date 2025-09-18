@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/*
+1. Cascase Delete on Booking and Expense for Villa use krna hai ya ni ? Understand the tradeoff !!!
+Might be a risky move.
+*/
+
 // -----Enums-----
 
 enum Booking_Status{
@@ -154,7 +159,7 @@ model Booking {
   guestName          String         @db.VarChar(100)
   guestEmail         String         @db.VarChar(100)
   guestPhone         String         @db.VarChar(20)
-  villa              Villa          @relation(fields: [villaId], references: [id])
+  villa              Villa          @relation(fields: [villaId], references: [id], onDelete: Cascade)
   villaId            Int
   checkIn            DateTime
   checkOut           DateTime
@@ -178,7 +183,7 @@ model Expense {
   date         DateTime
   type         Expense_Type
   category     Expense_Category
-  villa        Villa?        @relation(fields: [villaId], references: [id])
+  villa        Villa?        @relation(fields: [villaId], references: [id], onDelete: Cascade)
   villaId      Int?
   bookings     BookingExpense[]
   createdAt    DateTime      @default(now())
