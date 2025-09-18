@@ -1,11 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
-import { addVillaService, checkIfVillaExistService, getAllAmenityCategoriesService, getAllVillasService, getSingleVillaService, updateVillaService } from "../services/villas.services.ts";
+import { addVillaService, checkIfVillaExistService, deleteVillaService, getAllAmenityCategoriesService, getAllVillasService, getSingleVillaService, updateVillaService } from "../services/villas.services.ts";
 import { addVillaSchema } from "../validators/data-validators/villa/addVilla.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { getVillaSchema } from "../validators/data-validators/villa/getVilla.ts";
 import { updateVillaParamsSchema } from "../validators/data-validators/villa/updateVillaParam.ts";
 import { updateVillaBodySchema } from "../validators/data-validators/villa/updateVillaBody.ts";
 import { searchAndFilterVillasSchema } from "../validators/data-validators/villa/searchAndFilterVillas.ts";
+import { deleteVillaParamsSchema } from "../validators/data-validators/villa/deleteVillaParams.ts";
 
 // Controller to Add a Villa
 export async function addVilla(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -131,6 +132,30 @@ export async function updateVilla(req: Request, res: Response, next: NextFunctio
     }
 
     return sendSuccess(res, updatedVilla, "Villa updated successfully", 200);
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to Delete a Villa
+export async function deleteVilla(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const paramsValidation = deleteVillaParamsSchema.safeParse(req.params);
+
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid villa ID", 400, paramsValidation.error);
+    }
+
+    const villaId = paramsValidation.data.id;
+
+    const deletedVilla = await deleteVillaService(villaId);
+    
+    if (!deletedVilla) {
+      return sendError(res, "Unable to delete a villa", 500, null);
+    }
+
+    return sendSuccess(res, deletedVilla, "Villa deleted successfully", 200);
   } 
   catch (error) {
     next(error);

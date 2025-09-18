@@ -254,6 +254,24 @@ export async function updateVillaService(villaId: number, updateData: updateVill
     }
 }
 
+// Service to Delete a Villa
+export async function deleteVillaService(villaId: number): Promise<Villa | null> {
+    try {
+        const deletedVilla = await prisma.villa.delete({
+            where : {
+                id : villaId
+            }
+        })
+
+        return deletedVilla;
+    }
+    catch (error) { 
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Error while deleting a villa: ${message}`);
+        throw new Error(`Error while deleting a villa: ${message}`);
+    }
+}
+
 // Service to get Recent Bookings of a Villa
 export async function getVillaRecentBookingsService(): Promise<void> {
     try {
