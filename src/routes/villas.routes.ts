@@ -6,12 +6,14 @@ import {
   updateVilla,
   getVillaRecentBookings,
   getVillaMonthlyRevenue,
-  getVillaAvailability
+  getVillaAvailability,
+  searchAndFilterVillas
 } from "../controllers/villas.controllers.ts";
 
 const router = Router();
 
 // Villas Endpoints
+router.get("/search", searchAndFilterVillas);    
 router.post("/", addVilla);  
 router.put("/:id", updateVilla);
 router.get("/", getAllVillas);  

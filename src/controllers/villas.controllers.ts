@@ -5,6 +5,7 @@ import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { getVillaSchema } from "../validators/data-validators/villa/getVilla.ts";
 import { updateVillaParamsSchema } from "../validators/data-validators/villa/updateVillaParam.ts";
 import { updateVillaBodySchema } from "../validators/data-validators/villa/updateVillaBody.ts";
+import { searchAndFilterVillasSchema } from "../validators/data-validators/villa/searchAndFilterVillas.ts";
 
 // Controller to Add a Villa
 export async function addVilla(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -114,6 +115,22 @@ export async function updateVilla(req: Request, res: Response, next: NextFunctio
     }
 
     return sendSuccess(res, updatedVilla, "Villa updated successfully", 200);
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to Search and Filter Villas
+export async function searchAndFilterVillas(req: Request, res: Response, next: NextFunction) {
+  try {
+    const validatedData = searchAndFilterVillasSchema.safeParse(req.query);
+
+    if(!validatedData.success){
+      // send error
+    }
+
+    console.log(validatedData.data);
   } 
   catch (error) {
     next(error);
