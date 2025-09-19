@@ -10,6 +10,7 @@ datasource db {
 /*
 1. Cascase Delete on Booking and Expense for Villa use krna hai ya ni ? Understand the tradeoff !!!
 Might be a risky move.
+2. Jitte bhi jagah cascade delete temporarily use kra hai , revist to update the business logic
 */
 
 // -----Enums-----
@@ -197,7 +198,7 @@ model Expense {
 
 model ExpenseVilla {
   id        Int     @id @default(autoincrement())
-  expense   Expense @relation(fields: [expenseId], references: [id])
+  expense   Expense @relation(fields: [expenseId], references: [id] , onDelete: Cascade)
   expenseId Int
   villa     Villa   @relation(fields: [villaId], references: [id])
   villaId   Int
@@ -206,7 +207,7 @@ model ExpenseVilla {
 
 model BookingExpense {
   id        Int      @id @default(autoincrement())
-  booking   Booking  @relation(fields: [bookingId], references: [id])
+  booking   Booking  @relation(fields: [bookingId], references: [id] , onDelete: Cascade)
   bookingId Int
   expense   Expense  @relation(fields: [expenseId], references: [id])
   expenseId Int
