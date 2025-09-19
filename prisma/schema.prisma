@@ -135,6 +135,7 @@ model Villa {
   images      VillaImage[]
   bookings    Booking[]
   expenses    Expense[]
+  expenseVillas ExpenseVilla[]
 }
 
 // Table to Store Image for Villa
@@ -189,8 +190,18 @@ model Expense {
   villa        Villa?           @relation(fields: [villaId], references: [id], onDelete: Cascade)
   villaId      Int?
   bookings     BookingExpense[]
+  villas       ExpenseVilla[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+}
+
+model ExpenseVilla {
+  id        Int     @id @default(autoincrement())
+  expense   Expense @relation(fields: [expenseId], references: [id])
+  expenseId Int
+  villa     Villa   @relation(fields: [villaId], references: [id])
+  villaId   Int
+  amount    Int   
 }
 
 model BookingExpense {
