@@ -28,16 +28,8 @@ enum Villa_Status{
 }
 
 enum Expense_Type{
-  SPLIT
   INDIVIDUAL
-}
-
-enum Expense_Category{
-  MAINTENANCE
-  CLEANING
-  MARKETING
-  UTILITIES
-  OTHERS
+  SPLIT
 }
 
 enum Payment_Status{
@@ -176,18 +168,29 @@ model Booking {
   expenses           BookingExpense[]
 }
 
-model Expense {
+// Table to Store Expense Category
+model ExpenseCategory {
   id           Int           @id @default(autoincrement())
-  title        String        @db.VarChar(100)
+  name         String        @db.VarChar(100)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  expenses     Expense[]
+}
+
+// Table to Store Expenses
+model Expense {
+  id           Int              @id @default(autoincrement())
+  title        String           @db.VarChar(100)
   amount       Int
   date         DateTime
   type         Expense_Type
-  category     Expense_Category
-  villa        Villa?        @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  category     ExpenseCategory  @relation(fields: [categoryId], references: [id])
+  categoryId   Int
+  villa        Villa?           @relation(fields: [villaId], references: [id], onDelete: Cascade)
   villaId      Int?
   bookings     BookingExpense[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 }
 
 model BookingExpense {

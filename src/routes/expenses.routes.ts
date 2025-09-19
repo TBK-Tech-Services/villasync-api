@@ -10,10 +10,10 @@ import {
 const router = Router();
 
 // Expense Endpoints
-router.get("/", getAllExpenses);  
-router.post("/", addExpense);  
-router.put("/:id", updateExpense);  
-router.delete("/:id", deleteExpense);  
+router.post("/", addExpense);
+router.put("/:id", updateExpense);
+router.delete("/:id", deleteExpense);
+router.get("/", getAllExpenses);
 router.get("/villas", getAllVillasForExpenses);  
 
 export default router;

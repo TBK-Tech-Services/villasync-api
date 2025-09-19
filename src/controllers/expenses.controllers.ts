@@ -1,15 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
 
-// Controller to get All Expenses
-export async function getAllExpenses(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
 // Controller to Add An Expense
 export async function addExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -32,6 +22,16 @@ export async function updateExpense(req: Request, res: Response, next: NextFunct
 
 // Controller to Delete an Expense
 export async function deleteExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to get All Expenses
+export async function getAllExpenses(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
   } 
