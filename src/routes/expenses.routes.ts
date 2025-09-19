@@ -5,7 +5,8 @@ import {
   updateExpense,
   deleteExpense,
   getAllVillasForExpenses,
-  getAllExpenseCategories
+  getAllExpenseCategories,
+  getExpense
 } from "../controllers/expenses.controllers.ts";
 
 const router = Router();
@@ -15,6 +16,7 @@ router.post("/", addExpense);
 router.put("/:id", updateExpense);
 router.get("/categories", getAllExpenseCategories);
 router.delete("/:id", deleteExpense);
+router.get("/:id", getExpense);
 router.get("/", getAllExpenses);
 router.get("/villas", getAllVillasForExpenses);  
 

@@ -1,9 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { addExpenseSchema } from "../validators/data-validators/expense/addExpense.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
-import { addExpenseService, checkIfExpenseExistService, getAllExpenseCategoriesService, updateExpenseService } from "../services/expenses.services.ts";
+import { addExpenseService, checkIfExpenseExistService, getAllExpenseCategoriesService, getAllExpensesService, getExpenseService, updateExpenseService } from "../services/expenses.services.ts";
 import { updateExpenseParamsSchema } from "../validators/data-validators/expense/updateExpenseParams.ts";
 import { updateExpenseBodySchema } from "../validators/data-validators/expense/updateExpenseBody.ts";
+import { getExpenseSchema } from "../validators/data-validators/expense/getExpense.ts";
 
 // Controller to Add An Expense
 export async function addExpense(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -83,18 +84,48 @@ export async function getAllExpenseCategories(req: Request, res: Response, next:
   }
 }
 
-// Controller to Delete an Expense
-export async function deleteExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to get All Expenses
+export async function getAllExpenses(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
+    const expenses = await getAllExpensesService();
+
+    if(!expenses){
+      return sendError(res , "Didnt get expenses!" , 404 , null);
+    }
+
+    return sendSuccess(res , expenses , "Successfully Got Expenses !" , 200);
   } 
   catch (error) {
     next(error);
   }
 }
 
-// Controller to get All Expenses
-export async function getAllExpenses(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to get an Expense
+export async function getExpense(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const paramsValidation = getExpenseSchema.safeParse(req.params);
+        
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid expense ID", 400, paramsValidation.error);
+    }
+        
+    const expenseId = paramsValidation.data.id;
+    
+    const expense = await getExpenseService(expenseId);
+    
+    if(!expense){
+      return sendError(res , "Expense Doesnt Exist !!!" , 404 , null);
+    }
+    
+    return sendSuccess(res , expense , "Successfully Retrieved A Expense !!!" , 200);
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to Delete an Expense
+export async function deleteExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     
   } 

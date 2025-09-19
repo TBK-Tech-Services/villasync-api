@@ -208,6 +208,57 @@ export async function getAllExpenseCategoriesService(): Promise<any | null> {
     }
 }
 
+// Service to get All Expenses
+export async function getAllExpensesService(): Promise<any | null> {
+    try {
+      const expenses = await prisma.expense.findMany({
+        include : {
+          category : true,
+          villa: true, 
+          villas : {
+            include : {
+              villa : true
+            }
+          }
+        }
+      });
+
+      return expenses;
+    } 
+    catch (error) { 
+      const message = error instanceof Error ? (error.message) : String(error);
+      console.error(`Error getting all expenses : ${message}`);
+      throw new Error(`Error getting all expenses : ${message}`);
+    }
+}
+
+// Service to get an Expense
+export async function getExpenseService(expenseId: number): Promise<any | null> {
+    try {
+      const expense = await prisma.expense.findUnique({
+        where : {
+          id : expenseId
+        },
+        include : {
+          category : true,
+          villa : true,
+          villas : {
+            include : {
+              villa : true
+            }
+          }
+        }
+      });
+
+      return expense;
+    } 
+    catch (error) { 
+      const message = error instanceof Error ? (error.message) : String(error);
+      console.error(`Error getting a expense : ${message}`);
+      throw new Error(`Error getting a expense : ${message}`);
+    }
+}
+
 // Service to Delete an Expense
 export async function deleteExpenseService(): Promise<void> {
     try {
@@ -218,16 +269,6 @@ export async function deleteExpenseService(): Promise<void> {
     }
 }
   
-// Service to get All Expenses
-export async function getAllExpensesService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-
 // Service to get All Villas For Expenses
 export async function getAllVillasForExpensesService(): Promise<void> {
     try {
