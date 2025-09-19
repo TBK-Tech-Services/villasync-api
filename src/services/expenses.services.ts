@@ -194,6 +194,20 @@ export async function updateExpenseService({validatedData , expenseId}: {validat
     }
 }
 
+// Service to get All Categories for Expense
+export async function getAllExpenseCategoriesService(): Promise<any | null> {
+    try {
+      const expenseCategories = await prisma.expenseCategory.findMany();
+
+      return expenseCategories;
+    } 
+    catch (error) { 
+      const message = error instanceof Error ? (error.message) : String(error);
+      console.error(`Error getting all expense categories : ${message}`);
+      throw new Error(`Error getting all expense categories : ${message}`);
+    }
+}
+
 // Service to Delete an Expense
 export async function deleteExpenseService(): Promise<void> {
     try {

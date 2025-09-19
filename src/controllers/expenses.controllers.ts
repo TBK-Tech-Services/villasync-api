@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { addExpenseSchema } from "../validators/data-validators/expense/addExpense.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
-import { addExpenseService, checkIfExpenseExistService, updateExpenseService } from "../services/expenses.services.ts";
+import { addExpenseService, checkIfExpenseExistService, getAllExpenseCategoriesService, updateExpenseService } from "../services/expenses.services.ts";
 import { updateExpenseParamsSchema } from "../validators/data-validators/expense/updateExpenseParams.ts";
 import { updateExpenseBodySchema } from "../validators/data-validators/expense/updateExpenseBody.ts";
 
@@ -61,6 +61,22 @@ export async function updateExpense(req: Request, res: Response, next: NextFunct
     }
 
     return sendSuccess(res, updatedExpense, "Successfully Updated Expense!", 200);
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to get All Villas For Expenses
+export async function getAllExpenseCategories(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const expenseCategories = await getAllExpenseCategoriesService();
+
+    if(!expenseCategories){
+      return sendError(res, "Didnt got Expense Categories!" , 404 , null);
+    }
+
+    return sendSuccess(res , expenseCategories , "Successfully Got All Expense Categories!" , 200);
   } 
   catch (error) {
     next(error);
