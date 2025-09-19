@@ -1,10 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { addExpenseSchema } from "../validators/data-validators/expense/addExpense.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
-import { addExpenseService, checkIfExpenseExistService, getAllExpenseCategoriesService, getAllExpensesService, getExpenseService, updateExpenseService } from "../services/expenses.services.ts";
+import { addExpenseService, checkIfExpenseExistService, deleteExpenseService, getAllExpenseCategoriesService, getAllExpensesService, getExpenseService, updateExpenseService } from "../services/expenses.services.ts";
 import { updateExpenseParamsSchema } from "../validators/data-validators/expense/updateExpenseParams.ts";
 import { updateExpenseBodySchema } from "../validators/data-validators/expense/updateExpenseBody.ts";
 import { getExpenseSchema } from "../validators/data-validators/expense/getExpense.ts";
+import { deleteExpenseSchema } from "../validators/data-validators/expense/deleteExpense.ts";
 
 // Controller to Add An Expense
 export async function addExpense(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -125,9 +126,29 @@ export async function getExpense(req: Request, res: Response, next: NextFunction
 }
 
 // Controller to Delete an Expense
-export async function deleteExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function deleteExpense(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
+    const paramsValidation = deleteExpenseSchema.safeParse(req.params);
+        
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid expense ID", 400, paramsValidation.error);
+    }
+        
+    const expenseId = paramsValidation.data.id;
+
+    const existingExpense = await checkIfExpenseExistService(expenseId);
+
+    if(!existingExpense){
+      return sendError(res , "Expense Doesnt Exist!" , 404 , null);
+    }
+
+    const deletedExpense = await deleteExpenseService(expenseId);
+
+    if(!deletedExpense){
+      return sendError(res , "Didnt get deleted expense!" , 404 , null);
+    }
+
+    return sendSuccess(res , deletedExpense , "Successfully deleted an expense!" , 200);
   } 
   catch (error) {
     next(error);

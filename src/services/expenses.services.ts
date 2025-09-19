@@ -260,12 +260,20 @@ export async function getExpenseService(expenseId: number): Promise<any | null> 
 }
 
 // Service to Delete an Expense
-export async function deleteExpenseService(): Promise<void> {
+export async function deleteExpenseService(expenseId: number): Promise<any | null> {
     try {
+      const deletedExpense = await prisma.expense.delete({
+        where : {
+          id : expenseId
+        }
+      });
 
+      return deletedExpense;
     } 
     catch (error) { 
-        console.error(error); 
+      const message = error instanceof Error ? (error.message) : String(error);
+      console.error(`Error deleting an expense : ${message}`);
+      throw new Error(`Error deleting an expense : ${message}`);
     }
 }
   
