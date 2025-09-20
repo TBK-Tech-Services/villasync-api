@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addVillaService, checkIfVillaExistService, deleteVillaService, getAllAmenityCategoriesService, getAllVillasService, getSingleVillaService, updateVillaService } from "../services/villas.services.ts";
+import { addVillaService, checkIfVillaExistService, deleteVillaService, getAllAmenityCategoriesService, getAllVillasService, getSingleVillaService, getVillaBookingsService, getVillaRecentBookingsService, isVillaPresentService, updateVillaService } from "../services/villas.services.ts";
 import { addVillaSchema } from "../validators/data-validators/villa/addVilla.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { getVillaSchema } from "../validators/data-validators/villa/getVilla.ts";
@@ -7,6 +7,7 @@ import { updateVillaParamsSchema } from "../validators/data-validators/villa/upd
 import { updateVillaBodySchema } from "../validators/data-validators/villa/updateVillaBody.ts";
 import { searchAndFilterVillasSchema } from "../validators/data-validators/villa/searchAndFilterVillas.ts";
 import { deleteVillaParamsSchema } from "../validators/data-validators/villa/deleteVillaParams.ts";
+import { getVillaIdSchema } from "../validators/data-validators/villa/getVillaId.ts";
 
 // Controller to Add a Villa
 export async function addVilla(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -179,9 +180,59 @@ export async function searchAndFilterVillas(req: Request, res: Response, next: N
 }
 
 // Controller to get Recent Bookings of a Villa
-export async function getVillaRecentBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getVillaRecentBookings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
+    const paramsValidation = getVillaIdSchema.safeParse(req.params);
+
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid villa ID", 400, paramsValidation.error);
+    }
+
+    const villaId = paramsValidation.data.id;
+
+    const villa = await isVillaPresentService({villaId});
     
+    if(!villa){
+      return sendError(res , "Villa Doesnt Exist !" , 404 , null);
+    }
+
+    const recentBookings = await getVillaRecentBookingsService(villaId);
+
+    if(!recentBookings){
+      return sendError(res , "Didnt Got Villa Recent Bookings !" , 404 , null);
+    }
+
+    return sendSuccess(res , recentBookings , "Successfully Got Villa Recent Bookings !" , 200);
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to get All Bookings of a Villa
+export async function getVillaBookings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const paramsValidation = getVillaIdSchema.safeParse(req.params);
+
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid villa ID", 400, paramsValidation.error);
+    }
+
+    const villaId = paramsValidation.data.id;
+
+    const villa = await isVillaPresentService({villaId});
+    
+    if(!villa){
+      return sendError(res , "Villa Doesnt Exist !" , 404 , null);
+    }
+
+    const recentBookings = await getVillaBookingsService(villaId);
+
+    if(!recentBookings){
+      return sendError(res , "Didnt Got Villa Bookings !" , 404 , null);
+    }
+
+    return sendSuccess(res , recentBookings , "Successfully Got Villa Bookings !" , 200);
   } 
   catch (error) {
     next(error);

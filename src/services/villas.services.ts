@@ -1,4 +1,4 @@
-import type { Villa } from "@prisma/client";
+import type { Booking, Villa } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { addVillaData } from "../validators/data-validators/villa/addVilla.ts";
 import type { updateVillaBodyData } from "../validators/data-validators/villa/updateVillaBody.ts";
@@ -273,15 +273,56 @@ export async function deleteVillaService(villaId: number): Promise<Villa | null>
 }
 
 // Service to get Recent Bookings of a Villa
-export async function getVillaRecentBookingsService(): Promise<void> {
+export async function getVillaRecentBookingsService(villaId: number): Promise<Booking[] | null> {
     try {
+        const villa = await prisma.villa.findUnique({
+            where : {
+                id : villaId
+            },
+            include : {
+                bookings : {
+                    orderBy : {
+                        createdAt : 'desc'
+                    },
+                    take : 5
+                },
+            }
+        });
 
+        return villa?.bookings || null;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Error while getting recent bookings for a villa: ${message}`);
+        throw new Error(`Error while getting recent bookings for a villa: ${message}`);
     }
 }
-  
+
+// Service to get Recent Bookings of a Villa
+export async function getVillaBookingsService(villaId: number): Promise<Booking[] | null> {
+    try {
+        const villa = await prisma.villa.findUnique({
+            where : {
+                id : villaId
+            },
+            include : {
+                bookings : {
+                    orderBy : {
+                        checkIn : 'desc'
+                    }
+                }
+            }
+        });
+
+        return villa?.bookings || null;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Error while getting bookings for a villa: ${message}`);
+        throw new Error(`Error while getting bookings for a villa: ${message}`);
+    }
+}
+
 // Service to get Monthly Revenue of a Villa
 export async function getVillaMonthlyRevenueService(): Promise<void> {
     try {
