@@ -1,24 +1,34 @@
+import type { Booking } from "@prisma/client";
+import prisma from "../db/DB.ts";
 
 // Service to get Total Count of Villas 
-export async function getTotalVillasCountService(): Promise<void> {
-    try {
+export async function getTotalVillasCountService(): Promise<number | null> {
+    try {   
+        const villaCount = await prisma.villa.count();
 
+        return villaCount;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting villa count : ${message}`);
+        throw new Error(`Error getting villa count : ${message}`);
     }
 }
-  
+
 // Service to Get Total Count of Bookings
-export async function getTotalBookingsCountService(): Promise<void> {
+export async function getTotalBookingsCountService(): Promise<number | null> {
     try {
+        const bookingsCount = await prisma.booking.count();
 
+        return bookingsCount;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting bookings count : ${message}`);
+        throw new Error(`Error getting bookings count : ${message}`);
     }
 }
-  
+
 // Service to Get Total Revenue
 export async function getTotalRevenueService(): Promise<void> {
     try {
@@ -30,12 +40,20 @@ export async function getTotalRevenueService(): Promise<void> {
 }
   
 // Service to Get Total Count of Guest
-export async function getTotalGuestsCountService(): Promise<void> {
+export async function getTotalGuestsCountService(): Promise<number | null> {
     try {
+        const guestCount = await prisma.booking.aggregate({
+            _sum : {
+                totalGuests : true
+            }
+        })
 
+        return guestCount._sum.totalGuests || 0;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting bookings count : ${message}`);
+        throw new Error(`Error getting bookings count : ${message}`);
     }
 }
   
@@ -60,15 +78,27 @@ export async function getCancellationsCountService(): Promise<void> {
 }
 
 // Service to Get Count of Recent Bookings
-export async function getRecentBookingsService(): Promise<void> {
+export async function getRecentBookingsService(): Promise<Booking[] | null> {
     try {
+        const recentBookings = await prisma.booking.findMany({
+            orderBy : {
+                createdAt : 'desc'
+            },
+            take : 5,
+            include : {
+                villa : true
+            }
+        })
 
+        return recentBookings;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting recent bookings : ${message}`);
+        throw new Error(`Error getting recent bookings : ${message}`);
     }
 }
-  
+
 // Service to Get Todays Checkins
 export async function getTodaysCheckinsService(): Promise<void> {
     try {
