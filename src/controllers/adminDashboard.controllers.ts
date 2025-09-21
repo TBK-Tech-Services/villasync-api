@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { getRecentBookingsService, getTotalBookingsCountService, getTotalGuestsCountService, getTotalVillasCountService } from "../services/adminDashboard.services.ts";
+import { getRecentBookingsService, getTodaysCheckinsService, getTomorrowsCheckinsService, getTotalBookingsCountService, getTotalGuestsCountService, getTotalVillasCountService, getWeeksCheckinsService } from "../services/adminDashboard.services.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
 
 // Controller to get Total Count of Villas 
@@ -97,9 +97,15 @@ export async function getRecentBookings(req: Request, res: Response, next: NextF
 }
 
 // Controller to Get Todays Checkins
-export async function getTodaysCheckins(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getTodaysCheckins(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
+    const totalTodaysCheckin = await getTodaysCheckinsService();
+
+    if(totalTodaysCheckin === null){
+      return sendError(res , "Error Getting Total Todays Checkins!" , 404 , null);
+    }
+
+    return sendSuccess(res , totalTodaysCheckin , "Successfully Got Total Todays Checkins !" , 200);
   } 
   catch (error) {
     next(error);
@@ -107,9 +113,15 @@ export async function getTodaysCheckins(req: Request, res: Response, next: NextF
 }
 
 // Controller to Get Tommorows Checkins
-export async function getTomorrowsCheckins(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getTomorrowsCheckins(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
+    const totalTommorowsCheckin = await getTomorrowsCheckinsService();
+
+    if(totalTommorowsCheckin === null){
+      return sendError(res , "Error Getting Total Tommorows Checkins!" , 404 , null);
+    }
+
+    return sendSuccess(res , totalTommorowsCheckin , "Successfully Got Total Tommorows Checkins !" , 200);
   } 
   catch (error) {
     next(error);
@@ -117,9 +129,15 @@ export async function getTomorrowsCheckins(req: Request, res: Response, next: Ne
 }
 
 // Controller to Get Weeks Checkins
-export async function getWeeksCheckins(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getWeeksCheckins(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
+    const totalWeeksCheckin = await getWeeksCheckinsService();
+
+    if(totalWeeksCheckin === null){
+      return sendError(res , "Error Getting Total Weeks Checkins!" , 404 , null);
+    }
+
+    return sendSuccess(res , totalWeeksCheckin , "Successfully Got Total Weeks Checkins !" , 200);
   } 
   catch (error) {
     next(error);

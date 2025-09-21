@@ -100,32 +100,116 @@ export async function getRecentBookingsService(): Promise<Booking[] | null> {
 }
 
 // Service to Get Todays Checkins
-export async function getTodaysCheckinsService(): Promise<void> {
+export async function getTodaysCheckinsService(): Promise<{ count: number, totalIncome: number }> {
     try {
+        const today = new Date();
+        today.setHours(0 ,0 ,0 ,0);
 
+        const tommorow = new Date(today);
+        tommorow.setDate(today.getDate() + 1);
+
+        const result = await prisma.booking.aggregate({
+            where : {
+                checkIn : {
+                    gte : today,
+                    lt : tommorow
+                }
+            },
+            _count : {
+                id : true
+            },
+            _sum : {
+                totalPayableAmount : true
+            }
+        });
+
+        return {
+            count : result._count.id || 0,
+            totalIncome : result._sum.totalPayableAmount || 0
+        };
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting count of todays checkins : ${message}`);
+        throw new Error(`Error getting count of todays checkins : ${message}`);
     }
 }
   
 // Service to Get Tommorows Checkins
-export async function getTomorrowsCheckinsService(): Promise<void> {
-    try {
+export async function getTomorrowsCheckinsService(): Promise<{ count: number, totalIncome: number }> {
+    try {   
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0,0,0,0);
 
+        const dayAfterTomorrow = new Date(tomorrow);
+        dayAfterTomorrow.setDate(tomorrow.getDate() + 1);
+
+        const result = await prisma.booking.aggregate({
+            where : {
+                checkIn : {
+                    gte : tomorrow,
+                    lt : dayAfterTomorrow
+                }
+            },
+            _count : {
+                id : true
+            },
+            _sum : {
+                totalPayableAmount : true
+            }
+        })
+
+        return {
+            count : result._count.id || 0,
+            totalIncome : result._sum.totalPayableAmount || 0
+        };
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting count of tommorows checkins : ${message}`);
+        throw new Error(`Error getting count of tommorows checkins : ${message}`);
     }
 }
   
 // Service to Get Weeks Checkins
-export async function getWeeksCheckinsService(): Promise<void> {
+export async function getWeeksCheckinsService(): Promise<{ count: number, totalIncome: number }> {
     try {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
 
+        const startOfWeek = new Date(today); 
+        startOfWeek.setDate(today.getDate() - dayOfWeek);
+        startOfWeek.setHours(0,0,0,0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23,59,59,999);
+
+        const result = await prisma.booking.aggregate({
+            where : {
+                checkIn : {
+                    gte : startOfWeek,
+                    lte : endOfWeek
+                }
+            },
+            _count : {
+                id : true
+            },
+            _sum : {
+                totalPayableAmount : true
+            }
+        });
+
+        return {
+            count : result._count.id || 0,
+            totalIncome : result._sum.totalPayableAmount || 0
+        };
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting count of weeks checkins : ${message}`);
+        throw new Error(`Error getting count of weeks checkins : ${message}`);
     }
 }
  

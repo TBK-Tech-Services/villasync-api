@@ -24,7 +24,7 @@ router.get("/kpis/villas-count", getTotalVillasCount);
 router.get("/kpis/bookings-count", getTotalBookingsCount);
 router.get("/kpis/revenue", getTotalRevenue);
 router.get("/kpis/guests-count", getTotalGuestsCount);
-router.get("/kpis/pending-bookings", getPendingBookingsCount);  
+router.get("/kpis/pending-bookings", getPendingBookingsCount);
 router.get("/kpis/cancellations", getCancellationsCount);
 router.get("/recent-bookings", getRecentBookings);
 router.get("/checkins/today", getTodaysCheckins);
