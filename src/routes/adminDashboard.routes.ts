@@ -7,19 +7,18 @@ import {
   getPendingBookingsCount,
   getCancellationsCount,
   getRecentBookings,
-  getTodaysCheckins,
-  getTomorrowsCheckins,
-  getWeeksCheckins,
   getThisMonthRevenue,
   getLastMonthRevenue,
   getAverageDailyRevenue,
   getMonthlyGrowthRate,
-  getAllVillasOccupancy
+  getAllVillasOccupancy,
+  getUpcomingCheckins
 } from "../controllers/adminDashboard.controllers.ts";
 
 const router = Router();
 
 // Admin Page Endpoints
+router.get("/kpis/dashboard-stats", getTotalVillasCount);
 router.get("/kpis/villas-count", getTotalVillasCount);
 router.get("/kpis/bookings-count", getTotalBookingsCount);
 router.get("/kpis/revenue", getTotalRevenue);
@@ -27,9 +26,7 @@ router.get("/kpis/guests-count", getTotalGuestsCount);
 router.get("/kpis/pending-bookings", getPendingBookingsCount);
 router.get("/kpis/cancellations", getCancellationsCount);
 router.get("/recent-bookings", getRecentBookings);
-router.get("/checkins/today", getTodaysCheckins);
-router.get("/checkins/tomorrow", getTomorrowsCheckins);
-router.get("/checkins/week", getWeeksCheckins);  
+router.get("/upcoming-checkins", getUpcomingCheckins);
 router.get("/revenue/this-month", getThisMonthRevenue);  
 router.get("/revenue/last-month", getLastMonthRevenue);  
 router.get("/revenue/daily-average", getAverageDailyRevenue);  
