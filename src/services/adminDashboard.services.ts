@@ -85,9 +85,9 @@ export async function getRecentBookingsService(): Promise<Booking[] | null> {
                 createdAt : 'desc'
             },
             take : 5,
-            include : {
-                villa : true
-            }
+            include: {
+                villa: true
+}
         })
 
         return recentBookings;
