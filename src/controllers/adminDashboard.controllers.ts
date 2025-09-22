@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { getCancellationsCountService, getPendingBookingsCountService, getRecentBookingsService, getTodaysCheckinsService, getTomorrowsCheckinsService, getTotalBookingsCountService, getTotalGuestsCountService, getTotalRevenueService, getTotalVillasCountService, getWeeksCheckinsService } from "../services/adminDashboard.services.ts";
+import { getAllVillasOccupancyService, getCancellationsCountService, getPendingBookingsCountService, getRecentBookingsService, getTodaysCheckinsService, getTomorrowsCheckinsService, getTotalBookingsCountService, getTotalGuestsCountService, getTotalRevenueService, getTotalVillasCountService, getWeeksCheckinsService } from "../services/adminDashboard.services.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
 
 // Controller to get Dashboard Stats
@@ -73,102 +73,6 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     ];
 
     return sendSuccess(res, { stats: dashboardStats }, "Dashboard stats fetched successfully!", 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to get Total Count of Villas 
-export async function getTotalVillasCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const villaCount = await getTotalVillasCountService();
-
-    if(villaCount === null){
-      return sendError(res , "Error Getting Count of Villas!" , 404 , null);
-    }
-
-    return sendSuccess(res , villaCount , "Successfully Got the Villa Count !" , 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to Get Total Count of Bookings
-export async function getTotalBookingsCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const bookingsCount = await getTotalBookingsCountService();
-
-    if(bookingsCount === null){
-      return sendError(res , "Error Getting Count of Bookings!" , 404 , null);
-    }
-
-    return sendSuccess(res , bookingsCount , "Successfully Got the Bookings Count !" , 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to Get Total Revenue
-export async function getTotalRevenue(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const totalRevenue = await getTotalRevenueService();
-
-    if(!totalRevenue){
-      return sendError(res, "Didnt Got Total Revenue" , 404 , null);
-    }
-
-    return sendSuccess(res , totalRevenue , "Successfully Got Total Revenue!" , 200);
-  }
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to Get Total Count of Guest
-export async function getTotalGuestsCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const guestCount = await getTotalGuestsCountService();
-
-    if(guestCount === null){
-      return sendError(res , "Error Getting Count of Guests!" , 404 , null);
-    }
-
-    return sendSuccess(res , guestCount , "Successfully Got the Guest Count !" , 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to Get Count of Pending Bookings
-export async function getPendingBookingsCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const totalPendingBookings = await getPendingBookingsCountService();
-
-    if(totalPendingBookings === null){
-      return sendError(res , "Error Getting Count of Pending Bookings!" , 404 , null);
-    }
-
-    return sendSuccess(res , totalPendingBookings , "Successfully Got the Pending Bookings Count !" , 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to Get Count of Cancellations
-export async function getCancellationsCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const totalCancelledBookings = await getCancellationsCountService();
-
-    if(totalCancelledBookings === null){
-      return sendError(res , "Error Getting Count of Cancelled Bookings!" , 404 , null);
-    }
-
-    return sendSuccess(res , totalCancelledBookings , "Successfully Got the Cancelled Bookings Count !" , 200);
   } 
   catch (error) {
     next(error);
@@ -275,9 +179,15 @@ export async function getMonthlyGrowthRate(req: Request, res: Response, next: Ne
 }
 
 // Controller to Get All Villas Occupancy
-export async function getAllVillasOccupancy(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getAllVillasOccupancy(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
+    const villasOccupancy = await getAllVillasOccupancyService();
+
+    if(villasOccupancy === null){
+      return sendError(res , "Error Getting Villas Occupancy!" , 404 , null);
+    }
+
+    return sendSuccess(res, villasOccupancy, "Successfully Got Villas Occupancy!", 200);
   } 
   catch (error) {
     next(error);

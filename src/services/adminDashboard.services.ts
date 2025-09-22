@@ -287,11 +287,89 @@ export async function getMonthlyGrowthRateService(): Promise<void> {
 }
   
 // Service to Get All Villas Occupancy
-export async function getAllVillasOccupancyService(): Promise<void> {
+export async function getAllVillasOccupancyService(): Promise<any[] | null> {
     try {
+        const currentDate = new Date();
 
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        endOfMonth.setHours(23, 59, 59, 999);
+
+        const totalDaysInMonth = endOfMonth.getDate();
+
+        const allVillas = await prisma.villa.findMany({
+            select: {
+                id: true,
+                name: true
+            }
+        });
+
+        const villasOccupancyPromises = allVillas.map(async (villa) => {
+            const monthlyBookings = await prisma.booking.findMany({
+                where: {
+                    villaId: villa.id,
+                    bookingStatus: {
+                        in: ['CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT']
+                    },
+                    OR: [
+                        {
+                            checkIn: {
+                                gte: startOfMonth,
+                                lte: endOfMonth
+                            }
+                        },
+                        {
+                            checkOut: {
+                                gte: startOfMonth,
+                                lte: endOfMonth
+                            }
+                        },
+                        {
+                            checkIn: {
+                                lte: startOfMonth
+                            },
+                            checkOut: {
+                                gte: endOfMonth
+                            }
+                        }
+                    ]
+                },
+                select: {
+                    checkIn: true,
+                    checkOut: true
+                }
+            });
+
+            let totalBookedDays = 0;
+            
+            for (const booking of monthlyBookings) {
+                const actualStartDate = new Date(Math.max(booking.checkIn.getTime(), startOfMonth.getTime()));
+                const actualEndDate = new Date(Math.min(booking.checkOut.getTime(), endOfMonth.getTime()));
+                
+                const daysDifference = Math.ceil((actualEndDate.getTime() - actualStartDate.getTime()) / (1000 * 60 * 60 * 24));
+                totalBookedDays = totalBookedDays + daysDifference;
+            }
+
+            const occupancyPercentage = Math.round((totalBookedDays / totalDaysInMonth) * 100);
+            const cappedOccupancy = Math.min(occupancyPercentage, 100);
+
+            return {
+                villaName: villa.name,
+                occupancyPercentage: cappedOccupancy
+            };
+        });
+
+        const villasOccupancy = await Promise.all(villasOccupancyPromises);
+
+        villasOccupancy.sort((a, b) => b.occupancyPercentage - a.occupancyPercentage);
+
+        return villasOccupancy;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting villas occupancy: ${message}`);
+        throw new Error(`Error getting villas occupancy: ${message}`);
     }
 }

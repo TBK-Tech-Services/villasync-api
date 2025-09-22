@@ -1,11 +1,5 @@
 import { Router } from "express";
 import {
-  getTotalVillasCount,
-  getTotalBookingsCount,
-  getTotalRevenue,
-  getTotalGuestsCount,
-  getPendingBookingsCount,
-  getCancellationsCount,
   getRecentBookings,
   getThisMonthRevenue,
   getLastMonthRevenue,
@@ -20,12 +14,6 @@ const router = Router();
 
 // Admin Page Endpoints
 router.get("/kpis/dashboard-stats", getDashboardStats);
-router.get("/kpis/villas-count", getTotalVillasCount);
-router.get("/kpis/bookings-count", getTotalBookingsCount);
-router.get("/kpis/revenue", getTotalRevenue);
-router.get("/kpis/guests-count", getTotalGuestsCount);
-router.get("/kpis/pending-bookings", getPendingBookingsCount);
-router.get("/kpis/cancellations", getCancellationsCount);
 router.get("/recent-bookings", getRecentBookings);
 router.get("/upcoming-checkins", getUpcomingCheckins);
 router.get("/revenue/this-month", getThisMonthRevenue);  
