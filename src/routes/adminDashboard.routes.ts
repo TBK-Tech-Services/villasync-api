@@ -12,13 +12,14 @@ import {
   getAverageDailyRevenue,
   getMonthlyGrowthRate,
   getAllVillasOccupancy,
-  getUpcomingCheckins
+  getUpcomingCheckins,
+  getDashboardStats
 } from "../controllers/adminDashboard.controllers.ts";
 
 const router = Router();
 
 // Admin Page Endpoints
-router.get("/kpis/dashboard-stats", getTotalVillasCount);
+router.get("/kpis/dashboard-stats", getDashboardStats);
 router.get("/kpis/villas-count", getTotalVillasCount);
 router.get("/kpis/bookings-count", getTotalBookingsCount);
 router.get("/kpis/revenue", getTotalRevenue);

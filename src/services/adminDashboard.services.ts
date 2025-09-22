@@ -30,12 +30,23 @@ export async function getTotalBookingsCountService(): Promise<number | null> {
 }
 
 // Service to Get Total Revenue
-export async function getTotalRevenueService(): Promise<void> {
+export async function getTotalRevenueService(): Promise<number | null> {
     try {
+        const totalRevenue = await prisma.booking.aggregate({
+            where : {
+                paymentStatus : 'PAID'
+            },
+            _sum : {
+                totalPayableAmount : true
+            }
+        });
 
+        return totalRevenue._sum.totalPayableAmount;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting total revenue : ${message}`);
+        throw new Error(`Error getting total revenue : ${message}`);
     }
 }
   
@@ -58,22 +69,44 @@ export async function getTotalGuestsCountService(): Promise<number | null> {
 }
   
 // Service to Get Count of Pending Bookings
-export async function getPendingBookingsCountService(): Promise<void> {
+export async function getPendingBookingsCountService(): Promise<number | null> {
     try {
+        const totalPendingBookings = await prisma.booking.aggregate({
+            where : {
+                bookingStatus : 'CONFIRMED'
+            },
+            _count : {
+                id : true
+            }
+        })
 
+        return totalPendingBookings._count.id;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting pending bookings count : ${message}`);
+        throw new Error(`Error getting pending bookings count : ${message}`);
     }
 }
   
 // Service to Get Count of Cancellations
-export async function getCancellationsCountService(): Promise<void> {
+export async function getCancellationsCountService(): Promise<number | null> {
     try {
+        const totalPendingBookings = await prisma.booking.aggregate({
+            where : {
+                bookingStatus : 'CANCELLED'
+            },
+            _count : {
+                id : true
+            }
+        })
 
+        return totalPendingBookings._count.id;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting cancelled bookings count : ${message}`);
+        throw new Error(`Error getting cancelled bookings count : ${message}`);
     }
 }
 

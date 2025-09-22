@@ -196,6 +196,7 @@ model Expense {
   updatedAt    DateTime         @updatedAt
 }
 
+// Table to Store Expenses for a Villa
 model ExpenseVilla {
   id        Int     @id @default(autoincrement())
   expense   Expense @relation(fields: [expenseId], references: [id] , onDelete: Cascade)
@@ -205,6 +206,7 @@ model ExpenseVilla {
   amount    Int   
 }
 
+// Table to Store Expenses for a Booking
 model BookingExpense {
   id        Int      @id @default(autoincrement())
   booking   Booking  @relation(fields: [bookingId], references: [id] , onDelete: Cascade)

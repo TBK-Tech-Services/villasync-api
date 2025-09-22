@@ -1,12 +1,78 @@
 import type { NextFunction, Request, Response } from "express";
-import { getRecentBookingsService, getTodaysCheckinsService, getTomorrowsCheckinsService, getTotalBookingsCountService, getTotalGuestsCountService, getTotalVillasCountService, getWeeksCheckinsService } from "../services/adminDashboard.services.ts";
+import { getCancellationsCountService, getPendingBookingsCountService, getRecentBookingsService, getTodaysCheckinsService, getTomorrowsCheckinsService, getTotalBookingsCountService, getTotalGuestsCountService, getTotalRevenueService, getTotalVillasCountService, getWeeksCheckinsService } from "../services/adminDashboard.services.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
-
 
 // Controller to get Dashboard Stats
 export async function getDashboardStats(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
+    const [
+      totalVillas,
+      totalBookings, 
+      totalRevenue,
+      totalGuests,
+      pendingBookings,
+      cancellations
+    ] = await Promise.all([
+      getTotalVillasCountService(),
+      getTotalBookingsCountService(),
+      getTotalRevenueService(),
+      getTotalGuestsCountService(),
+      getPendingBookingsCountService(),
+      getCancellationsCountService()
+    ]);
+
+    const dashboardStats = [
+      {
+        title: "Total Villas",
+        value: String(totalVillas || 0),
+        change: "Active properties",
+        icon: "DollarSign", // Frontend mein map karega
+        gradient: "bg-gradient-primary",
+        trend: "neutral"
+      },
+      {
+        title: "Total Bookings",
+        value: String(totalBookings || 0),
+        change: "+12% from last month", // Placeholder for now
+        icon: "Calendar",
+        gradient: "bg-gradient-accent", 
+        trend: "up"
+      },
+      {
+        title: "Revenue",
+        value: `₹${(totalRevenue || 0).toLocaleString('en-IN')}`, // Indian formatting
+        change: "+18% from last month", // Placeholder for now
+        icon: "DollarSign",
+        gradient: "bg-gradient-secondary",
+        trend: "up"
+      },
+      {
+        title: "Guests",
+        value: String(totalGuests || 0),
+        change: "+8% from last month", // Placeholder for now
+        icon: "Users",
+        gradient: "bg-gradient-sunset",
+        trend: "up"
+      },
+      {
+        title: "Pending",
+        value: String(pendingBookings || 0),
+        change: "3 urgent", // Static for now, can be dynamic later
+        icon: "Clock",
+        gradient: "bg-warning",
+        trend: "neutral"
+      },
+      {
+        title: "Cancellations", 
+        value: String(cancellations || 0),
+        change: "-2 from last month", // Placeholder for now
+        icon: "CalendarX",
+        gradient: "bg-destructive",
+        trend: "down"
+      }
+    ];
+
+    return sendSuccess(res, { stats: dashboardStats }, "Dashboard stats fetched successfully!", 200);
   } 
   catch (error) {
     next(error);
@@ -46,10 +112,16 @@ export async function getTotalBookingsCount(req: Request, res: Response, next: N
 }
 
 // Controller to Get Total Revenue
-export async function getTotalRevenue(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getTotalRevenue(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
-  } 
+    const totalRevenue = await getTotalRevenueService();
+
+    if(!totalRevenue){
+      return sendError(res, "Didnt Got Total Revenue" , 404 , null);
+    }
+
+    return sendSuccess(res , totalRevenue , "Successfully Got Total Revenue!" , 200);
+  }
   catch (error) {
     next(error);
   }
@@ -72,9 +144,15 @@ export async function getTotalGuestsCount(req: Request, res: Response, next: Nex
 }
 
 // Controller to Get Count of Pending Bookings
-export async function getPendingBookingsCount(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getPendingBookingsCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
+    const totalPendingBookings = await getPendingBookingsCountService();
+
+    if(totalPendingBookings === null){
+      return sendError(res , "Error Getting Count of Pending Bookings!" , 404 , null);
+    }
+
+    return sendSuccess(res , totalPendingBookings , "Successfully Got the Pending Bookings Count !" , 200);
   } 
   catch (error) {
     next(error);
@@ -82,9 +160,15 @@ export async function getPendingBookingsCount(req: Request, res: Response, next:
 }
 
 // Controller to Get Count of Cancellations
-export async function getCancellationsCount(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getCancellationsCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
+    const totalCancelledBookings = await getCancellationsCountService();
+
+    if(totalCancelledBookings === null){
+      return sendError(res , "Error Getting Count of Cancelled Bookings!" , 404 , null);
+    }
+
+    return sendSuccess(res , totalCancelledBookings , "Successfully Got the Cancelled Bookings Count !" , 200);
   } 
   catch (error) {
     next(error);
