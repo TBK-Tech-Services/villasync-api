@@ -1,19 +1,20 @@
 import type { NextFunction, Request, Response } from "express";
+import { getFinanceQueryParamsSchema } from "../validators/data-validators/finance/getFinanceParams.ts";
+import { sendError, sendSuccess } from "../utils/general/response.ts";
+import { getFinanceDashboardService } from "../services/finance.services.ts";
 
-// Controller to get All Finance Data
-export async function getFinanceDashboard(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Update controller to validate query params
+export async function getFinanceDashboard(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
+    const validatedParams = getFinanceQueryParamsSchema.parse(req.query);
     
-  } 
-  catch (error) {
-    next(error);
-  }
-}
+    const financeDashboardData = await getFinanceDashboardService(validatedParams);
 
-// Controller to get All Villas For Finance
-export async function getAllVillasForFinance(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
+    if(financeDashboardData === null){
+      return sendError(res , "Didnt Get Data For Finance Dashboard!" , 404 , null);
+    }
+
+    return sendSuccess(res , financeDashboardData , "Successfully Got Data For Finance Dashboard!" , 200);
   } 
   catch (error) {
     next(error);

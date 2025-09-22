@@ -379,7 +379,7 @@ export async function getRevenueTrendsService(): Promise<any | null> {
         } 
         else {
             growthRate = ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
-            growthRate = Math.round(growthRate * 10) / 10; // Round to 1 decimal place
+            growthRate = Math.round(growthRate * 10) / 10;
         }
 
         return {
