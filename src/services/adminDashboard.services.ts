@@ -245,47 +245,27 @@ export async function getWeeksCheckinsService(): Promise<{ count: number, totalI
         throw new Error(`Error getting count of weeks checkins : ${message}`);
     }
 }
- 
-// Service to Get This Month Revenue
-export async function getThisMonthRevenueService(): Promise<void> {
-    try {
 
+// Service to Get All Revenue Trends
+export async function getRevenueTrendsService(): Promise<void> {
+    try {
+        // calculate revenue for this month
+        // calculate revenue for last month
+        // calculate average revenue for daily
+        // calculate growth rate
+        // return all these data : 
+            // Revenue for this month
+            // Revenue for last month
+            // Average Daily Revenu
+            // Growth Rate  
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting villas occupancy: ${message}`);
+        throw new Error(`Error getting villas occupancy: ${message}`);
     }
 }
- 
-// Service to Get Last Month Revenue
-export async function getLastMonthRevenueService(): Promise<void> {
-    try {
 
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-  
-// Service to Get Average Daily Revenue
-export async function getAverageDailyRevenueService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-  
-// Service to Get Monthly growth Rate
-export async function getMonthlyGrowthRateService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-  
 // Service to Get All Villas Occupancy
 export async function getAllVillasOccupancyService(): Promise<any[] | null> {
     try {

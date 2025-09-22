@@ -138,40 +138,16 @@ export async function getUpcomingCheckins(req: Request, res: Response, next: Nex
   }
 }
 
-// Controller to Get This Month Revenue
-export async function getThisMonthRevenue(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to Get All Villas Occupancy
+export async function getRevenueTrends(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    
-  } 
-  catch (error) {
-    next(error);
-  }
-}
+    const villasOccupancy = await getAllVillasOccupancyService();
 
-// Controller to Get Last Month Revenue
-export async function getLastMonthRevenue(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
-  } 
-  catch (error) {
-    next(error);
-  }
-}
+    if(villasOccupancy === null){
+      return sendError(res , "Error Getting Villas Occupancy!" , 404 , null);
+    }
 
-// Controller to Get Average Daily Revenue
-export async function getAverageDailyRevenue(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to Get Monthly growth Rate
-export async function getMonthlyGrowthRate(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
+    return sendSuccess(res, villasOccupancy, "Successfully Got Villas Occupancy!", 200);
   } 
   catch (error) {
     next(error);
