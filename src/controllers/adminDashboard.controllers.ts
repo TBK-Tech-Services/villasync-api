@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { getAllVillasOccupancyService, getCancellationsCountService, getPendingBookingsCountService, getRecentBookingsService, getTodaysCheckinsService, getTomorrowsCheckinsService, getTotalBookingsCountService, getTotalGuestsCountService, getTotalRevenueService, getTotalVillasCountService, getWeeksCheckinsService } from "../services/adminDashboard.services.ts";
+import { getAllVillasOccupancyService, getCancellationsCountService, getPendingBookingsCountService, getRecentBookingsService, getRevenueTrendsService, getTodaysCheckinsService, getTomorrowsCheckinsService, getTotalBookingsCountService, getTotalGuestsCountService, getTotalRevenueService, getTotalVillasCountService, getWeeksCheckinsService } from "../services/adminDashboard.services.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
 
 // Controller to get Dashboard Stats
@@ -138,16 +138,16 @@ export async function getUpcomingCheckins(req: Request, res: Response, next: Nex
   }
 }
 
-// Controller to Get All Villas Occupancy
+// Controller to Get Revenue Trends
 export async function getRevenueTrends(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    const villasOccupancy = await getAllVillasOccupancyService();
+    const revenueTrend = await getRevenueTrendsService();
 
-    if(villasOccupancy === null){
-      return sendError(res , "Error Getting Villas Occupancy!" , 404 , null);
+    if(revenueTrend === null){
+      return sendError(res , "Error Getting Revenue Trends!" , 404 , null);
     }
 
-    return sendSuccess(res, villasOccupancy, "Successfully Got Villas Occupancy!", 200);
+    return sendSuccess(res, revenueTrend, "Successfully Got Revenue Trends!", 200);
   } 
   catch (error) {
     next(error);

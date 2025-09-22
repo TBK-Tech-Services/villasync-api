@@ -246,23 +246,153 @@ export async function getWeeksCheckinsService(): Promise<{ count: number, totalI
     }
 }
 
-// Service to Get All Revenue Trends
-export async function getRevenueTrendsService(): Promise<void> {
+// Service to Get Current Month Revenue
+export async function getCurrentMonthRevenueService(): Promise<number> {
     try {
-        // calculate revenue for this month
-        // calculate revenue for last month
-        // calculate average revenue for daily
-        // calculate growth rate
-        // return all these data : 
-            // Revenue for this month
-            // Revenue for last month
-            // Average Daily Revenu
-            // Growth Rate  
+        const currentDate = new Date();
+
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        endOfMonth.setHours(23, 59, 59, 999);
+        
+        const currentMonthRevenue = await prisma.booking.aggregate({
+            where : {
+                paymentStatus: 'PAID',
+                OR: [
+                    { 
+                        checkIn: { 
+                            gte: startOfMonth, 
+                            lte: endOfMonth 
+                        } 
+                    },
+                    { 
+                        checkOut: { 
+                            gte: startOfMonth, 
+                            lte: endOfMonth 
+                        } 
+                    },
+                    { 
+                        checkIn: { lte: startOfMonth },
+                        checkOut: { gte: endOfMonth }
+                    }
+                ]
+            },
+            _sum : {
+                totalPayableAmount : true
+            }
+        });
+
+        return currentMonthRevenue._sum.totalPayableAmount || 0;
+    }
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting revenue for current month : ${message}`);
+        throw new Error(`Error getting revenue for current month : ${message}`);
+    }
+}
+
+// Service to Get Last Month Revenue
+export async function getLastMonthRevenueService(): Promise<number> {
+    try {
+        const currentDate = new Date();
+
+        const startDateForLastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+        startDateForLastMonth.setHours(0, 0, 0, 0);
+
+        const endDateForLastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+        endDateForLastMonth.setHours(23, 59, 59, 999);
+
+        const lastMonthRevenue = await prisma.booking.aggregate({
+            where : {
+                paymentStatus: 'PAID',
+                OR: [
+                    { 
+                        checkIn: { 
+                            gte: startDateForLastMonth, 
+                            lte: endDateForLastMonth 
+                        } 
+                    },
+                    { 
+                        checkOut: { 
+                            gte: startDateForLastMonth, 
+                            lte: endDateForLastMonth 
+                        } 
+                    },
+                    { 
+                        checkIn: { lte: startDateForLastMonth },
+                        checkOut: { gte: endDateForLastMonth }
+                    }
+                ]
+            },
+            _sum : {
+                totalPayableAmount : true
+            }
+        });
+
+        return lastMonthRevenue._sum.totalPayableAmount || 0;
+    } 
+    catch (error) {
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting revenue for last month : ${message}`);
+        throw new Error(`Error getting revenue for last month : ${message}`);
+    }
+}
+
+// Service to Get Average Daily Revenue
+export async function getAverageDailyRevenueService(): Promise<number> {
+    try {
+        const lastMonthRevenue = await getLastMonthRevenueService();
+
+        const currentDate = new Date();
+
+        const startDateForLastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+        startDateForLastMonth.setHours(0, 0, 0, 0);
+
+        const endDateForLastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+        endDateForLastMonth.setHours(23, 59, 59, 999);
+
+        const totalDaysInLastMonth = endDateForLastMonth.getDate();
+
+        const avgDailyRevenue = lastMonthRevenue / totalDaysInLastMonth;
+        
+        return Math.round(avgDailyRevenue);
     } 
     catch (error) { 
         const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting villas occupancy: ${message}`);
-        throw new Error(`Error getting villas occupancy: ${message}`);
+        console.error(`Error getting average daily revenue : ${message}`);
+        throw new Error(`Error getting average daily revenue : ${message}`);
+    }
+}
+
+// Service to Get All Revenue Trends
+export async function getRevenueTrendsService(): Promise<any | null> {
+    try {
+        const currentMonthRevenue = await getCurrentMonthRevenueService();
+        const lastMonthRevenue = await getLastMonthRevenueService();
+        const averageDailyRevenue = await getAverageDailyRevenueService();
+        
+        let growthRate;
+        if(lastMonthRevenue === 0){
+            growthRate = currentMonthRevenue > 0 ? 100 : 0;
+        } 
+        else {
+            growthRate = ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
+            growthRate = Math.round(growthRate * 10) / 10; // Round to 1 decimal place
+        }
+
+        return {
+            currentMonthRevenue,
+            lastMonthRevenue,
+            averageDailyRevenue,
+            growthRate
+        };
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error getting Revenue Trends: ${message}`);
+        throw new Error(`Error getting Revenue Trends: ${message}`);
     }
 }
 
