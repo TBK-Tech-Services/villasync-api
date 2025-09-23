@@ -145,6 +145,34 @@ export async function updateBookingService(bookingId: number, updateData: any): 
     }
 }
 
+// Service to Update a Booking Status
+export async function updateBookingStatusService(): Promise<Booking[] | null> {
+    try {
+        const bookings = await prisma.booking.findMany();
+
+        return bookings;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error updating booking status of a booking : ${message}`);
+        throw new Error(`Error updating booking status of a booking : ${message}`);
+    }
+}
+
+// Service to Update a Payment Status
+export async function updatePaymentStatusService(): Promise<Booking[] | null> {
+    try {
+        const bookings = await prisma.booking.findMany();
+
+        return bookings;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error updating payment status of a booking : ${message}`);
+        throw new Error(`Error updating payment status of a booking : ${message}`);
+    }
+}
+
 // Service to Delete a Booking
 export async function deleteBookingService(bookingId: number): Promise<Booking> {
     try {

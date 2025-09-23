@@ -6,7 +6,9 @@ import {
   deleteBooking,
   exportBookings,
   getABooking,
-  searchAndFilterBookings
+  searchAndFilterBookings,
+  updateBookingStatus,
+  updatePaymentStatus
 } from "../controllers/bookings.controllers.ts";
 
 const router = Router();
@@ -16,6 +18,8 @@ router.post("/", addBooking);
 router.get("/search", searchAndFilterBookings);  
 router.get("/", getAllBookings);  
 router.put("/:id", updateBooking);  
+router.put("/:id/status", updateBookingStatus);  
+router.put("/:id/payment-status", updatePaymentStatus);  
 router.delete("/:id", deleteBooking);  
 router.get("/:id", getABooking);  
 router.get("/export", exportBookings);  

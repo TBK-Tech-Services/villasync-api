@@ -212,6 +212,39 @@ export async function updateBooking(req: Request, res: Response, next: NextFunct
   }
 }
 
+// Controller to Update Booking Status
+export async function updateBookingStatus(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const bookings = await getAllBookingsService();
+
+    if(!bookings){
+      return sendError(res , "No Bookings Exist !!!" , 404 , null);
+    }
+
+    return sendSuccess(res , bookings , "Successfully Retrieved All Bookings !!!" , 200);
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to Update Payment Status
+export async function updatePaymentStatus(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const bookings = await getAllBookingsService();
+
+    if(!bookings){
+      return sendError(res , "No Bookings Exist !!!" , 404 , null);
+    }
+
+    return sendSuccess(res , bookings , "Successfully Retrieved All Bookings !!!" , 200);
+  } 
+  catch (error) {
+    next(error);
+  }
+}
+
+
 // Controller to Delete a Booking
 export async function deleteBooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
