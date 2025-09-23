@@ -2,6 +2,8 @@ import type { Booking } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { Booking_Data } from "../utils/booking/bookingData.ts";
 import type { searchAndFilterBookingData } from "../validators/data-validators/booking/searchAndFilterBooking.ts";
+import type { updateBookingStatusBodyData } from "../validators/data-validators/booking/updateBookingStatusBody.ts";
+import type { updatePaymentStatusBodyData } from "../validators/data-validators/booking/updatePaymentStatusBody.ts";
 
 // Service to check if a booking exist
 export async function checkIfBookingExistService(bookingId : number): Promise<Booking | null> {
@@ -146,11 +148,16 @@ export async function updateBookingService(bookingId: number, updateData: any): 
 }
 
 // Service to Update a Booking Status
-export async function updateBookingStatusService(): Promise<Booking[] | null> {
+export async function updateBookingStatusService({bookingId , updatedData}: {bookingId: number , updatedData: updateBookingStatusBodyData}): Promise<Booking | null> {
     try {
-        const bookings = await prisma.booking.findMany();
+        const updatedBooking = await prisma.booking.update({
+            where : {
+                id : bookingId
+            },
+            data : updatedData
+        });
 
-        return bookings;
+        return updatedBooking;
     } 
     catch (error) { 
         const message = error instanceof Error ? (error.message) : String(error);
@@ -160,11 +167,16 @@ export async function updateBookingStatusService(): Promise<Booking[] | null> {
 }
 
 // Service to Update a Payment Status
-export async function updatePaymentStatusService(): Promise<Booking[] | null> {
+export async function updatePaymentStatusService({bookingId , updatedData}: {bookingId: number , updatedData: updatePaymentStatusBodyData}): Promise<Booking | null> {
     try {
-        const bookings = await prisma.booking.findMany();
+        const updatedBooking = await prisma.booking.update({
+            where : {
+                id : bookingId
+            },
+            data : updatedData
+        });
 
-        return bookings;
+        return updatedBooking;
     } 
     catch (error) { 
         const message = error instanceof Error ? (error.message) : String(error);

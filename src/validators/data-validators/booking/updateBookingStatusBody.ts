@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const updateBookingStatusBodySchema = z.object({
-    status: z.enum(["CONFIRMED", "CHECKED_IN", "CHECKED_OUT" , "CANCELLED"])
+    bookingStatus: z.enum(["CONFIRMED", "CHECKED_IN", "CHECKED_OUT" , "CANCELLED"])
 });
 
 export type updateBookingStatusBodyData = z.infer<typeof updateBookingStatusBodySchema>;

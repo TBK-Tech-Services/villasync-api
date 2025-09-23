@@ -4,12 +4,16 @@ import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { isVillaPresentService } from "../services/villas.services.ts";
 import { parseBookingDates } from "../utils/booking/parseBookingDates.ts";
 import { getTotalDaysOfStay } from "../utils/booking/calculateTotalDaysOfStay.ts";
-import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, deleteBookingService, getABookingService, getAllBookingsService, searchAndFilterBookingsService, updateBookingService } from "../services/bookings.services.ts";
+import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, deleteBookingService, getABookingService, getAllBookingsService, searchAndFilterBookingsService, updateBookingService, updateBookingStatusService, updatePaymentStatusService } from "../services/bookings.services.ts";
 import { deleteBookingSchema } from "../validators/data-validators/booking/deleteBooking.ts";
 import { updateBookingParamsSchema } from "../validators/data-validators/booking/updateBookingParam.ts";
 import { updateBookingBodySchema } from "../validators/data-validators/booking/updateBookingBody.ts";
 import { getBookingSchema } from "../validators/data-validators/booking/getBooking.ts";
 import { searchAndFilterBookingSchema } from "../validators/data-validators/booking/searchAndFilterBooking.ts";
+import { updateBookingStatusParamsSchema } from "../validators/data-validators/booking/updateBookingStatusParam.ts";
+import { updateBookingStatusBodySchema } from "../validators/data-validators/booking/updateBookingStatusBody.ts";
+import { updatePaymentStatusParamsSchema } from "../validators/data-validators/booking/updatePaymentStatusParam.ts";
+import { updatePaymentStatusBodySchema } from "../validators/data-validators/booking/updatePaymentStatusBody.ts";
 
 // Controller to Add a Booking
 export async function addBooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -215,13 +219,29 @@ export async function updateBooking(req: Request, res: Response, next: NextFunct
 // Controller to Update Booking Status
 export async function updateBookingStatus(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    const bookings = await getAllBookingsService();
+    const paramsValidation = updateBookingStatusParamsSchema.safeParse(req.params);
+    
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid booking ID", 400, paramsValidation.error);
+    }
+    
+    const bookingId = paramsValidation.data.id;
+    
+    const bodyValidation = updateBookingStatusBodySchema.safeParse(req.body);
 
-    if(!bookings){
-      return sendError(res , "No Bookings Exist !!!" , 404 , null);
+    if (!bodyValidation.success) {
+      return sendError(res, "Validation Failed", 400, bodyValidation.error);
+    }
+    
+    const updatedData = bodyValidation.data;
+
+    const updatedBooking = await updateBookingStatusService({bookingId , updatedData});
+
+    if(updatedBooking === null){
+      return sendError(res , "Didnt Get Updated Booking!" , 404 , null);
     }
 
-    return sendSuccess(res , bookings , "Successfully Retrieved All Bookings !!!" , 200);
+    return sendSuccess(res , updatedBooking , "Successfully Updated Booking Status!" , 200);
   } 
   catch (error) {
     next(error);
@@ -231,19 +251,34 @@ export async function updateBookingStatus(req: Request, res: Response, next: Nex
 // Controller to Update Payment Status
 export async function updatePaymentStatus(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    const bookings = await getAllBookingsService();
+    const paramsValidation = updatePaymentStatusParamsSchema.safeParse(req.params);
+    
+    if (!paramsValidation.success) {
+      return sendError(res, "Invalid booking ID", 400, paramsValidation.error);
+    }
+    
+    const bookingId = paramsValidation.data.id;
+    
+    const bodyValidation = updatePaymentStatusBodySchema.safeParse(req.body);
 
-    if(!bookings){
-      return sendError(res , "No Bookings Exist !!!" , 404 , null);
+    if (!bodyValidation.success) {
+      return sendError(res, "Validation Failed", 400, bodyValidation.error);
+    }
+    
+    const updatedData = bodyValidation.data;
+
+    const updatedBooking = await updatePaymentStatusService({bookingId , updatedData});
+
+    if(updatedBooking === null){
+      return sendError(res , "Didnt Get Updated Booking!" , 404 , null);
     }
 
-    return sendSuccess(res , bookings , "Successfully Retrieved All Bookings !!!" , 200);
+    return sendSuccess(res , updatedBooking , "Successfully Updated Payment Status!" , 200);
   } 
   catch (error) {
     next(error);
   }
 }
-
 
 // Controller to Delete a Booking
 export async function deleteBooking(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
