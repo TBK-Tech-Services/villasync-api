@@ -48,12 +48,12 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
                     AND: [
                         {
                             checkIn: {
-                                lt: updatedData.checkOut
+                                lt: new Date(updatedData.checkOut), 
                             }
                         },
                         {
                             checkOut: {
-                                gt: updatedData.checkIn
+                                gt: new Date(updatedData.checkIn),
                             }
                         },
                         {
