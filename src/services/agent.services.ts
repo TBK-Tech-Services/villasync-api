@@ -114,3 +114,17 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
         throw new Error(`Error while filtering villas : ${message}`);
     }
 }
+
+// Service to get All Ammenities For Landing Page
+export async function getAllAmmenitiesService(): Promise<any[] | null> {
+    try {
+        const ammenities = await prisma.amenity.findMany();
+
+        return ammenities;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Error while getting ammenities : ${message}`);
+        throw new Error(`Error while getting ammenities : ${message}`);
+    }
+}
