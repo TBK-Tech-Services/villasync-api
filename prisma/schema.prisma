@@ -121,22 +121,22 @@ model VillaAmenity {
 
 // Table to store Villa Details
 model Villa {
-  id          Int       @id @default(autoincrement())
-  name        String    @db.VarChar(100)
-  location    String    @db.VarChar(500)
-  price       Int       
-  maxGuests   Int       
-  bedrooms    Int
-  bathrooms   Int
-  description String    @db.VarChar(1000)
-  status      Villa_Status
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  amenities   VillaAmenity[]
-  images      VillaImage[]
-  bookings    Booking[]
-  expenses    Expense[]
-  expenseVillas ExpenseVilla[]
+  id              Int       @id @default(autoincrement())
+  name            String    @db.VarChar(100)
+  location        String    @db.VarChar(500)
+  price           Int       
+  maxGuests       Int       
+  bedrooms        Int
+  bathrooms       Int
+  description     String    @db.VarChar(1000)
+  status          Villa_Status
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  amenities       VillaAmenity[]
+  images          VillaImage[]
+  bookings        Booking[]
+  expenses        Expense[]
+  expenseVillas   ExpenseVilla[]
 }
 
 // Table to Store Image for Villa
