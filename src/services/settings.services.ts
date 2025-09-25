@@ -196,13 +196,9 @@ export async function updateGeneralSettingsService(generalSettingId: number , va
 }
 
 // Service to get General Settings
-export async function getGeneralSettingsService(generalSettingId: number): Promise<GeneralSetting | null> {
+export async function getGeneralSettingsService(): Promise<GeneralSetting[] | null> {
     try {
-        const generalSettings = await prisma.generalSetting.findUnique({
-            where : {
-                id : generalSettingId
-            },
-        });
+        const generalSettings = await prisma.generalSetting.findMany();
 
         return generalSettings;
     } 

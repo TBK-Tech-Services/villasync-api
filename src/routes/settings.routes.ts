@@ -24,7 +24,7 @@ router.post("/user-management/invite-user", authenticate , authorize('INVITE_USE
 router.put("/user-management/update-user" , authenticate , updateUser);
 router.post("/general", addGeneralSettings);  
 router.put("/general/:id", updateGeneralSettings);  
-router.get("/general/:id", getGeneralSettings);  
+router.get("/general", getGeneralSettings);  
 router.put("/general", authenticate , updateGeneralSettings);  
 router.get("/villas", authenticate , getAllVillasSettings);  
 router.put("/villas/:id", authenticate , updateVillaSettings);  

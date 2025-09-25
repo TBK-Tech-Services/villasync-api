@@ -188,15 +188,7 @@ export async function updateGeneralSettings(req: Request, res: Response, next: N
 // Controller to get General Settings
 export async function getGeneralSettings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try { 
-        const paramsValidation = updateGeneralSettingParamSchema.safeParse(req.params);
-        
-        if (!paramsValidation.success) {
-            return sendError(res, "Invalid General Setting ID", 400, paramsValidation.error);
-        }
-        
-        const generalSettingId = paramsValidation.data.id;
-
-        const generalSettings = await getGeneralSettingsService(generalSettingId);
+        const generalSettings = await getGeneralSettingsService();
 
         if(generalSettings === null){
             return sendError(res , "Didnt Get General Setting !" , 404 , null);
