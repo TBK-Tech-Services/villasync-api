@@ -9,7 +9,8 @@ import {
   inviteNewUser,
   updateUser,
   getAllPermissions,
-  getAllRoles
+  getAllRoles,
+  addGeneralSettings
 } from "../controllers/settings.controllers.ts";
 import { authenticate } from "../middlewares/auth/authenticate.ts";
 import { authorize } from "../middlewares/auth/authorize.ts";
@@ -21,7 +22,9 @@ router.get("/user-management/roles", authenticate , getAllRoles);
 router.get("/user-management/permissions", authenticate , getAllPermissions);  
 router.post("/user-management/invite-user", authenticate , authorize('INVITE_USER') , inviteNewUser);  
 router.put("/user-management/update-user" , authenticate , updateUser);
-router.get("/general", authenticate , getGeneralSettings);  
+router.post("/general", addGeneralSettings);  
+router.put("/general/:id", updateGeneralSettings);  
+router.get("/general/:id", getGeneralSettings);  
 router.put("/general", authenticate , updateGeneralSettings);  
 router.get("/villas", authenticate , getAllVillasSettings);  
 router.put("/villas/:id", authenticate , updateVillaSettings);  

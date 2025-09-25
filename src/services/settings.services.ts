@@ -1,7 +1,8 @@
-import type { Permission, PrismaClient, Role, User } from "@prisma/client";
+import type { GeneralSetting, Permission, PrismaClient, Role, User } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { createUserData } from "../validators/data-validators/settings/createUser.ts";
 import type { AssignRolePermissionsInput } from "../validators/data-validators/settings/assignRolePermissionsInput.ts";
+import type { addGeneralSettingsData } from "../validators/data-validators/settings/addGeneralSettings.ts";
 
 // Service to get All Roles
 export async function getAllRolesService(): Promise<Role[]> {
@@ -141,23 +142,74 @@ export async function updateUserService(): Promise<void> {
     }
 }
 
-// Service to get General Settings
-export async function getGeneralSettingsService(): Promise<void> {
+// Service to Add general Settings
+export async function addGeneralSettingsService(validatedData: addGeneralSettingsData): Promise<GeneralSetting | null>{
     try {
+        const generalSetting = await prisma.generalSetting.create({
+            data : validatedData
+        });
 
+        return generalSetting;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while adding general setting : ${message}`);
+        throw new Error(`Error while adding general setting : ${message}`);
+    }
+}
+
+// Service to check if General Setting Exist
+export async function checkIfGeneralSettingExistService(generalSettingId: number): Promise<GeneralSetting | null> {
+    try {   
+        const generalSetting = await prisma.generalSetting.findUnique({
+            where : {
+                id : generalSettingId
+            }
+        });
+
+        return generalSetting;
+    }
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while checking if general setting exist : ${message}`);
+        throw new Error(`Error while checking if general setting exist : ${message}`);
     }
 }
 
 // Service to Update general Settings
-export async function updateGeneralSettingsService(): Promise<void>{
-    try {
+export async function updateGeneralSettingsService(generalSettingId: number , validatedData: any): Promise<GeneralSetting | null>{
+    try {   
+        const updatedGeneralSetting = await prisma.generalSetting.update({
+            where : {
+                id : generalSettingId
+            },
+            data : validatedData
+        });
 
+        return updatedGeneralSetting;
     } 
     catch (error) { 
-        console.error(error); 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while updating general setting : ${message}`);
+        throw new Error(`Error while updating general setting : ${message}`);
+    }
+}
+
+// Service to get General Settings
+export async function getGeneralSettingsService(generalSettingId: number): Promise<GeneralSetting | null> {
+    try {
+        const generalSettings = await prisma.generalSetting.findUnique({
+            where : {
+                id : generalSettingId
+            },
+        });
+
+        return generalSettings;
+    } 
+    catch (error) { 
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting general setting : ${message}`);
+        throw new Error(`Error while getting general setting : ${message}`);
     }
 }
 

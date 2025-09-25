@@ -1,9 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
-import { assignPermissionsToRoleService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllPermissionsService, getAllRolesService } from "../services/settings.services.ts";
+import { addGeneralSettingsService, assignPermissionsToRoleService, checkIfGeneralSettingExistService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, updateGeneralSettingsService } from "../services/settings.services.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
 import prisma from "../db/DB.ts";
+import { addGeneralSettingsSchema } from "../validators/data-validators/settings/addGeneralSettings.ts";
+import { updateGeneralSettingParamSchema } from "../validators/data-validators/settings/updateGeneralSettingsParam.ts";
+import { updateGeneralSettingBodySchema } from "../validators/data-validators/settings/updateGeneralSettingsBody.ts";
 
 // Controller to get All Roles
 export async function getAllRoles(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -120,10 +123,24 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
     }
 }
 
-// Controller to get General Settings
-export async function getGeneralSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to Add General Settings 
+export async function addGeneralSettings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try { 
+        const validationResult = addGeneralSettingsSchema.safeParse(req.body);
         
+        if(!validationResult.success){
+            return sendError(res , "Validation Failed !!!" , 400 , validationResult.error);
+        }
+        
+        const validatedData = validationResult.data;
+
+        const generalSetting = await addGeneralSettingsService(validatedData);
+
+        if(generalSetting === null){
+            return sendError(res,  "Didnt Get General Setting !" , 404 , null);
+        }
+
+        return sendSuccess(res , generalSetting , "Successfully Added General Settings!" , 201);
     } 
     catch (error) { 
         next(error);
@@ -131,11 +148,63 @@ export async function getGeneralSettings(req: Request, res: Response, next: Next
 }
 
 // Controller to Update General Settings 
-export async function updateGeneralSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function updateGeneralSettings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try { 
+        const paramsValidation = updateGeneralSettingParamSchema.safeParse(req.params);
         
+        if (!paramsValidation.success) {
+            return sendError(res, "Invalid General Setting ID", 400, paramsValidation.error);
+        }
+        
+        const generalSettingId = paramsValidation.data.id;
+        
+        const bodyValidation = updateGeneralSettingBodySchema.safeParse(req.body);
+        
+        if (!bodyValidation.success) {
+            return sendError(res, "Validation Failed", 400, bodyValidation.error);
+        }
+        
+        const validatedData = bodyValidation.data;
+
+        const generalSettingExistance = await checkIfGeneralSettingExistService(generalSettingId);
+
+        if(generalSettingExistance === null){
+            return sendError(res , "General Setting Doesnt Exist!" , 404 , null);
+        }
+
+        const updatedGeneralSetting = await updateGeneralSettingsService(generalSettingId , validatedData);
+
+        if(updatedGeneralSetting === null){
+            return sendError(res , "Didnt Get Updated General Setting!" , 404 , null);
+        }
+
+        return sendSuccess(res , updatedGeneralSetting , "Successfully Updated General Setting!" , 200);
     } 
     catch (error) { 
+        next(error);
+    }
+}
+
+// Controller to get General Settings
+export async function getGeneralSettings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try { 
+        const paramsValidation = updateGeneralSettingParamSchema.safeParse(req.params);
+        
+        if (!paramsValidation.success) {
+            return sendError(res, "Invalid General Setting ID", 400, paramsValidation.error);
+        }
+        
+        const generalSettingId = paramsValidation.data.id;
+
+        const generalSettings = await getGeneralSettingsService(generalSettingId);
+
+        if(generalSettings === null){
+            return sendError(res , "Didnt Get General Setting !" , 404 , null);
+        }
+
+        return sendSuccess(res , generalSettings , "Successfully Get General Settings!" , 200);
+    }
+    catch (error) {
         next(error);
     }
 }

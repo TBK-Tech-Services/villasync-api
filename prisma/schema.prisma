@@ -7,211 +7,199 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/*
-1. Cascase Delete on Booking and Expense for Villa use krna hai ya ni ? Understand the tradeoff !!!
-Might be a risky move.
-2. Jitte bhi jagah cascade delete temporarily use kra hai , revist to update the business logic
-*/
+model GeneralSetting {
+  id           Int      @id @default(autoincrement())
+  businessName String   @db.VarChar(255)
+  contactEmail String   @db.VarChar(255)
+  phoneNumber  String   @db.VarChar(20)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
 
-// -----Enums-----
+model User {
+  id          Int      @id @default(autoincrement())
+  firstName   String   @db.VarChar(50)
+  lastName    String   @db.VarChar(50)
+  email       String   @unique @db.VarChar(100)
+  password    String   @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  roleId      Int?
+  role        Role?    @relation(fields: [roleId], references: [id])
+  ownedVillas Villa[]
+}
 
-enum Booking_Status{
+model Role {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  rolePermissions RolePermission[]
+  users           User[]
+}
+
+model Permission {
+  permissionId   Int              @id @default(autoincrement())
+  name           String           @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  RolePermission RolePermission[]
+}
+
+model RolePermission {
+  rolePermissionId Int        @id @default(autoincrement())
+  roleId           Int
+  permissionId     Int
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  permission       Permission @relation(fields: [permissionId], references: [permissionId])
+  role             Role       @relation(fields: [roleId], references: [id])
+}
+
+model AmenityCategory {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique @db.VarChar(100)
+  description String?   @db.VarChar(255)
+  icon        String?   @db.VarChar(50)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  amenities   Amenity[]
+}
+
+model Amenity {
+  id          Int             @id @default(autoincrement())
+  name        String          @db.VarChar(100)
+  categoryId  Int             @map("category_id")
+  createdAt   DateTime        @default(now())
+  description String?         @db.VarChar(255)
+  updatedAt   DateTime        @updatedAt
+  category    AmenityCategory @relation(fields: [categoryId], references: [id])
+  villas      VillaAmenity[]
+
+  @@unique([name, categoryId])
+}
+
+model VillaAmenity {
+  amenityId Int      @map("amenity_id")
+  createdAt DateTime @default(now())
+  villaId   Int      @map("villa_id")
+  amenity   Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+  villa     Villa    @relation(fields: [villaId], references: [id], onDelete: Cascade)
+
+  @@id([villaId, amenityId])
+}
+
+model Villa {
+  id            Int            @id @default(autoincrement())
+  name          String         @db.VarChar(100)
+  location      String         @db.VarChar(500)
+  price         Int
+  maxGuests     Int
+  bedrooms      Int
+  bathrooms     Int
+  description   String         @db.VarChar(1000)
+  status        Villa_Status
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  ownerId       Int?
+  bookings      Booking[]
+  expenses      Expense[]
+  expenseVillas ExpenseVilla[]
+  owner         User?          @relation(fields: [ownerId], references: [id])
+  amenities     VillaAmenity[]
+  images        VillaImage[]
+}
+
+model VillaImage {
+  id      Int    @id @default(autoincrement())
+  link    String @db.VarChar(255)
+  villaId Int    @map("villa_id")
+  villa   Villa  @relation(fields: [villaId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id                 Int              @id @default(autoincrement())
+  guestName          String           @db.VarChar(100)
+  guestEmail         String           @db.VarChar(100)
+  guestPhone         String           @db.VarChar(20)
+  villaId            Int
+  checkIn            DateTime
+  checkOut           DateTime
+  totalGuests        Int
+  specialRequest     String?          @db.VarChar(500)
+  bookingStatus      Booking_Status   @default(CONFIRMED)
+  paymentStatus      Payment_Status   @default(PENDING)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  isGSTIncluded      Boolean          @default(false)
+  subTotalAmount     Int
+  totalPayableAmount Int
+  totalTax           Int
+  villa              Villa            @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  expenses           BookingExpense[] 
+}
+
+model ExpenseCategory {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expenses  Expense[]
+}
+
+model Expense {
+  id         Int              @id @default(autoincrement())
+  title      String           @db.VarChar(100)
+  amount     Int
+  date       DateTime
+  type       Expense_Type
+  villaId    Int?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  categoryId Int
+  bookings   BookingExpense[]
+  category   ExpenseCategory  @relation(fields: [categoryId], references: [id])
+  villa      Villa?           @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  villas     ExpenseVilla[]
+}
+
+model ExpenseVilla {
+  id        Int     @id @default(autoincrement())
+  expenseId Int
+  villaId   Int
+  amount    Int
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  villa     Villa   @relation(fields: [villaId], references: [id])
+}
+
+model BookingExpense {
+  id        Int     @id @default(autoincrement())
+  bookingId Int
+  expenseId Int
+  amount    Int
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  expense   Expense @relation(fields: [expenseId], references: [id])
+}
+
+enum Booking_Status {
   CONFIRMED
   CHECKED_IN
   CHECKED_OUT
   CANCELLED
 }
 
-enum Villa_Status{
+enum Villa_Status {
   AVAILABLE
   OCCUPIED
   MAINTENANCE
 }
 
-enum Expense_Type{
+enum Expense_Type {
   INDIVIDUAL
   SPLIT
 }
 
-enum Payment_Status{
+enum Payment_Status {
   PAID
   PENDING
-}
-
-// -----Tables-----
-
-// Table to store users
-model User {
-  id        Int      @id @default(autoincrement())
-  firstName String   @db.VarChar(50)
-  lastName  String   @db.VarChar(50)
-  email     String   @unique @db.VarChar(100)
-  password  String   @db.VarChar(255)
-  role      Role?     @relation(fields: [roleId], references: [id])
-  roleId    Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// Table to store roles
-model Role {
-  id              Int              @id @default(autoincrement())
-  name            String           @unique
-  rolePermissions RolePermission[]
-  users           User[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-}
-
-// Table to store permissions
-model Permission{
-  permissionId    Int              @id @default(autoincrement())
-  name            String           @unique
-  RolePermission  RolePermission[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-}
-
-// Table to store permisisons for a role
-model RolePermission{
-  rolePermissionId Int        @id @default(autoincrement())
-  role             Role       @relation(fields: [roleId], references: [id])
-  roleId           Int
-  permission       Permission @relation(fields: [permissionId], references: [permissionId])
-  permissionId     Int
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-}
-
-// Table to Store Amenity Categories
-model AmenityCategory {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique @db.VarChar(100)
-  description String?   @db.VarChar(255)
-  icon        String?   @db.VarChar(50)  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  amenities   Amenity[]
-}
-
-// Table to Store Individual Amenities
-model Amenity {
-  id          Int              @id @default(autoincrement())
-  name        String           @db.VarChar(100)
-  description String?          @db.VarChar(255)
-  category    AmenityCategory  @relation(fields: [categoryId], references: [id])
-  categoryId  Int              @map("category_id")
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  villas      VillaAmenity[]
-
-  @@unique([name, categoryId])
-}
-
-// Junction Table for Villa-Amenity Relationship
-model VillaAmenity {
-  villa     Villa   @relation(fields: [villaId], references: [id], onDelete: Cascade)
-  villaId   Int     @map("villa_id")
-  amenity   Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
-  amenityId Int     @map("amenity_id")
-  createdAt DateTime @default(now())
-
-  @@id([villaId, amenityId])
-}
-
-// Table to store Villa Details
-model Villa {
-  id              Int       @id @default(autoincrement())
-  name            String    @db.VarChar(100)
-  location        String    @db.VarChar(500)
-  price           Int       
-  maxGuests       Int       
-  bedrooms        Int
-  bathrooms       Int
-  description     String    @db.VarChar(1000)
-  status          Villa_Status
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  amenities       VillaAmenity[]
-  images          VillaImage[]
-  bookings        Booking[]
-  expenses        Expense[]
-  expenseVillas   ExpenseVilla[]
-}
-
-// Table to Store Image for Villa
-model VillaImage {
-  id      Int    @id @default(autoincrement())
-  link    String @db.VarChar(255)
-  villa   Villa  @relation(fields: [villaId], references: [id], onDelete: Cascade)
-  villaId Int    @map("villa_id")
-}
-
-// Table to Store Bookings for Villa
-model Booking {
-  id                 Int            @id @default(autoincrement())
-  guestName          String         @db.VarChar(100)
-  guestEmail         String         @db.VarChar(100)
-  guestPhone         String         @db.VarChar(20)
-  villa              Villa          @relation(fields: [villaId], references: [id], onDelete: Cascade)
-  villaId            Int
-  checkIn            DateTime
-  checkOut           DateTime
-  totalGuests        Int
-  specialRequest     String?        @db.VarChar(500)
-  bookingStatus      Booking_Status @default(CONFIRMED)
-  paymentStatus      Payment_Status @default(PENDING)
-  subTotalAmount     Int
-  isGSTIncluded      Boolean        @default(false)
-  totalTax           Int
-  totalPayableAmount Int
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-  expenses           BookingExpense[]
-}
-
-// Table to Store Expense Category
-model ExpenseCategory {
-  id           Int           @id @default(autoincrement())
-  name         String        @db.VarChar(100)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  expenses     Expense[]
-}
-
-// Table to Store Expenses
-model Expense {
-  id           Int              @id @default(autoincrement())
-  title        String           @db.VarChar(100)
-  amount       Int
-  date         DateTime
-  type         Expense_Type
-  category     ExpenseCategory  @relation(fields: [categoryId], references: [id])
-  categoryId   Int
-  villa        Villa?           @relation(fields: [villaId], references: [id], onDelete: Cascade)
-  villaId      Int?
-  bookings     BookingExpense[]
-  villas       ExpenseVilla[]
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-}
-
-// Table to Store Expenses for a Villa
-model ExpenseVilla {
-  id        Int     @id @default(autoincrement())
-  expense   Expense @relation(fields: [expenseId], references: [id] , onDelete: Cascade)
-  expenseId Int
-  villa     Villa   @relation(fields: [villaId], references: [id])
-  villaId   Int
-  amount    Int   
-}
-
-// Table to Store Expenses for a Booking
-model BookingExpense {
-  id        Int      @id @default(autoincrement())
-  booking   Booking  @relation(fields: [bookingId], references: [id] , onDelete: Cascade)
-  bookingId Int
-  expense   Expense  @relation(fields: [expenseId], references: [id])
-  expenseId Int
-  amount    Int
 }
