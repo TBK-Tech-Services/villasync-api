@@ -2,15 +2,18 @@ import { Router } from "express";
 import {
   getGeneralSettings,
   updateGeneralSettings,
-  getAllVillasSettings,
-  updateVillaSettings,
-  updateBackupSettings,
-  exportAllData,
   inviteNewUser,
   updateUser,
   getAllPermissions,
   getAllRoles,
-  addGeneralSettings
+  addGeneralSettings,
+  assignVillasToOwner,
+  updateOwnerVillaAssignments,
+  unassignSpecificVilla,
+  unassignAllVillasFromOwner,
+  getAllOwners,
+  getAllOwnersWithVillas,
+  getVillaOwnerManagementStats
 } from "../controllers/settings.controllers.ts";
 import { authenticate } from "../middlewares/auth/authenticate.ts";
 import { authorize } from "../middlewares/auth/authorize.ts";
