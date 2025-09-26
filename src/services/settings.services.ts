@@ -209,8 +209,8 @@ export async function getGeneralSettingsService(): Promise<GeneralSetting[] | nu
     }
 }
 
-// Service to get All Villas Settings
-export async function getAllVillasSettingsService(): Promise<void> {
+// Service to Assign Villas to Owner
+export async function assignVillasToOwnerService(): Promise<void> {
     try {
 
     } 
@@ -219,8 +219,8 @@ export async function getAllVillasSettingsService(): Promise<void> {
     }
 }
 
-// Service to Update a Villa Settings
-export async function updateVillaSettingsService(): Promise<void> {
+// Service to Update a Villa Assignment to Owner
+export async function updateOwnerVillaAssignmentsService(): Promise<void> {
     try {
 
     } 
@@ -229,8 +229,8 @@ export async function updateVillaSettingsService(): Promise<void> {
     }
 }
 
-// Service to get All Users
-export async function getAllUsersService(): Promise<void> {
+// Service to Un-Assign Specific Villa
+export async function unassignSpecificVillaService(): Promise<void> {
     try {
 
     } 
@@ -239,8 +239,8 @@ export async function getAllUsersService(): Promise<void> {
     }
 }
 
-// Service to Update Backup Settings
-export async function updateBackupSettingsService(): Promise<void> {
+// Service to Un-Assign All Villas From Owner
+export async function unassignAllVillasFromOwnerService(): Promise<void> {
     try {
 
     } 
@@ -249,8 +249,28 @@ export async function updateBackupSettingsService(): Promise<void> {
     }
 }
 
-// Service to Export All Data
-export async function exportAllDataService(): Promise<void> {
+// Service to get All Owners
+export async function getAllOwnersService(): Promise<void> {
+    try {
+
+    } 
+    catch (error) { 
+        console.error(error); 
+    }
+}
+
+// Service to get All Owners with Villas
+export async function getAllOwnersWithVillasService(): Promise<void> {
+    try {
+
+    } 
+    catch (error) { 
+        console.error(error); 
+    }
+}
+
+// Service to get All Stats
+export async function getVillaOwnerManagementStatsService(): Promise<void> {
     try {
 
     } 

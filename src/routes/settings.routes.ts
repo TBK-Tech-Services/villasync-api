@@ -25,10 +25,12 @@ router.put("/user-management/update-user" , authenticate , updateUser);
 router.post("/general", addGeneralSettings);  
 router.put("/general/:id", updateGeneralSettings);  
 router.get("/general", getGeneralSettings);  
-router.put("/general", authenticate , updateGeneralSettings);  
-router.get("/villas", authenticate , getAllVillasSettings);  
-router.put("/villas/:id", authenticate , updateVillaSettings);  
-router.put("/backup", authenticate , updateBackupSettings);  
-router.get("/export", authenticate , exportAllData);  
+router.post("/villa-owner-management/assign" , assignVillasToOwner);
+router.patch("/villa-owner-management/assign" , updateOwnerVillaAssignments);
+router.delete("/villa-owner-management/unassign-villa/:villaId/:ownerId" , unassignSpecificVilla);
+router.delete("/villa-owner-management/unassign-owner/:ownerId" , unassignAllVillasFromOwner);
+router.get("/villa-owner-management/owners" , getAllOwners);
+router.get("/villa-owner-management/owners-with-villas" , getAllOwnersWithVillas);
+router.get("/villa-owner-management/stats" , getVillaOwnerManagementStats);
 
 export default router;

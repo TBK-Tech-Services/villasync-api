@@ -201,8 +201,8 @@ export async function getGeneralSettings(req: Request, res: Response, next: Next
     }
 }
 
-// Controller to get All Villas Settings
-export async function getAllVillasSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to Assign Villas to Owner
+export async function assignVillasToOwner(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
     } 
@@ -211,8 +211,8 @@ export async function getAllVillasSettings(req: Request, res: Response, next: Ne
     }
 }
 
-// Controller to Update a Villa Settings
-export async function updateVillaSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to Update a Villa Assignment to Owner
+export async function updateOwnerVillaAssignments(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
     } 
@@ -221,8 +221,8 @@ export async function updateVillaSettings(req: Request, res: Response, next: Nex
     }
 }
 
-// Controller to get All Users
-export async function getAllUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to Un-Assign Specific Villa
+export async function unassignSpecificVilla(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
     } 
@@ -231,8 +231,8 @@ export async function getAllUsers(req: Request, res: Response, next: NextFunctio
     }
 }
 
-// Controller to Update Backup Settings
-export async function updateBackupSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to Un-Assign All Villas From Owner
+export async function unassignAllVillasFromOwner(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
     } 
@@ -241,8 +241,28 @@ export async function updateBackupSettings(req: Request, res: Response, next: Ne
     }
 }
 
-// Controller to Export All Data
-export async function exportAllData(req: Request, res: Response, next: NextFunction): Promise<void> {
+// Controller to get All Owners
+export async function getAllOwners(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try { 
+        
+    } 
+    catch (error) { 
+        next(error);
+    }
+}
+
+// Controller to get All Owners with Villas
+export async function getAllOwnersWithVillas(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try { 
+        
+    } 
+    catch (error) { 
+        next(error);
+    }
+}
+
+// Controller to get All Stats
+export async function getVillaOwnerManagementStats(req: Request, res: Response, next: NextFunction): Promise<void> {
     try { 
         
     } 
