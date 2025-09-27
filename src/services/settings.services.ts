@@ -3,6 +3,7 @@ import prisma from "../db/DB.ts";
 import type { createUserData } from "../validators/data-validators/settings/createUser.ts";
 import type { AssignRolePermissionsInput } from "../validators/data-validators/settings/assignRolePermissionsInput.ts";
 import type { addGeneralSettingsData } from "../validators/data-validators/settings/addGeneralSettings.ts";
+import { InternalServerError } from "../utils/errors/customErrors.ts";
 
 // Service to get All Roles
 export async function getAllRolesService(): Promise<Role[]> {
@@ -11,9 +12,8 @@ export async function getAllRolesService(): Promise<Role[]> {
         return roles;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while getting all Roles : ${message}`);
-        throw new Error(`Error while getting all Roles : ${message}`);
+        console.error(`Error fetching all roles: ${error}`);
+        throw new InternalServerError("Failed to fetch roles");
     }
 }
 
@@ -24,71 +24,67 @@ export async function getAllPermissionsService(): Promise<Permission[]> {
         return permissions;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while getting all Permissions : ${message}`);
-        throw new Error(`Error while getting all Permissions : ${message}`);
+        console.error(`Error fetching all permissions: ${error}`);
+        throw new InternalServerError("Failed to fetch permissions");
     }
 }
 
 // Service to Check an Existance of a Role
-export async function checkRoleExistanceService(role : number , client: PrismaClient | any = prisma): Promise<Role | null> {
+export async function checkRoleExistanceService(role: number, client: PrismaClient | any = prisma): Promise<Role | null> {
     try {
         const roleData = await client.role.findUnique({
-            where : {
-                id : role
+            where: {
+                id: role
             }
         });
 
         return roleData;
     }
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while checking role existance : ${message}`);
-        throw new Error(`Error while checking role existance : ${message}`);
+        console.error(`Error checking role existence: ${error}`);
+        throw new InternalServerError("Failed to verify role existence");
     }
 }
 
 // Service to Create a New Role
-export async function createNewRoleService(role : string , client: PrismaClient | any = prisma): Promise<Role | null> {
+export async function createNewRoleService(role: string, client: PrismaClient | any = prisma): Promise<Role | null> {
     try {
         const newRole = await client.role.create({
-            data : {
-                name : role,
+            data: {
+                name: role,
             }
         });
 
         return newRole;
     }
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while creating a new role : ${message}`);
-        throw new Error(`Error while creating a new role : ${message}`);
+        console.error(`Error creating new role: ${error}`);
+        throw new InternalServerError("Failed to create new role");
     }
 }
 
 // Service to Check If The Same Role Name Exist
-export async function checkIfSameRoleNameExistService(role : string , client: PrismaClient | any = prisma): Promise<Role | null> {
+export async function checkIfSameRoleNameExistService(role: string, client: PrismaClient | any = prisma): Promise<Role | null> {
     try {
         const roleData = await client.role.findFirst({
-            where : {
-                name : role
+            where: {
+                name: role
             }
         });
 
         return roleData;
     }
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while checking if role with same name exist : ${message}`);
-        throw new Error(`Error while checking if role with same name exist : ${message}`);
+        console.error(`Error checking role name availability: ${error}`);
+        throw new InternalServerError("Failed to check role name availability");
     }
 }
 
 // Service to Create a New User
-export async function createNewUserService({firstName , lastName , email , password , roleId}: createUserData , client: PrismaClient | any = prisma): Promise<User | null> {
+export async function createNewUserService({firstName, lastName, email, password, roleId}: createUserData, client: PrismaClient | any = prisma): Promise<User | null> {
     try {
         const newUser = await client.user.create({
-            data : {
+            data: {
                 firstName,
                 lastName,
                 email,
@@ -100,51 +96,48 @@ export async function createNewUserService({firstName , lastName , email , passw
         return newUser;
     }
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while creating a user : ${message}`);
-        throw new Error(`Error while creating a user : ${message}`);
+        console.error(`Error creating user: ${error}`);
+        throw new InternalServerError("Failed to create user");
     }
 }
 
 // Service to Assign Permissions to a Role
-export async function assignPermissionsToRoleService({roleId , permissionIds}: AssignRolePermissionsInput , client: PrismaClient | any = prisma): Promise<void> {
+export async function assignPermissionsToRoleService({roleId, permissionIds}: AssignRolePermissionsInput, client: PrismaClient | any = prisma): Promise<void> {
     try {
         if (!permissionIds || permissionIds.length === 0) {
-            throw new Error("At least one permission is required");
+            throw new InternalServerError("At least one permission is required");
         }
 
         const rolePermissionMapping = permissionIds.map((permissionId) => {
             return {
-                roleId : roleId,
-                permissionId : permissionId
+                roleId: roleId,
+                permissionId: permissionId
             }
         });
 
         await client.rolePermission.createMany({
-            data : rolePermissionMapping,
-            skipDuplicates : true
+            data: rolePermissionMapping,
+            skipDuplicates: true
         });
     }
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while assigning permissions to a role : ${message}`);
-        throw new Error(`Error while assigning permissions to a role : ${message}`);
+        console.error(`Error assigning permissions to role: ${error}`);
+        throw new InternalServerError("Failed to assign permissions to role");
     }
 }
 
 // Service to Add general Settings
-export async function addGeneralSettingsService(validatedData: addGeneralSettingsData): Promise<GeneralSetting | null>{
+export async function addGeneralSettingsService(validatedData: addGeneralSettingsData): Promise<GeneralSetting | null> {
     try {
         const generalSetting = await prisma.generalSetting.create({
-            data : validatedData
+            data: validatedData
         });
 
         return generalSetting;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while adding general setting : ${message}`);
-        throw new Error(`Error while adding general setting : ${message}`);
+        console.error(`Error adding general setting: ${error}`);
+        throw new InternalServerError("Failed to create general settings");
     }
 }
 
@@ -152,36 +145,34 @@ export async function addGeneralSettingsService(validatedData: addGeneralSetting
 export async function checkIfGeneralSettingExistService(generalSettingId: number): Promise<GeneralSetting | null> {
     try {   
         const generalSetting = await prisma.generalSetting.findUnique({
-            where : {
-                id : generalSettingId
+            where: {
+                id: generalSettingId
             }
         });
 
         return generalSetting;
     }
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while checking if general setting exist : ${message}`);
-        throw new Error(`Error while checking if general setting exist : ${message}`);
+        console.error(`Error checking general setting existence: ${error}`);
+        throw new InternalServerError("Failed to verify general setting existence");
     }
 }
 
 // Service to Update general Settings
-export async function updateGeneralSettingsService(generalSettingId: number , validatedData: any): Promise<GeneralSetting | null>{
+export async function updateGeneralSettingsService(generalSettingId: number, validatedData: any): Promise<GeneralSetting | null> {
     try {   
         const updatedGeneralSetting = await prisma.generalSetting.update({
-            where : {
-                id : generalSettingId
+            where: {
+                id: generalSettingId
             },
-            data : validatedData
+            data: validatedData
         });
 
         return updatedGeneralSetting;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while updating general setting : ${message}`);
-        throw new Error(`Error while updating general setting : ${message}`);
+        console.error(`Error updating general setting: ${error}`);
+        throw new InternalServerError("Failed to update general settings");
     }
 }
 
@@ -193,9 +184,8 @@ export async function getGeneralSettingsService(): Promise<GeneralSetting[] | nu
         return generalSettings;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error while getting general setting : ${message}`);
-        throw new Error(`Error while getting general setting : ${message}`);
+        console.error(`Error fetching general settings: ${error}`);
+        throw new InternalServerError("Failed to fetch general settings");
     }
 }
 
