@@ -9,7 +9,7 @@ import adminDashboardRoutes from '../src/routes/adminDashboard.routes.ts';
 import settingsRoutes from '../src/routes/settings.routes.ts';
 import agentRoutes from '../src/routes/agent.routes.ts';
 import healthRoutes from '../src/routes/health.routes.ts';
-import { globalErrorHandler } from './middlewares/globalErrorHandler.ts';
+import { globalErrorHandler } from './middlewares/errorHandler.ts';
 import cookieParser from "cookie-parser";
 import cors from 'cors';
 
