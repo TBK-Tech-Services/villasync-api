@@ -1,95 +1,87 @@
 import type { NextFunction, Request, Response } from "express";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
 import { createAdminService, getAdminService, getUserService  } from "../services/auth.services.ts";
-import { sendError, sendSuccess } from "../utils/general/response.ts";
+import { sendSuccess } from "../utils/general/response.ts";
 import { comparePassword } from "../utils/auth/comparePassword.ts";
 import { generateJWT } from "../utils/auth/generateJWT.ts";
 import { loginSchema } from "../validators/data-validators/auth/login.ts";
-
+import catchAsync from "../utils/general/catchAsync.ts";
+import { ConflictError, InternalServerError, NotFoundError, UnauthorizedError, ValidationError } from "../utils/errors/customErrors.ts";
 
 // Controller to Create Admin
-export async function createAdmin(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      role
-    } = req.body;
+export const createAdmin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { firstName, lastName, email, password, role } = req.body;
 
-    if(!firstName || !lastName || !email || !password || !role){
-      return sendError(res, "Fill all fields to continue...", 400);
-    }
-
-    const hashedPassword = await hashPassword(password);
-
-    if(!hashedPassword){
-      return sendError(res, "Failed to hash password...", 500);
-    }
-
-    const admin = await getAdminService({email , role});
-
-    if(admin){
-      return sendError(res, "Admin with same email already exists...", 409);
-    }
-
-    const newAdmin = await createAdminService({firstName , lastName , email , password: hashedPassword , role});
-
-    return sendSuccess(res, newAdmin, "Admin created successfully", 201);
-  } 
-  catch (error) {
-    next(error);
+  if(!firstName || !lastName || !email || !password || !role){
+    throw new ValidationError("All fields are required : firstName, lastName, email, password, role");
   }
-}
+
+  const existingAdmin = await getAdminService({ email, role });
+  if (existingAdmin) {
+    throw new ConflictError("Admin with this email already exists");
+  }
+
+  const hashedPassword = await hashPassword(password);
+  if (!hashedPassword) {
+    throw new InternalServerError("Failed to hash password");
+  }
+
+  const newAdmin = await createAdminService({
+    firstName,
+    lastName,
+    email,
+    password: hashedPassword,
+    role
+  });
+
+  if (!newAdmin) {
+    throw new InternalServerError("Failed to create admin");
+  }
+
+  sendSuccess(res, newAdmin, "Admin created successfully", 201);
+});
 
 // Controller to Login User
-export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const validationResult = loginSchema.safeParse(req.body);
-    
-    if(!validationResult.success){
-      return sendError(res , "Validation Failed !!!" , 400 , validationResult.error);
-    }
-    
-    const validatedData = validationResult.data;
-
-    const user = await getUserService({email: validatedData.email});
-
-    if(!user){
-      return sendError(res, "User doesnt exist...", 404);
-    }
-
-    const passwordMatch = await comparePassword({password: validatedData.password , hashedPassword : user.password});
-
-    if(!passwordMatch){
-      return sendError(res , "Invalid credentials..." , 401);
-    }
-
-    const jwt = await generateJWT({firstName : user.firstName , lastName : user.lastName , email : user.email , role : user.role});
-
-    if(!jwt){
-      return sendError(res , "JWT doesnt exist..." , 500);
-    }
-
-    res.cookie('jwt', jwt);
-
-    const {password : _ , ...safeUser} = user;
-
-    return sendSuccess(res , safeUser , "User login successfull" , 200);
-  } 
-  catch (error) {
-    next(error);
+export const loginUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const validationResult = loginSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    throw validationResult.error;
   }
-}
+
+  const { email, password } = validationResult.data;
+
+  const user = await getUserService({ email });
+  if (!user) {
+    throw new NotFoundError("No account found with this email address");
+  }
+
+  const passwordMatch = await comparePassword({
+    password,
+    hashedPassword: user.password
+  });
+  if (!passwordMatch) {
+    throw new UnauthorizedError("Invalid email or password");
+  }
+
+  const jwt = await generateJWT({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role
+  });
+  if (!jwt) {
+    throw new InternalServerError("Failed to generate authentication token");
+  }
+
+  res.cookie('jwt', jwt);
+
+  const { password: _, ...safeUser } = user;
+
+  sendSuccess(res, safeUser, "Login successful", 200);
+});
 
 // Controller to Logout User
-export async function logoutUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-      res.clearCookie('jwt');
-      return sendSuccess(res , null , "User logout successfull" , 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
+export const logoutUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  res.clearCookie('jwt');
+  sendSuccess(res, null, "Logout successful", 200);
+});

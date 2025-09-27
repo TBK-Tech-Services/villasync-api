@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { User } from "../types/general/userData.ts";
 import { createAdminSchema, type createAdminData, } from "../validators/data-validators/auth/createAdmin.ts";
+import { InternalServerError, NotFoundError } from "../utils/errors/customErrors.ts";
 
 // Service to Get a User
 export async function getUserService({ email } : {email : string} , client: PrismaClient | any = prisma): Promise<User | null> {
@@ -34,11 +35,10 @@ export async function getUserService({ email } : {email : string} , client: Pris
     };
   }
   catch (error) {
-    const message = error instanceof Error ? (error.message) : String(error);
-    console.error(`Error while getting a User : ${message}`);
-    throw new Error(`Error while getting a User : ${message}`);
+    console.error(`Error while getting user: ${error}`);
+    throw new InternalServerError("Failed to retrieve user information");
   }
-}
+};
 
 // Service to Get an Admin
 export async function getAdminService({ email , role } : {email : string , role : string}): Promise<createAdminData | null> {
@@ -70,11 +70,10 @@ export async function getAdminService({ email , role } : {email : string , role 
     return createAdminSchema.parse(user);
   } 
   catch (error) {
-    const message = error instanceof Error ? (error.message) : String(error);
-    console.error(`Error while getting a Admin : ${message}`);
-    throw new Error(`Error while getting a Admin : ${message}`);
+    console.error(`Error while getting admin: ${error}`);
+    throw new InternalServerError("Failed to retrieve admin information");
   }
-}
+};
 
 // Service to Create an Admin
 export async function createAdminService({firstName , lastName , email , password , role} : createAdminData): Promise<createAdminData | null> {
@@ -86,7 +85,7 @@ export async function createAdminService({firstName , lastName , email , passwor
     });
 
     if(!adminRole){ 
-      throw new Error("Admin role not found. Please seed the database with an 'ADMIN' role first.");
+      throw new NotFoundError("Admin role not found. Please contact system administrator.");
     }
 
     const newUser = await prisma.user.create({
@@ -115,7 +114,7 @@ export async function createAdminService({firstName , lastName , email , passwor
     })
 
     if(!newUser){
-      return null;
+      throw new InternalServerError("Failed to create admin user");
     }
 
     return createAdminSchema.parse({
@@ -124,11 +123,13 @@ export async function createAdminService({firstName , lastName , email , passwor
     });
   } 
   catch (error) {
-    const message = error instanceof Error ? (error.message) : String(error);
-    console.error(`Error while creating admin : ${message}`);
-    throw new Error(`Error while creating admin : ${message}`);
+    if (error instanceof NotFoundError || error instanceof InternalServerError) {
+      throw error;
+    }
+    console.error(`Error while creating admin: ${error}`);
+    throw new InternalServerError("Failed to create admin user");
   }
-}
+};
 
 // Service to Get Permissions By Role
 export async function getPermissionsByRole(role: string): Promise<string[] | void> {
@@ -147,8 +148,7 @@ export async function getPermissionsByRole(role: string): Promise<string[] | voi
       return permissions.map((rp) => rp.permission.name);
     } 
     catch (error) {
-      const message = error instanceof Error ? (error.message) : String(error);
-      console.error(`Error while getting permissions by role : ${message}`);
-      throw new Error(`Error while getting permissions by role : ${message}`);
+      console.error(`Error while getting permissions by role: ${error}`);
+      throw new InternalServerError("Failed to retrieve role permissions");
     }
 }
