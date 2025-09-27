@@ -1,224 +1,199 @@
 import type { NextFunction, Request, Response } from "express";
 import { addVillaService, checkIfVillaExistService, deleteVillaService, getAllAmenityCategoriesService, getAllVillasService, getSingleVillaService, getVillaBookingsService, getVillaRecentBookingsService, isVillaPresentService, updateVillaService } from "../services/villas.services.ts";
 import { addVillaSchema } from "../validators/data-validators/villa/addVilla.ts";
-import { sendError, sendSuccess } from "../utils/general/response.ts";
+import { sendSuccess } from "../utils/general/response.ts";
 import { getVillaSchema } from "../validators/data-validators/villa/getVilla.ts";
 import { updateVillaParamsSchema } from "../validators/data-validators/villa/updateVillaParam.ts";
 import { updateVillaBodySchema } from "../validators/data-validators/villa/updateVillaBody.ts";
-import { searchAndFilterVillasSchema } from "../validators/data-validators/villa/searchAndFilterVillas.ts";
 import { deleteVillaParamsSchema } from "../validators/data-validators/villa/deleteVillaParams.ts";
 import { getVillaIdSchema } from "../validators/data-validators/villa/getVillaId.ts";
+import catchAsync from "../utils/general/catchAsync.ts";
+import { ValidationError, NotFoundError, ConflictError, InternalServerError } from "../utils/errors/customErrors.ts";
 
 // Controller to Add a Villa
-export async function addVilla(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const validationResult = addVillaSchema.safeParse(req.body);
+export const addVilla = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const validationResult = addVillaSchema.safeParse(req.body);
 
-    if(!validationResult.success){
-      return sendError(res , "Validation Failed !!!" , 400 , validationResult.error);
-    }
-
-    const validatedData = validationResult.data;
-    
-    const existingVilla = await checkIfVillaExistService(validatedData?.villaName);
-
-    if(existingVilla){
-      return sendError(res , "Villa with this name already exist !!!" , 400 , validationResult.error);
-    }
-
-    const newVilla = await addVillaService(validatedData);
-
-    if(!newVilla){
-      return sendError(res , "Failed to create a Villa !!!" , 400 , validationResult.error);
-    }
-
-    return sendSuccess(res , newVilla , "Villa Created Successfully !!!" , 201);
-  } 
-  catch (error) {
-    next(error);
+  if (!validationResult.success) {
+    throw validationResult.error;
   }
-}
+
+  const validatedData = validationResult.data;
+
+  const existingVilla = await checkIfVillaExistService(validatedData.villaName);
+
+  if (existingVilla) {
+    throw new ConflictError("Villa with this name already exists");
+  }
+
+  const newVilla = await addVillaService(validatedData);
+
+  if (!newVilla) {
+    throw new InternalServerError("Failed to create villa");
+  }
+
+  sendSuccess(res, newVilla, "Villa created successfully", 201);
+});
 
 // Controller to get All Villas
-export async function getAllVillas(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const villas = await getAllVillasService();
+export const getAllVillas = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const villas = await getAllVillasService();
 
-    if(!villas){
-      return sendError(res , "Error Getting All Villas !!!" , 400 , null);
-    }
-
-    return sendSuccess(res , villas , "Successfully Retrieved All Villas !!!" , 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!villas || villas.length === 0) {
+    throw new NotFoundError("No villas found");
   }
-}
+
+  sendSuccess(res, villas, "All villas retrieved successfully", 200);
+});
 
 // Controller to get a Single Villa
-export async function getSingleVilla(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const paramId = req.params.id;
+export const getSingleVilla = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramId = req.params.id;
 
-    if (!paramId) {
-      return sendError(res, "Villa ID is required", 400, null);
-    }
-
-    const validationResult = getVillaSchema.safeParse({ 
-      id: parseInt(paramId) 
-    });
-    
-    if (!validationResult.success) {
-      return sendError(res, "Invalid villa ID", 400, validationResult.error);
-    }
-
-    const villa = await getSingleVillaService(validationResult.data.id);
-
-    if(!villa){
-      return sendError(res, "Villa Doesnt Exist", 404, null);
-    }
-
-    return sendSuccess(res , villa , "Successfully Retrieved Villa Details" , 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!paramId) {
+    throw new ValidationError("Villa ID is required");
   }
-}
+
+  const validationResult = getVillaSchema.safeParse({ 
+    id: parseInt(paramId) 
+  });
+
+  if (!validationResult.success) {
+    throw new ValidationError("Invalid villa ID format");
+  }
+
+  const villa = await getSingleVillaService(validationResult.data.id);
+
+  if (!villa) {
+    throw new NotFoundError("Villa with this ID does not exist");
+  }
+
+  sendSuccess(res, villa, "Villa details retrieved successfully", 200);
+});
 
 // Controller to get All Amenity Categories
-export async function getAllAmenityCategories(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const amenitiesCategories = await getAllAmenityCategoriesService();
+export const getAllAmenityCategories = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const amenitiesCategories = await getAllAmenityCategoriesService();
 
-    if(!amenitiesCategories || amenitiesCategories.length === 0){
-      return sendError(res , "No Amenity Categories Found" , 404);
-    }
+  if (!amenitiesCategories || amenitiesCategories.length === 0) {
+    throw new NotFoundError("No amenity categories found");
+  }
 
-    return sendSuccess(res , amenitiesCategories , "Successfully Retrieved All Amenities Categories" , 200);
-  }
-  catch (error) {
-    next(error);
-  }
-}
+  sendSuccess(res, amenitiesCategories, "Amenity categories retrieved successfully", 200);
+});
 
 // Controller to Update a Villa
-export async function updateVilla(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const paramsValidation = updateVillaParamsSchema.safeParse(req.params);
+export const updateVilla = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = updateVillaParamsSchema.safeParse(req.params);
 
-    if (!paramsValidation.success) {
-      return sendError(res, "Invalid villa ID", 400, paramsValidation.error);
-    }
-
-    const villaId = paramsValidation.data.id;
-
-    const bodyValidation = updateVillaBodySchema.safeParse(req.body);
-
-    if (!bodyValidation.success) {
-      return sendError(res, "Validation Failed", 400, bodyValidation.error);
-    }
-
-    const updateData = bodyValidation.data;
-
-    const existingVilla = await getSingleVillaService(villaId);
-
-    if (!existingVilla) {
-      return sendError(res, "Villa not found", 404, null);
-    }
-
-    const updatedVilla = await updateVillaService(villaId, updateData);
-    
-    if (!updatedVilla) {
-      return sendError(res, "Unable to update villa", 500, null);
-    }
-
-    return sendSuccess(res, updatedVilla, "Villa updated successfully", 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid villa ID format");
   }
-}
+
+  const villaId = paramsValidation.data.id;
+
+  const bodyValidation = updateVillaBodySchema.safeParse(req.body);
+
+  if (!bodyValidation.success) {
+    throw bodyValidation.error;
+  }
+
+  const updateData = bodyValidation.data;
+
+  const existingVilla = await getSingleVillaService(villaId);
+
+  if (!existingVilla) {
+    throw new NotFoundError("Villa with this ID does not exist");
+  }
+
+  // Check if villa name is being updated and if it conflicts
+  if (updateData.villaName && updateData.villaName !== existingVilla.name) {
+    const nameConflict = await checkIfVillaExistService(updateData.villaName);
+    if (nameConflict) {
+      throw new ConflictError("Villa with this name already exists");
+    }
+  }
+
+  const updatedVilla = await updateVillaService(villaId, updateData);
+
+  if (!updatedVilla) {
+    throw new InternalServerError("Failed to update villa");
+  }
+
+  sendSuccess(res, updatedVilla, "Villa updated successfully", 200);
+});
 
 // Controller to Delete a Villa
-export async function deleteVilla(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const paramsValidation = deleteVillaParamsSchema.safeParse(req.params);
+export const deleteVilla = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = deleteVillaParamsSchema.safeParse(req.params);
 
-    if (!paramsValidation.success) {
-      return sendError(res, "Invalid villa ID", 400, paramsValidation.error);
-    }
-
-    const villaId = paramsValidation.data.id;
-
-    const deletedVilla = await deleteVillaService(villaId);
-    
-    if (!deletedVilla) {
-      return sendError(res, "Unable to delete a villa", 500, null);
-    }
-
-    return sendSuccess(res, deletedVilla, "Villa deleted successfully", 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid villa ID format");
   }
-}
+
+  const villaId = paramsValidation.data.id;
+
+  // Check if villa exists before deleting
+  const existingVilla = await getSingleVillaService(villaId);
+  if (!existingVilla) {
+    throw new NotFoundError("Villa with this ID does not exist");
+  }
+
+  const deletedVilla = await deleteVillaService(villaId);
+
+  if (!deletedVilla) {
+    throw new InternalServerError("Failed to delete villa");
+  }
+
+  sendSuccess(res, deletedVilla, "Villa deleted successfully", 200);
+});
 
 // Controller to get Recent Bookings of a Villa
-export async function getVillaRecentBookings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const paramsValidation = getVillaIdSchema.safeParse(req.params);
+export const getVillaRecentBookings = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = getVillaIdSchema.safeParse(req.params);
 
-    if (!paramsValidation.success) {
-      return sendError(res, "Invalid villa ID", 400, paramsValidation.error);
-    }
-
-    const villaId = paramsValidation.data.id;
-
-    const villa = await isVillaPresentService({villaId});
-    
-    if(!villa){
-      return sendError(res , "Villa Doesnt Exist !" , 404 , null);
-    }
-
-    const recentBookings = await getVillaRecentBookingsService(villaId);
-
-    if(!recentBookings){
-      return sendError(res , "Didnt Got Villa Recent Bookings !" , 404 , null);
-    }
-
-    return sendSuccess(res , recentBookings , "Successfully Got Villa Recent Bookings !" , 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid villa ID format");
   }
-}
+
+  const villaId = paramsValidation.data.id;
+
+  const villa = await isVillaPresentService({ villaId });
+
+  if (!villa) {
+    throw new NotFoundError("Villa with this ID does not exist");
+  }
+
+  const recentBookings = await getVillaRecentBookingsService(villaId);
+
+  if (!recentBookings || recentBookings.length === 0) {
+    throw new NotFoundError("No recent bookings found for this villa");
+  }
+
+  sendSuccess(res, recentBookings, "Villa recent bookings retrieved successfully", 200);
+});
 
 // Controller to get All Bookings of a Villa
-export async function getVillaBookings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const paramsValidation = getVillaIdSchema.safeParse(req.params);
+export const getVillaBookings = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = getVillaIdSchema.safeParse(req.params);
 
-    if (!paramsValidation.success) {
-      return sendError(res, "Invalid villa ID", 400, paramsValidation.error);
-    }
-
-    const villaId = paramsValidation.data.id;
-
-    const villa = await isVillaPresentService({villaId});
-    
-    if(!villa){
-      return sendError(res , "Villa Doesnt Exist !" , 404 , null);
-    }
-
-    const recentBookings = await getVillaBookingsService(villaId);
-
-    if(!recentBookings){
-      return sendError(res , "Didnt Got Villa Bookings !" , 404 , null);
-    }
-
-    return sendSuccess(res , recentBookings , "Successfully Got Villa Bookings !" , 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid villa ID format");
   }
-}
+
+  const villaId = paramsValidation.data.id;
+
+  const villa = await isVillaPresentService({ villaId });
+
+  if (!villa) {
+    throw new NotFoundError("Villa with this ID does not exist");
+  }
+
+  const villaBookings = await getVillaBookingsService(villaId);
+
+  if (!villaBookings || villaBookings.length === 0) {
+    throw new NotFoundError("No bookings found for this villa");
+  }
+
+  sendSuccess(res, villaBookings, "Villa bookings retrieved successfully", 200);
+});
