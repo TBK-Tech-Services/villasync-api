@@ -1,5 +1,6 @@
 import prisma from "../db/DB.ts";
 import type { FilterVillasData } from "../validators/data-validators/agent/filterVillas.ts";
+import { InternalServerError } from "../utils/errors/customErrors.ts";
 
 // Service to get All Villas For Landing Page
 export async function filterVillasForLandingService(updatedData: FilterVillasData): Promise<any[] | null> {
@@ -26,15 +27,15 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
             }
         };
         
-        if(updatedData.guests){
+        if (updatedData.guests) {
             where.maxGuests = {
                 gte: updatedData.guests
             }
         }
         
-        if(updatedData.amenities && updatedData.amenities.length > 0){
+        if (updatedData.amenities && updatedData.amenities.length > 0) {
             where.amenities = {
-                some : {
+                some: {
                     amenityId: {
                         in: updatedData.amenities
                     }
@@ -67,11 +68,11 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
         }
         
         const villas = await prisma.villa.findMany({
-            where : where,
-            include : include
+            where: where,
+            include: include
         });
         
-        if(!villas || villas.length === 0){
+        if (!villas || villas.length === 0) {
             return null;
         }
 
@@ -109,22 +110,20 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
         return transformedVillas;
         
     } catch (error) { 
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`Error while filtering villas : ${message}`);
-        throw new Error(`Error while filtering villas : ${message}`);
+        console.error(`Error filtering villas: ${error}`);
+        throw new InternalServerError("Failed to filter villas");
     }
 }
 
-// Service to get All Ammenities For Landing Page
+// Service to get All Amenities For Landing Page
 export async function getAllAmmenitiesService(): Promise<any[] | null> {
     try {
-        const ammenities = await prisma.amenity.findMany();
+        const amenities = await prisma.amenity.findMany();
 
-        return ammenities;
+        return amenities;
     } 
     catch (error) { 
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`Error while getting ammenities : ${message}`);
-        throw new Error(`Error while getting ammenities : ${message}`);
+        console.error(`Error fetching amenities: ${error}`);
+        throw new InternalServerError("Failed to fetch amenities");
     }
 }
