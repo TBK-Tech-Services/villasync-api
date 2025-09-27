@@ -4,22 +4,22 @@ import type { Booking_Data } from "../types/booking/bookingData.ts";
 import type { searchAndFilterBookingData } from "../validators/data-validators/booking/searchAndFilterBooking.ts";
 import type { updateBookingStatusBodyData } from "../validators/data-validators/booking/updateBookingStatusBody.ts";
 import type { updatePaymentStatusBodyData } from "../validators/data-validators/booking/updatePaymentStatusBody.ts";
+import { NotFoundError, InternalServerError } from "../utils/errors/customErrors.ts";
 
 // Service to check if a booking exist
-export async function checkIfBookingExistService(bookingId : number): Promise<Booking | null> {
+export async function checkIfBookingExistService(bookingId: number): Promise<Booking | null> {
     try {
         const booking = await prisma.booking.findUnique({
-            where : {
-                id : bookingId
+            where: {
+                id: bookingId
             }
         });
 
         return booking;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error checking villa availability : ${message}`);
-        throw new Error(`Error checking villa availability : ${message}`);
+        console.error(`Error checking booking existence: ${error}`);
+        throw new InternalServerError("Failed to verify booking existence");
     }
 }
 
@@ -62,9 +62,8 @@ export async function checkVillaAvailabilityService({villaId, checkInDate, check
         
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error checking villa availability : ${message}`);
-        throw new Error(`Error checking villa availability : ${message}`);
+        console.error(`Error checking villa availability: ${error}`);
+        throw new InternalServerError("Failed to check villa availability");
     }
 }
 
@@ -94,37 +93,35 @@ export async function checkVillaAvailabilityForUpdateService({villaId, checkInDa
 
         if (!villa) {
             return false;
-        };
+        }
 
         for (const booking of villa.bookings) {
             const hasOverlap = (checkInDate < booking.checkOut) && (checkOutDate > booking.checkIn);
-            if (hasOverlap){
+            if (hasOverlap) {
                 return false;
-            };
+            }
         }
         
         return true;
     } 
     catch (error) { 
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`Error checking villa availability: ${message}`);
-        throw new Error(`Error checking villa availability: ${message}`);
+        console.error(`Error checking villa availability for update: ${error}`);
+        throw new InternalServerError("Failed to check villa availability for update");
     }
 }
 
 // Service to Add a Booking
-export async function addBookingService(formData : Booking_Data): Promise<Booking> {
+export async function addBookingService(formData: Booking_Data): Promise<Booking> {
     try {
         const booking = await prisma.booking.create({
-            data : formData
+            data: formData
         });
 
         return booking;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error adding a booking : ${message}`);
-        throw new Error(`Error adding a booking : ${message}`); 
+        console.error(`Error creating booking: ${error}`);
+        throw new InternalServerError("Failed to create booking");
     }
 }
 
@@ -141,47 +138,57 @@ export async function updateBookingService(bookingId: number, updateData: any): 
         return updatedBooking;
     }
     catch (error) { 
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`Error updating a booking: ${message}`);
-        throw new Error(`Error updating a booking: ${message}`);
+        if (error.code === 'P2025') {
+            throw new NotFoundError("Booking not found");
+        }
+        
+        console.error(`Error updating booking: ${error}`);
+        throw new InternalServerError("Failed to update booking");
     }
 }
 
 // Service to Update a Booking Status
-export async function updateBookingStatusService({bookingId , updatedData}: {bookingId: number , updatedData: updateBookingStatusBodyData}): Promise<Booking | null> {
+export async function updateBookingStatusService({bookingId, updatedData}: {bookingId: number, updatedData: updateBookingStatusBodyData}): Promise<Booking | null> {
     try {
         const updatedBooking = await prisma.booking.update({
-            where : {
-                id : bookingId
+            where: {
+                id: bookingId
             },
-            data : updatedData
+            data: updatedData
         });
 
         return updatedBooking;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error updating booking status of a booking : ${message}`);
-        throw new Error(`Error updating booking status of a booking : ${message}`);
+        // Check if booking doesn't exist
+        if (error.code === 'P2025') {
+            throw new NotFoundError("Booking not found");
+        }
+        
+        console.error(`Error updating booking status: ${error}`);
+        throw new InternalServerError("Failed to update booking status");
     }
 }
 
 // Service to Update a Payment Status
-export async function updatePaymentStatusService({bookingId , updatedData}: {bookingId: number , updatedData: updatePaymentStatusBodyData}): Promise<Booking | null> {
+export async function updatePaymentStatusService({bookingId, updatedData}: {bookingId: number, updatedData: updatePaymentStatusBodyData}): Promise<Booking | null> {
     try {
         const updatedBooking = await prisma.booking.update({
-            where : {
-                id : bookingId
+            where: {
+                id: bookingId
             },
-            data : updatedData
+            data: updatedData
         });
 
         return updatedBooking;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error updating payment status of a booking : ${message}`);
-        throw new Error(`Error updating payment status of a booking : ${message}`);
+        if (error.code === 'P2025') {
+            throw new NotFoundError("Booking not found");
+        }
+        
+        console.error(`Error updating payment status: ${error}`);
+        throw new InternalServerError("Failed to update payment status");
     }
 }
 
@@ -189,42 +196,51 @@ export async function updatePaymentStatusService({bookingId , updatedData}: {boo
 export async function deleteBookingService(bookingId: number): Promise<Booking> {
     try {
         const deletedBooking = await prisma.booking.delete({
-            where : {
-                id : bookingId
+            where: {
+                id: bookingId
             }
         });
 
         return deletedBooking;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error deleting a booking : ${message}`);
-        throw new Error(`Error deleting a booking : ${message}`);
+        if (error.code === 'P2025') {
+            throw new NotFoundError("Booking not found");
+        }
+        
+        console.error(`Error deleting booking: ${error}`);
+        throw new InternalServerError("Failed to delete booking");
     }
 }
 
 // Service to get All Bookings
 export async function getAllBookingsService(): Promise<Booking[] | null> {
     try {
-        const bookings = await prisma.booking.findMany();
+        const bookings = await prisma.booking.findMany({
+            include: {
+                villa: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
 
         return bookings;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting all bookings : ${message}`);
-        throw new Error(`Error getting all bookings : ${message}`);
+        console.error(`Error fetching all bookings: ${error}`);
+        throw new InternalServerError("Failed to fetch bookings");
     }
 }
 
-// Service to get All Bookings
+// Service to get A Booking
 export async function getABookingService(bookingId: number): Promise<Booking | null> {
     try {
         const booking = await prisma.booking.findUnique({
-            where : {
-                id : bookingId
+            where: {
+                id: bookingId
             },
-            include : {
+            include: {
                 villa: true
             }
         });
@@ -232,9 +248,8 @@ export async function getABookingService(bookingId: number): Promise<Booking | n
         return booking;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting a booking : ${message}`);
-        throw new Error(`Error getting a booking : ${message}`);
+        console.error(`Error fetching booking: ${error}`);
+        throw new InternalServerError("Failed to fetch booking details");
     }
 }
 
@@ -246,6 +261,7 @@ export async function searchAndFilterBookingsService(validatedData: searchAndFil
         if (validatedData.searchText && validatedData.searchText.trim()) {
             where.guestName = {
                 contains: validatedData.searchText,
+                mode: 'insensitive'
             };
         }
 
@@ -257,14 +273,16 @@ export async function searchAndFilterBookingsService(validatedData: searchAndFil
             where: where,
             include: {
                 villa: true
+            },
+            orderBy: {
+                createdAt: 'desc'
             }
         });
 
         return bookings;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error searching and filtering bookings : ${message}`);
-        throw new Error(`Error searching and filtering bookings : ${message}`);
+        console.error(`Error searching and filtering bookings: ${error}`);
+        throw new InternalServerError("Failed to search bookings");
     }
 }
