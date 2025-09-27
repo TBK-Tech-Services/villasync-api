@@ -1,17 +1,16 @@
 import type { Booking } from "@prisma/client";
 import prisma from "../db/DB.ts";
+import { InternalServerError } from "../utils/errors/customErrors.ts";
 
 // Service to get Total Count of Villas 
 export async function getTotalVillasCountService(): Promise<number | null> {
     try {   
         const villaCount = await prisma.villa.count();
-
         return villaCount;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting villa count : ${message}`);
-        throw new Error(`Error getting villa count : ${message}`);
+        console.error(`Error getting villa count: ${error}`);
+        throw new InternalServerError("Failed to fetch total villas count");
     }
 }
 
@@ -19,13 +18,11 @@ export async function getTotalVillasCountService(): Promise<number | null> {
 export async function getTotalBookingsCountService(): Promise<number | null> {
     try {
         const bookingsCount = await prisma.booking.count();
-
         return bookingsCount;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting bookings count : ${message}`);
-        throw new Error(`Error getting bookings count : ${message}`);
+        console.error(`Error getting bookings count: ${error}`);
+        throw new InternalServerError("Failed to fetch total bookings count");
     }
 }
 
@@ -33,20 +30,19 @@ export async function getTotalBookingsCountService(): Promise<number | null> {
 export async function getTotalRevenueService(): Promise<number | null> {
     try {
         const totalRevenue = await prisma.booking.aggregate({
-            where : {
-                paymentStatus : 'PAID'
+            where: {
+                paymentStatus: 'PAID'
             },
-            _sum : {
-                totalPayableAmount : true
+            _sum: {
+                totalPayableAmount: true
             }
         });
 
         return totalRevenue._sum.totalPayableAmount;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting total revenue : ${message}`);
-        throw new Error(`Error getting total revenue : ${message}`);
+        console.error(`Error getting total revenue: ${error}`);
+        throw new InternalServerError("Failed to calculate total revenue");
     }
 }
 
@@ -54,17 +50,16 @@ export async function getTotalRevenueService(): Promise<number | null> {
 export async function getTotalGuestsCountService(): Promise<number | null> {
     try {
         const guestCount = await prisma.booking.aggregate({
-            _sum : {
-                totalGuests : true
+            _sum: {
+                totalGuests: true
             }
-        })
+        });
 
         return guestCount._sum.totalGuests || 0;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting bookings count : ${message}`);
-        throw new Error(`Error getting bookings count : ${message}`);
+        console.error(`Error getting total guests count: ${error}`);
+        throw new InternalServerError("Failed to fetch total guests count");
     }
 }
 
@@ -72,41 +67,39 @@ export async function getTotalGuestsCountService(): Promise<number | null> {
 export async function getPendingBookingsCountService(): Promise<number | null> {
     try {
         const totalPendingBookings = await prisma.booking.aggregate({
-            where : {
-                bookingStatus : 'CONFIRMED'
+            where: {
+                bookingStatus: 'CONFIRMED'
             },
-            _count : {
-                id : true
+            _count: {
+                id: true
             }
-        })
+        });
 
         return totalPendingBookings._count.id;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting pending bookings count : ${message}`);
-        throw new Error(`Error getting pending bookings count : ${message}`);
+        console.error(`Error getting pending bookings count: ${error}`);
+        throw new InternalServerError("Failed to fetch pending bookings count");
     }
 }
 
 // Service to Get Count of Cancellations
 export async function getCancellationsCountService(): Promise<number | null> {
     try {
-        const totalPendingBookings = await prisma.booking.aggregate({
-            where : {
-                bookingStatus : 'CANCELLED'
+        const totalCancelledBookings = await prisma.booking.aggregate({
+            where: {
+                bookingStatus: 'CANCELLED'
             },
-            _count : {
-                id : true
+            _count: {
+                id: true
             }
-        })
+        });
 
-        return totalPendingBookings._count.id;
+        return totalCancelledBookings._count.id;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting cancelled bookings count : ${message}`);
-        throw new Error(`Error getting cancelled bookings count : ${message}`);
+        console.error(`Error getting cancelled bookings count: ${error}`);
+        throw new InternalServerError("Failed to fetch cancellations count");
     }
 }
 
@@ -114,21 +107,20 @@ export async function getCancellationsCountService(): Promise<number | null> {
 export async function getRecentBookingsService(): Promise<Booking[] | null> {
     try {
         const recentBookings = await prisma.booking.findMany({
-            orderBy : {
-                createdAt : 'desc'
+            orderBy: {
+                createdAt: 'desc'
             },
-            take : 5,
+            take: 5,
             include: {
                 villa: true
-}
-        })
+            }
+        });
 
         return recentBookings;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting recent bookings : ${message}`);
-        throw new Error(`Error getting recent bookings : ${message}`);
+        console.error(`Error getting recent bookings: ${error}`);
+        throw new InternalServerError("Failed to fetch recent bookings");
     }
 }
 
@@ -136,35 +128,34 @@ export async function getRecentBookingsService(): Promise<Booking[] | null> {
 export async function getTodaysCheckinsService(): Promise<{ count: number, totalIncome: number }> {
     try {
         const today = new Date();
-        today.setHours(0 ,0 ,0 ,0);
+        today.setHours(0, 0, 0, 0);
 
-        const tommorow = new Date(today);
-        tommorow.setDate(today.getDate() + 1);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
 
         const result = await prisma.booking.aggregate({
-            where : {
-                checkIn : {
-                    gte : today,
-                    lt : tommorow
+            where: {
+                checkIn: {
+                    gte: today,
+                    lt: tomorrow
                 }
             },
-            _count : {
-                id : true
+            _count: {
+                id: true
             },
-            _sum : {
-                totalPayableAmount : true
+            _sum: {
+                totalPayableAmount: true
             }
         });
 
         return {
-            count : result._count.id || 0,
-            totalIncome : result._sum.totalPayableAmount || 0
+            count: result._count.id || 0,
+            totalIncome: result._sum.totalPayableAmount || 0
         };
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting count of todays checkins : ${message}`);
-        throw new Error(`Error getting count of todays checkins : ${message}`);
+        console.error(`Error getting today's checkins: ${error}`);
+        throw new InternalServerError("Failed to fetch today's checkins data");
     }
 }
 
@@ -173,35 +164,34 @@ export async function getTomorrowsCheckinsService(): Promise<{ count: number, to
     try {   
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0,0,0,0);
+        tomorrow.setHours(0, 0, 0, 0);
 
         const dayAfterTomorrow = new Date(tomorrow);
         dayAfterTomorrow.setDate(tomorrow.getDate() + 1);
 
         const result = await prisma.booking.aggregate({
-            where : {
-                checkIn : {
-                    gte : tomorrow,
-                    lt : dayAfterTomorrow
+            where: {
+                checkIn: {
+                    gte: tomorrow,
+                    lt: dayAfterTomorrow
                 }
             },
-            _count : {
-                id : true
+            _count: {
+                id: true
             },
-            _sum : {
-                totalPayableAmount : true
+            _sum: {
+                totalPayableAmount: true
             }
-        })
+        });
 
         return {
-            count : result._count.id || 0,
-            totalIncome : result._sum.totalPayableAmount || 0
+            count: result._count.id || 0,
+            totalIncome: result._sum.totalPayableAmount || 0
         };
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting count of tommorows checkins : ${message}`);
-        throw new Error(`Error getting count of tommorows checkins : ${message}`);
+        console.error(`Error getting tomorrow's checkins: ${error}`);
+        throw new InternalServerError("Failed to fetch tomorrow's checkins data");
     }
 }
 
@@ -213,36 +203,35 @@ export async function getWeeksCheckinsService(): Promise<{ count: number, totalI
 
         const startOfWeek = new Date(today); 
         startOfWeek.setDate(today.getDate() - dayOfWeek);
-        startOfWeek.setHours(0,0,0,0);
+        startOfWeek.setHours(0, 0, 0, 0);
 
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23,59,59,999);
+        endOfWeek.setHours(23, 59, 59, 999);
 
         const result = await prisma.booking.aggregate({
-            where : {
-                checkIn : {
-                    gte : startOfWeek,
-                    lte : endOfWeek
+            where: {
+                checkIn: {
+                    gte: startOfWeek,
+                    lte: endOfWeek
                 }
             },
-            _count : {
-                id : true
+            _count: {
+                id: true
             },
-            _sum : {
-                totalPayableAmount : true
+            _sum: {
+                totalPayableAmount: true
             }
         });
 
         return {
-            count : result._count.id || 0,
-            totalIncome : result._sum.totalPayableAmount || 0
+            count: result._count.id || 0,
+            totalIncome: result._sum.totalPayableAmount || 0
         };
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting count of weeks checkins : ${message}`);
-        throw new Error(`Error getting count of weeks checkins : ${message}`);
+        console.error(`Error getting week's checkins: ${error}`);
+        throw new InternalServerError("Failed to fetch this week's checkins data");
     }
 }
 
@@ -258,7 +247,7 @@ export async function getCurrentMonthRevenueService(): Promise<number> {
         endOfMonth.setHours(23, 59, 59, 999);
         
         const currentMonthRevenue = await prisma.booking.aggregate({
-            where : {
+            where: {
                 paymentStatus: 'PAID',
                 OR: [
                     { 
@@ -279,17 +268,16 @@ export async function getCurrentMonthRevenueService(): Promise<number> {
                     }
                 ]
             },
-            _sum : {
-                totalPayableAmount : true
+            _sum: {
+                totalPayableAmount: true
             }
         });
 
         return currentMonthRevenue._sum.totalPayableAmount || 0;
     }
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting revenue for current month : ${message}`);
-        throw new Error(`Error getting revenue for current month : ${message}`);
+        console.error(`Error getting current month revenue: ${error}`);
+        throw new InternalServerError("Failed to calculate current month revenue");
     }
 }
 
@@ -305,7 +293,7 @@ export async function getLastMonthRevenueService(): Promise<number> {
         endDateForLastMonth.setHours(23, 59, 59, 999);
 
         const lastMonthRevenue = await prisma.booking.aggregate({
-            where : {
+            where: {
                 paymentStatus: 'PAID',
                 OR: [
                     { 
@@ -326,17 +314,16 @@ export async function getLastMonthRevenueService(): Promise<number> {
                     }
                 ]
             },
-            _sum : {
-                totalPayableAmount : true
+            _sum: {
+                totalPayableAmount: true
             }
         });
 
         return lastMonthRevenue._sum.totalPayableAmount || 0;
     } 
     catch (error) {
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting revenue for last month : ${message}`);
-        throw new Error(`Error getting revenue for last month : ${message}`);
+        console.error(`Error getting last month revenue: ${error}`);
+        throw new InternalServerError("Failed to calculate last month revenue");
     }
 }
 
@@ -360,9 +347,8 @@ export async function getAverageDailyRevenueService(): Promise<number> {
         return Math.round(avgDailyRevenue);
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting average daily revenue : ${message}`);
-        throw new Error(`Error getting average daily revenue : ${message}`);
+        console.error(`Error getting average daily revenue: ${error}`);
+        throw new InternalServerError("Failed to calculate average daily revenue");
     }
 }
 
@@ -374,7 +360,7 @@ export async function getRevenueTrendsService(): Promise<any | null> {
         const averageDailyRevenue = await getAverageDailyRevenueService();
         
         let growthRate;
-        if(lastMonthRevenue === 0){
+        if (lastMonthRevenue === 0) {
             growthRate = currentMonthRevenue > 0 ? 100 : 0;
         } 
         else {
@@ -390,9 +376,8 @@ export async function getRevenueTrendsService(): Promise<any | null> {
         };
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting Revenue Trends: ${message}`);
-        throw new Error(`Error getting Revenue Trends: ${message}`);
+        console.error(`Error getting revenue trends: ${error}`);
+        throw new InternalServerError("Failed to calculate revenue trends");
     }
 }
 
@@ -478,8 +463,7 @@ export async function getAllVillasOccupancyService(): Promise<any[] | null> {
         return villasOccupancy;
     } 
     catch (error) { 
-        const message = error instanceof Error ? (error.message) : String(error);
-        console.error(`Error getting villas occupancy: ${message}`);
-        throw new Error(`Error getting villas occupancy: ${message}`);
+        console.error(`Error getting villas occupancy: ${error}`);
+        throw new InternalServerError("Failed to calculate villas occupancy data");
     }
 }

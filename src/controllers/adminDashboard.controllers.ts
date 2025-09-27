@@ -1,171 +1,140 @@
 import type { NextFunction, Request, Response } from "express";
 import { getAllVillasOccupancyService, getCancellationsCountService, getPendingBookingsCountService, getRecentBookingsService, getRevenueTrendsService, getTodaysCheckinsService, getTomorrowsCheckinsService, getTotalBookingsCountService, getTotalGuestsCountService, getTotalRevenueService, getTotalVillasCountService, getWeeksCheckinsService } from "../services/adminDashboard.services.ts";
-import { sendError, sendSuccess } from "../utils/general/response.ts";
+import { sendSuccess } from "../utils/general/response.ts";
+import catchAsync from "../utils/general/catchAsync.ts";
+import { InternalServerError } from "../utils/errors/customErrors.ts";
 
 // Controller to get Dashboard Stats
-export async function getDashboardStats(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const [
-      totalVillas,
-      totalBookings, 
-      totalRevenue,
-      totalGuests,
-      pendingBookings,
-      cancellations
-    ] = await Promise.all([
-      getTotalVillasCountService(),
-      getTotalBookingsCountService(),
-      getTotalRevenueService(),
-      getTotalGuestsCountService(),
-      getPendingBookingsCountService(),
-      getCancellationsCountService()
-    ]);
+export const getDashboardStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const [
+    totalVillas,
+    totalBookings, 
+    totalRevenue,
+    totalGuests,
+    pendingBookings,
+    cancellations
+  ] = await Promise.all([
+    getTotalVillasCountService(),
+    getTotalBookingsCountService(),
+    getTotalRevenueService(),
+    getTotalGuestsCountService(),
+    getPendingBookingsCountService(),
+    getCancellationsCountService()
+  ]);
 
-    const dashboardStats = [
-      {
-        title: "Total Villas",
-        value: String(totalVillas || 0),
-        change: "Active properties",
-        icon: "DollarSign", // Frontend mein map karega
-        gradient: "bg-gradient-primary",
-        trend: "neutral"
-      },
-      {
-        title: "Total Bookings",
-        value: String(totalBookings || 0),
-        change: "+12% from last month", // Placeholder for now
-        icon: "Calendar",
-        gradient: "bg-gradient-accent", 
-        trend: "up"
-      },
-      {
-        title: "Revenue",
-        value: `₹${(totalRevenue || 0).toLocaleString('en-IN')}`, // Indian formatting
-        change: "+18% from last month", // Placeholder for now
-        icon: "DollarSign",
-        gradient: "bg-gradient-secondary",
-        trend: "up"
-      },
-      {
-        title: "Guests",
-        value: String(totalGuests || 0),
-        change: "+8% from last month", // Placeholder for now
-        icon: "Users",
-        gradient: "bg-gradient-sunset",
-        trend: "up"
-      },
-      {
-        title: "Pending",
-        value: String(pendingBookings || 0),
-        change: "3 urgent", // Static for now, can be dynamic later
-        icon: "Clock",
-        gradient: "bg-warning",
-        trend: "neutral"
-      },
-      {
-        title: "Cancellations", 
-        value: String(cancellations || 0),
-        change: "-2 from last month", // Placeholder for now
-        icon: "CalendarX",
-        gradient: "bg-destructive",
-        trend: "down"
-      }
-    ];
+  const dashboardStats = [
+    {
+      title: "Total Villas",
+      value: String(totalVillas || 0),
+      change: "Active properties",
+      icon: "DollarSign",
+      gradient: "bg-gradient-primary",
+      trend: "neutral"
+    },
+    {
+      title: "Total Bookings",
+      value: String(totalBookings || 0),
+      change: "+12% from last month",
+      icon: "Calendar",
+      gradient: "bg-gradient-accent", 
+      trend: "up"
+    },
+    {
+      title: "Revenue",
+      value: `₹${(totalRevenue || 0).toLocaleString('en-IN')}`,
+      change: "+18% from last month",
+      icon: "DollarSign",
+      gradient: "bg-gradient-secondary",
+      trend: "up"
+    },
+    {
+      title: "Guests",
+      value: String(totalGuests || 0),
+      change: "+8% from last month",
+      icon: "Users",
+      gradient: "bg-gradient-sunset",
+      trend: "up"
+    },
+    {
+      title: "Pending",
+      value: String(pendingBookings || 0),
+      change: "3 urgent",
+      icon: "Clock",
+      gradient: "bg-warning",
+      trend: "neutral"
+    },
+    {
+      title: "Cancellations", 
+      value: String(cancellations || 0),
+      change: "-2 from last month",
+      icon: "CalendarX",
+      gradient: "bg-destructive",
+      trend: "down"
+    }
+  ];
 
-    return sendSuccess(res, { stats: dashboardStats }, "Dashboard stats fetched successfully!", 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
+  sendSuccess(res, { stats: dashboardStats }, "Dashboard stats fetched successfully", 200);
+});
 
 // Controller to Get Recent Bookings
-export async function getRecentBookings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const recentBookings = await getRecentBookingsService();
+export const getRecentBookings = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const recentBookings = await getRecentBookingsService();
 
-    if(recentBookings === null){
-      return sendError(res , "Error Getting Recent Bookings!" , 404 , null);
-    }
-
-    return sendSuccess(res , recentBookings , "Successfully Got the Recent Bookings!" , 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!recentBookings || recentBookings.length === 0) {
+    throw new InternalServerError("No recent bookings found");
   }
-}
+
+  sendSuccess(res, recentBookings, "Recent bookings fetched successfully", 200);
+});
 
 // Controller to Get Upcoming Checkins
-export async function getUpcomingCheckins(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const totalTodaysCheckin = await getTodaysCheckinsService();
+export const getUpcomingCheckins = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const [totalTodaysCheckin, totalTomorrowsCheckin, totalWeeksCheckin] = await Promise.all([
+    getTodaysCheckinsService(),
+    getTomorrowsCheckinsService(),
+    getWeeksCheckinsService()
+  ]);
 
-    if(totalTodaysCheckin === null){
-      return sendError(res , "Error Getting Total Todays Checkins!" , 404 , null);
-    }
-
-    const totalTommorowsCheckin = await getTomorrowsCheckinsService();
-
-    if(totalTommorowsCheckin === null){
-      return sendError(res , "Error Getting Total Tommorows Checkins!" , 404 , null);
-    }
-
-    const totalWeeksCheckin = await getWeeksCheckinsService();
-
-    if(totalWeeksCheckin === null){
-      return sendError(res , "Error Getting Total Weeks Checkins!" , 404 , null);
-    }
-
-    const upcomingCheckinsData = {
-      today: {
-        count: totalTodaysCheckin.count,
-        totalIncome: totalTodaysCheckin.totalIncome
-      },
-      tomorrow: {
-        count: totalTommorowsCheckin.count,
-        totalIncome: totalTommorowsCheckin.totalIncome
-      },
-      thisWeek: {
-        count: totalWeeksCheckin.count,
-        totalIncome: totalWeeksCheckin.totalIncome
-      }
-    };
-    
-    return sendSuccess(res, upcomingCheckinsData, "Successfully Got Upcoming Checkins!", 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!totalTodaysCheckin || !totalTomorrowsCheckin || !totalWeeksCheckin) {
+    throw new InternalServerError("Failed to fetch upcoming checkins data");
   }
-}
+
+  const upcomingCheckinsData = {
+    today: {
+      count: totalTodaysCheckin.count,
+      totalIncome: totalTodaysCheckin.totalIncome
+    },
+    tomorrow: {
+      count: totalTomorrowsCheckin.count,
+      totalIncome: totalTomorrowsCheckin.totalIncome
+    },
+    thisWeek: {
+      count: totalWeeksCheckin.count,
+      totalIncome: totalWeeksCheckin.totalIncome
+    }
+  };
+  
+  sendSuccess(res, upcomingCheckinsData, "Upcoming checkins fetched successfully", 200);
+});
 
 // Controller to Get Revenue Trends
-export async function getRevenueTrends(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const revenueTrend = await getRevenueTrendsService();
+export const getRevenueTrends = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const revenueTrend = await getRevenueTrendsService();
 
-    if(revenueTrend === null){
-      return sendError(res , "Error Getting Revenue Trends!" , 404 , null);
-    }
-
-    return sendSuccess(res, revenueTrend, "Successfully Got Revenue Trends!", 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!revenueTrend) {
+    throw new InternalServerError("Failed to fetch revenue trends data");
   }
-}
+
+  sendSuccess(res, revenueTrend, "Revenue trends fetched successfully", 200);
+});
 
 // Controller to Get All Villas Occupancy
-export async function getAllVillasOccupancy(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const villasOccupancy = await getAllVillasOccupancyService();
+export const getAllVillasOccupancy = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const villasOccupancy = await getAllVillasOccupancyService();
 
-    if(villasOccupancy === null){
-      return sendError(res , "Error Getting Villas Occupancy!" , 404 , null);
-    }
-
-    return sendSuccess(res, villasOccupancy, "Successfully Got Villas Occupancy!", 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!villasOccupancy || villasOccupancy.length === 0) {
+    throw new InternalServerError("Failed to fetch villas occupancy data");
   }
-}
+
+  sendSuccess(res, villasOccupancy, "Villas occupancy data fetched successfully", 200);
+});
