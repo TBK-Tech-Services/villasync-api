@@ -1,7 +1,10 @@
+import dotenv from "dotenv";
 import type { NextFunction, Request, Response } from "express";
 import { sendError } from "../../utils/general/response.ts";
 import jwt from 'jsonwebtoken';
 import type { JWT_Payload } from "../../types/auth/payload.ts";
+
+dotenv.config();
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
@@ -16,6 +19,7 @@ declare global {
 // Midleware to Check If a User is Authenticated or Not
 export async function authenticate(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
+        console.log(SECRET_KEY);
         if (!SECRET_KEY) {
             return sendError(res, "SECRET_KEY not configured" , 500, null);
         }
