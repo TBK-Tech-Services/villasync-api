@@ -1,156 +1,128 @@
 import type { NextFunction, Request, Response } from "express";
 import { addExpenseSchema } from "../validators/data-validators/expense/addExpense.ts";
-import { sendError, sendSuccess } from "../utils/general/response.ts";
+import { sendSuccess } from "../utils/general/response.ts";
 import { addExpenseService, checkIfExpenseExistService, deleteExpenseService, getAllExpenseCategoriesService, getAllExpensesService, getExpenseService, updateExpenseService } from "../services/expenses.services.ts";
 import { updateExpenseParamsSchema } from "../validators/data-validators/expense/updateExpenseParams.ts";
 import { updateExpenseBodySchema } from "../validators/data-validators/expense/updateExpenseBody.ts";
 import { getExpenseSchema } from "../validators/data-validators/expense/getExpense.ts";
 import { deleteExpenseSchema } from "../validators/data-validators/expense/deleteExpense.ts";
+import catchAsync from "../utils/general/catchAsync.ts";
+import { ValidationError, NotFoundError, InternalServerError } from "../utils/errors/customErrors.ts";
 
 // Controller to Add An Expense
-export async function addExpense(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const validationResult = addExpenseSchema.safeParse(req.body);
+export const addExpense = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const validationResult = addExpenseSchema.safeParse(req.body);
 
-    if(!validationResult.success){
-      return sendError(res , "Validation Failed !!!" , 400 , validationResult.error);
-    }
-    
-    const validatedData = validationResult.data;
-
-    const newExpense = await addExpenseService(validatedData);
-
-    if(!newExpense){
-      return sendError(res , "Didn't get New Expense!" , 404 , null); 
-    }
-
-    return sendSuccess(res , newExpense ,"Successfully Added a New Expense !" , 201);
-  } 
-  catch (error) {
-    next(error);
+  if (!validationResult.success) {
+    throw validationResult.error;
   }
-}
+
+  const validatedData = validationResult.data;
+
+  const newExpense = await addExpenseService(validatedData);
+
+  if (!newExpense) {
+    throw new InternalServerError("Failed to create expense");
+  }
+
+  sendSuccess(res, newExpense, "Expense created successfully", 201);
+});
 
 // Controller to Update an Expense
-export async function updateExpense(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const paramsValidation = updateExpenseParamsSchema.safeParse(req.params);
-        
-    if (!paramsValidation.success) {
-      return sendError(res, "Invalid expense ID", 400, paramsValidation.error);
-    }
-        
-    const expenseId = paramsValidation.data.id;
-        
-    const bodyValidation = updateExpenseBodySchema.safeParse(req.body);
-    
-    if (!bodyValidation.success) {
-      return sendError(res, "Validation Failed", 400, bodyValidation.error);
-    }
-        
-    const validatedData = bodyValidation.data;
+export const updateExpense = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = updateExpenseParamsSchema.safeParse(req.params);
 
-    const expenseExist = await checkIfExpenseExistService(expenseId);
-
-    if(!expenseExist){
-      return sendError(res, "Expense Doesn't Exist!", 404, null);
-    }
-
-    const updatedExpense = await updateExpenseService({validatedData, expenseId});
-
-    if(!updatedExpense){
-      return sendError(res, "Failed to update expense!", 500, null); 
-    }
-
-    return sendSuccess(res, updatedExpense, "Successfully Updated Expense!", 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid expense ID format");
   }
-}
 
-// Controller to get All Villas For Expenses
-export async function getAllExpenseCategories(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const expenseCategories = await getAllExpenseCategoriesService();
+  const expenseId = paramsValidation.data.id;
 
-    if(!expenseCategories){
-      return sendError(res, "Didnt got Expense Categories!" , 404 , null);
-    }
+  const bodyValidation = updateExpenseBodySchema.safeParse(req.body);
 
-    return sendSuccess(res , expenseCategories , "Successfully Got All Expense Categories!" , 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!bodyValidation.success) {
+    throw bodyValidation.error;
   }
-}
+
+  const validatedData = bodyValidation.data;
+
+  const expenseExist = await checkIfExpenseExistService(expenseId);
+
+  if (!expenseExist) {
+    throw new NotFoundError("Expense with this ID does not exist");
+  }
+
+  const updatedExpense = await updateExpenseService({ validatedData, expenseId });
+
+  if (!updatedExpense) {
+    throw new InternalServerError("Failed to update expense");
+  }
+
+  sendSuccess(res, updatedExpense, "Expense updated successfully", 200);
+});
+
+// Controller to get All Expense Categories
+export const getAllExpenseCategories = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const expenseCategories = await getAllExpenseCategoriesService();
+
+  if (!expenseCategories) {
+    throw new NotFoundError("No expense categories found");
+  }
+
+  sendSuccess(res, expenseCategories, "Expense categories retrieved successfully", 200);
+});
 
 // Controller to get All Expenses
-export async function getAllExpenses(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const expenses = await getAllExpensesService();
+export const getAllExpenses = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const expenses = await getAllExpensesService();
 
-    if(!expenses){
-      return sendError(res , "Didnt get expenses!" , 404 , null);
-    }
-
-    return sendSuccess(res , expenses , "Successfully Got Expenses !" , 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!expenses) {
+    throw new NotFoundError("No expenses found");
   }
-}
+
+  sendSuccess(res, expenses, "Expenses retrieved successfully", 200);
+});
 
 // Controller to get an Expense
-export async function getExpense(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const paramsValidation = getExpenseSchema.safeParse(req.params);
-        
-    if (!paramsValidation.success) {
-      return sendError(res, "Invalid expense ID", 400, paramsValidation.error);
-    }
-    
-    const expenseId = paramsValidation.data.id;
-    
-    const expense = await getExpenseService(expenseId);
-    
-    if(!expense){
-      return sendError(res , "Expense Doesnt Exist !!!" , 404 , null);
-    }
-    
-    return sendSuccess(res , expense , "Successfully Retrieved A Expense !!!" , 200);
-  } 
-  catch (error) {
-    next(error);
+export const getExpense = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = getExpenseSchema.safeParse(req.params);
+
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid expense ID format");
   }
-}
+
+  const expenseId = paramsValidation.data.id;
+
+  const expense = await getExpenseService(expenseId);
+
+  if (!expense) {
+    throw new NotFoundError("Expense with this ID does not exist");
+  }
+
+  sendSuccess(res, expense, "Expense details retrieved successfully", 200);
+});
 
 // Controller to Delete an Expense
-export async function deleteExpense(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const paramsValidation = deleteExpenseSchema.safeParse(req.params);
-        
-    if (!paramsValidation.success) {
-      return sendError(res, "Invalid expense ID", 400, paramsValidation.error);
-    }
-    
-    const expenseId = paramsValidation.data.id;
+export const deleteExpense = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = deleteExpenseSchema.safeParse(req.params);
 
-    const existingExpense = await checkIfExpenseExistService(expenseId);
-
-    if(!existingExpense){
-      return sendError(res , "Expense Doesnt Exist!" , 404 , null);
-    }
-
-    const deletedExpense = await deleteExpenseService(expenseId);
-
-    if(!deletedExpense){
-      return sendError(res , "Didnt get deleted expense!" , 404 , null);
-    }
-
-    return sendSuccess(res , deletedExpense , "Successfully deleted an expense!" , 200);
-  } 
-  catch (error) {
-    next(error);
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid expense ID format");
   }
-}
+
+  const expenseId = paramsValidation.data.id;
+
+  const existingExpense = await checkIfExpenseExistService(expenseId);
+
+  if (!existingExpense) {
+    throw new NotFoundError("Expense with this ID does not exist");
+  }
+
+  const deletedExpense = await deleteExpenseService(expenseId);
+
+  if (!deletedExpense) {
+    throw new InternalServerError("Failed to delete expense");
+  }
+
+  sendSuccess(res, deletedExpense, "Expense deleted successfully", 200);
+});
