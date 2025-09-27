@@ -141,7 +141,7 @@ export async function getAllAmenityCategoriesService() {
         throw new Error(`Error while getting all amenities categories : ${message}`);
     }
 }
-    
+
 // Service to get a Single Villa
 export async function getSingleVillaService(villaId : number): Promise<Villa | null> {
     try {
@@ -320,25 +320,5 @@ export async function getVillaBookingsService(villaId: number): Promise<Booking[
         const message = error instanceof Error ? error.message : String(error);
         console.error(`Error while getting bookings for a villa: ${message}`);
         throw new Error(`Error while getting bookings for a villa: ${message}`);
-    }
-}
-
-// Service to get Monthly Revenue of a Villa
-export async function getVillaMonthlyRevenueService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-  
-// Service to get Availability of a Villa
-export async function getVillaAvailabilityService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
     }
 }

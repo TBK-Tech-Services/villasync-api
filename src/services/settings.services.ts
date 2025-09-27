@@ -132,16 +132,6 @@ export async function assignPermissionsToRoleService({roleId , permissionIds}: A
     }
 }
 
-// Service to Update an Existance User
-export async function updateUserService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
-    }
-}
-
 // Service to Add general Settings
 export async function addGeneralSettingsService(validatedData: addGeneralSettingsData): Promise<GeneralSetting | null>{
     try {

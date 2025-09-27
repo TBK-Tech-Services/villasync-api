@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 
+// Helper to Compare Passwords
 export async function comparePassword({password , hashedPassword} : {password: string ; hashedPassword: string}) : Promise<boolean> {
     try {
         const isPasswordSame = await bcrypt.compare(password , hashedPassword);

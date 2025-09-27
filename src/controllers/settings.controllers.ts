@@ -113,16 +113,6 @@ export async function inviteNewUser(req: Request, res: Response, next: NextFunct
     }
 }
 
-// Controller to Update an Existing User
-export async function updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try { 
-        
-    } 
-    catch (error) { 
-        next(error);
-    }
-}
-
 // Controller to Add General Settings 
 export async function addGeneralSettings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try { 

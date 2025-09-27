@@ -109,7 +109,7 @@ export async function getExpense(req: Request, res: Response, next: NextFunction
     if (!paramsValidation.success) {
       return sendError(res, "Invalid expense ID", 400, paramsValidation.error);
     }
-        
+    
     const expenseId = paramsValidation.data.id;
     
     const expense = await getExpenseService(expenseId);
@@ -133,7 +133,7 @@ export async function deleteExpense(req: Request, res: Response, next: NextFunct
     if (!paramsValidation.success) {
       return sendError(res, "Invalid expense ID", 400, paramsValidation.error);
     }
-        
+    
     const expenseId = paramsValidation.data.id;
 
     const existingExpense = await checkIfExpenseExistService(expenseId);
@@ -149,16 +149,6 @@ export async function deleteExpense(req: Request, res: Response, next: NextFunct
     }
 
     return sendSuccess(res , deletedExpense , "Successfully deleted an expense!" , 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to get All Villas For Expenses
-export async function getAllVillasForExpenses(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
   } 
   catch (error) {
     next(error);

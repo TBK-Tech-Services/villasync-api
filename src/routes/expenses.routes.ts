@@ -4,7 +4,6 @@ import {
   addExpense,
   updateExpense,
   deleteExpense,
-  getAllVillasForExpenses,
   getAllExpenseCategories,
   getExpense
 } from "../controllers/expenses.controllers.ts";
@@ -18,6 +17,5 @@ router.get("/categories", getAllExpenseCategories);
 router.delete("/:id", deleteExpense);
 router.get("/:id", getExpense);
 router.get("/", getAllExpenses);
-router.get("/villas", getAllVillasForExpenses);  
 
 export default router;

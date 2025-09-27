@@ -21,23 +21,3 @@ export async function getAllUsersService(): Promise<User[]> {
       throw new Error(`Error while getting all Users : ${message}`);
     }
 }
-  
-// Service to Update a User Role
-export async function updateUserRoleService(): Promise<void> {
-    try {
-      
-    } 
-    catch (error) {
-      console.error(error);
-    }
-}
-  
-// Service to Invite New User
-export async function inviteNewUserService(): Promise<void> {
-    try {
-      
-    } 
-    catch (error) {
-      console.error(error);
-    }
-}

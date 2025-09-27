@@ -2,7 +2,7 @@ import type { Expense_Type } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { addExpenseData } from "../validators/data-validators/expense/addExpense.ts";
 import type { updateExpenseBodyData } from "../validators/data-validators/expense/updateExpenseBody.ts";
-  
+
 // Service to Add An Expense
 export async function addExpenseService(validatedData: addExpenseData): Promise<any | null> {
   try {
@@ -35,12 +35,12 @@ export async function addExpenseService(validatedData: addExpenseData): Promise<
           : null
       };
 
-       const newExpense = await tx.expense.create({
-            data: expenseData,
-            include: {
-                category: true,
-                villa: true,
-            }
+      const newExpense = await tx.expense.create({
+        data: expenseData,
+          include: {
+            category: true,
+            villa: true,
+          }
         });        
 
         if(validatedData.expenseType === 'SPLIT'){
@@ -83,7 +83,7 @@ export async function addExpenseService(validatedData: addExpenseData): Promise<
     throw new Error(`Error adding new expense : ${message}`);
   }
 }
-  
+
 // Service to Update an Expense
 export async function checkIfExpenseExistService(expenseId: number): Promise<any | null> {
     try {
@@ -274,15 +274,5 @@ export async function deleteExpenseService(expenseId: number): Promise<any | nul
       const message = error instanceof Error ? (error.message) : String(error);
       console.error(`Error deleting an expense : ${message}`);
       throw new Error(`Error deleting an expense : ${message}`);
-    }
-}
-  
-// Service to get All Villas For Expenses
-export async function getAllVillasForExpensesService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
     }
 }

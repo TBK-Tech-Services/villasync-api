@@ -129,26 +129,6 @@ export async function createAdminService({firstName , lastName , email , passwor
     throw new Error(`Error while creating admin : ${message}`);
   }
 }
-  
-// Service to Forgot Password
-export async function forgotPasswordService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) {
-      console.error(error);
-    }
-}
-  
-// Service to Change Password
-export async function changePasswordService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) {
-      console.error(error);
-    }
-}
 
 // Service to Get Permissions By Role
 export async function getPermissionsByRole(role: string): Promise<string[] | void> {

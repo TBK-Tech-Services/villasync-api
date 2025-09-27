@@ -4,6 +4,7 @@ import { createAdminService, getAdminService, getUserService  } from "../service
 import { sendError, sendSuccess } from "../utils/general/response.ts";
 import { comparePassword } from "../utils/auth/comparePassword.ts";
 import { generateJWT } from "../utils/auth/generateJWT.ts";
+import { loginSchema } from "../validators/data-validators/auth/login.ts";
 
 
 // Controller to Create Admin
@@ -45,22 +46,21 @@ export async function createAdmin(req: Request, res: Response, next: NextFunctio
 // Controller to Login User
 export async function loginUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    const {
-      email,
-      password
-    } = req.body;
-
-    if(!email || !password){
-      return sendError(res, "Fill all fields to continue...", 400);
+    const validationResult = loginSchema.safeParse(req.body);
+    
+    if(!validationResult.success){
+      return sendError(res , "Validation Failed !!!" , 400 , validationResult.error);
     }
+    
+    const validatedData = validationResult.data;
 
-    const user = await getUserService({email});
+    const user = await getUserService({email: validatedData.email});
 
     if(!user){
       return sendError(res, "User doesnt exist...", 404);
     }
 
-    const passwordMatch = await comparePassword({password , hashedPassword : user.password});
+    const passwordMatch = await comparePassword({password: validatedData.password , hashedPassword : user.password});
 
     if(!passwordMatch){
       return sendError(res , "Invalid credentials..." , 401);
@@ -88,26 +88,6 @@ export async function logoutUser(req: Request, res: Response, next: NextFunction
   try {
       res.clearCookie('jwt');
       return sendSuccess(res , null , "User logout successfull" , 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to Forgot Password
-export async function forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to Change Password
-export async function changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
   } 
   catch (error) {
     next(error);

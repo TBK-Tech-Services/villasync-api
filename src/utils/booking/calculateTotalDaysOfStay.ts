@@ -1,4 +1,5 @@
 
+// Helper to Calculate Total Days of Stay
 export function getTotalDaysOfStay(checkIn: Date, checkOut: Date): number {
     const timeDifference = checkOut.getTime() - checkIn.getTime();
     

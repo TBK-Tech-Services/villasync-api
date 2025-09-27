@@ -49,7 +49,7 @@ export async function getTotalRevenueService(): Promise<number | null> {
         throw new Error(`Error getting total revenue : ${message}`);
     }
 }
-  
+
 // Service to Get Total Count of Guest
 export async function getTotalGuestsCountService(): Promise<number | null> {
     try {
@@ -67,7 +67,7 @@ export async function getTotalGuestsCountService(): Promise<number | null> {
         throw new Error(`Error getting bookings count : ${message}`);
     }
 }
-  
+
 // Service to Get Count of Pending Bookings
 export async function getPendingBookingsCountService(): Promise<number | null> {
     try {
@@ -88,7 +88,7 @@ export async function getPendingBookingsCountService(): Promise<number | null> {
         throw new Error(`Error getting pending bookings count : ${message}`);
     }
 }
-  
+
 // Service to Get Count of Cancellations
 export async function getCancellationsCountService(): Promise<number | null> {
     try {
@@ -167,7 +167,7 @@ export async function getTodaysCheckinsService(): Promise<{ count: number, total
         throw new Error(`Error getting count of todays checkins : ${message}`);
     }
 }
-  
+
 // Service to Get Tommorows Checkins
 export async function getTomorrowsCheckinsService(): Promise<{ count: number, totalIncome: number }> {
     try {   
@@ -204,7 +204,7 @@ export async function getTomorrowsCheckinsService(): Promise<{ count: number, to
         throw new Error(`Error getting count of tommorows checkins : ${message}`);
     }
 }
-  
+
 // Service to Get Weeks Checkins
 export async function getWeeksCheckinsService(): Promise<{ count: number, totalIncome: number }> {
     try {

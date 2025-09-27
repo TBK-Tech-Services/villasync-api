@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import type { JWT_Payload } from '../../types/auth/payload';
 
+// Helper to Generate JWT Token
 export async function generateJWT({firstName , lastName , email , role} : JWT_Payload) : Promise<string> {
     try {
         const payload : JWT_Payload = { firstName, lastName, email, role };

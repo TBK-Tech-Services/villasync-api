@@ -1,6 +1,6 @@
 import type { Booking } from "@prisma/client";
 import prisma from "../db/DB.ts";
-import type { Booking_Data } from "../utils/booking/bookingData.ts";
+import type { Booking_Data } from "../types/booking/bookingData.ts";
 import type { searchAndFilterBookingData } from "../validators/data-validators/booking/searchAndFilterBooking.ts";
 import type { updateBookingStatusBodyData } from "../validators/data-validators/booking/updateBookingStatusBody.ts";
 import type { updatePaymentStatusBodyData } from "../validators/data-validators/booking/updatePaymentStatusBody.ts";
@@ -266,15 +266,5 @@ export async function searchAndFilterBookingsService(validatedData: searchAndFil
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error searching and filtering bookings : ${message}`);
         throw new Error(`Error searching and filtering bookings : ${message}`);
-    }
-}
-        
-// Service to Export Bookings
-export async function exportBookingsService(): Promise<void> {
-    try {
-
-    } 
-    catch (error) { 
-        console.error(error); 
     }
 }

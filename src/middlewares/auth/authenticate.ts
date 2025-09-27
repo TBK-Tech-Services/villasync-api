@@ -19,7 +19,6 @@ declare global {
 // Midleware to Check If a User is Authenticated or Not
 export async function authenticate(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-        console.log(SECRET_KEY);
         if (!SECRET_KEY) {
             return sendError(res, "SECRET_KEY not configured" , 500, null);
         }

@@ -163,22 +163,6 @@ export async function deleteVilla(req: Request, res: Response, next: NextFunctio
   }
 }
 
-// Controller to Search and Filter Villas
-export async function searchAndFilterVillas(req: Request, res: Response, next: NextFunction) {
-  try {
-    const validatedData = searchAndFilterVillasSchema.safeParse(req.query);
-
-    if(!validatedData.success){
-      // send error
-    }
-
-    console.log(validatedData.data);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
 // Controller to get Recent Bookings of a Villa
 export async function getVillaRecentBookings(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
@@ -233,26 +217,6 @@ export async function getVillaBookings(req: Request, res: Response, next: NextFu
     }
 
     return sendSuccess(res , recentBookings , "Successfully Got Villa Bookings !" , 200);
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to get Monthly Revenue of a Villa
-export async function getVillaMonthlyRevenue(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
-  } 
-  catch (error) {
-    next(error);
-  }
-}
-
-// Controller to get Availability of a Villa
-export async function getVillaAvailability(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
   } 
   catch (error) {
     next(error);

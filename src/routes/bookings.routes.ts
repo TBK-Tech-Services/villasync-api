@@ -4,7 +4,6 @@ import {
   addBooking,
   updateBooking,
   deleteBooking,
-  exportBookings,
   getABooking,
   searchAndFilterBookings,
   updateBookingStatus,
@@ -22,6 +21,5 @@ router.patch("/:id/status", updateBookingStatus);
 router.patch("/:id/payment-status", updatePaymentStatus);  
 router.delete("/:id", deleteBooking);  
 router.get("/:id", getABooking);  
-router.get("/export", exportBookings);  
 
 export default router;

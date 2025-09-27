@@ -3,7 +3,6 @@ import {
   getGeneralSettings,
   updateGeneralSettings,
   inviteNewUser,
-  updateUser,
   getAllPermissions,
   getAllRoles,
   addGeneralSettings,
@@ -24,7 +23,6 @@ const router = Router();
 router.get("/user-management/roles", authenticate , getAllRoles);  
 router.get("/user-management/permissions", authenticate , getAllPermissions);  
 router.post("/user-management/invite-user", authenticate , authorize('INVITE_USER') , inviteNewUser);  
-router.put("/user-management/update-user" , authenticate , updateUser);
 router.post("/general", addGeneralSettings); 
 router.put("/general/:id", updateGeneralSettings);  
 router.get("/general", getGeneralSettings);  

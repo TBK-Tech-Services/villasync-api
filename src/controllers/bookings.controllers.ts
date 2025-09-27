@@ -368,13 +368,3 @@ export async function searchAndFilterBookings(req: Request, res: Response, next:
     next(error);
   }
 }
-
-// Controller to Export Bookings
-export async function exportBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    
-  } 
-  catch (error) {
-    next(error);
-  }
-}
