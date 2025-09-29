@@ -2,7 +2,7 @@ import prisma from "../db/DB.ts";
 import type { getFinanceQueryParamsData } from "../validators/data-validators/finance/getFinanceParams.ts";
 import { isVillaPresentService } from "./villas.services.ts";
 
-// Service to Calculate Total Income Card Data
+// Service 1: Calculate Total Income Card Data
 export async function getTotalIncomeService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
         let where: any = {};
@@ -132,231 +132,503 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
     }
 }
 
-// Service to Calculate Total Expense Card Data
+// Service 2: Calculate Total Expense Card Data
 export async function getTotalExpenseService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
-        // Step 1: Build base query for Expense table with ExpenseCategory join
+        let where: any = {};
         
-        // Step 2: Apply date filters on expense.date field
-        // - Same date filtering logic as income service
+        // Date filters
+        if(filters.month){
+            const currentYear = new Date().getFullYear();
+            const startOfMonth = new Date(currentYear, filters.month - 1, 1);
+            const endOfMonth = new Date(currentYear, filters.month, 0);
+            
+            where.date = {
+                gte: startOfMonth,
+                lte: endOfMonth
+            };
+        }
+        else if(filters.startDate && filters.endDate && !filters.month){
+            where.date = {
+                gte: filters.startDate,
+                lte: filters.endDate
+            };
+        }
+        else {
+            const currentYear = new Date().getFullYear();
+            const startOfYear = new Date(currentYear, 0, 1);
+            const endOfYear = new Date(currentYear, 11, 31);
+            
+            where.date = {
+                gte: startOfYear,
+                lte: endOfYear
+            };
+        }
         
-        // Step 3: Handle different expense types
-        // - For INDIVIDUAL type: direct villa mapping (expense.villaId)
-        // - For SPLIT type: join with ExpenseVilla table
+        // Calculate INDIVIDUAL expenses
+        let individualWhere = { ...where, type: 'INDIVIDUAL' };
+        if(filters.villaId){
+            individualWhere.villaId = filters.villaId;
+        }
         
-        // Step 4: Apply villa filter
-        // - Filter by expense.villaId for INDIVIDUAL
-        // - Filter by ExpenseVilla.villaId for SPLIT
+        const individualExpensesResult = await prisma.expense.aggregate({
+            where: individualWhere,
+            _sum: {
+                amount: true
+            }
+        });
         
-        // Step 5: Calculate total expenses
-        // - Sum expense amounts based on type
-        // - For SPLIT: sum ExpenseVilla.amount, not expense.amount
-        // - Handle cases where no expenses exist (return 0)
+        const individualTotal = individualExpensesResult._sum.amount || 0;
         
-        // Step 6: Calculate period comparison for growth percentage
-        // - Get previous period expense data
-        // - Calculate percentage change
+        // Calculate SPLIT expenses
+        let splitWhere = { ...where, type: 'SPLIT' };
         
-        // Step 7: Return formatted data for Total Expense Card
-        // Return: { totalExpenses: number, growthPercentage: number, isGrowthPositive: boolean }
+        const splitExpenses = await prisma.expenseVilla.aggregate({
+            where: {
+                expense: splitWhere,
+                ...(filters.villaId ? { villaId: filters.villaId } : {})
+            },
+            _sum: {
+                amount: true
+            }
+        });
+        
+        const splitTotal = splitExpenses._sum.amount || 0;
+        
+        const currentTotalExpense = individualTotal + splitTotal;
+        
+        // Previous period calculation
+        let previousWhere: any = {};
+        
+        if(filters.month){
+            const currentYear = new Date().getFullYear();
+            let prevMonth = filters.month - 1;
+            let prevYear = currentYear;
+            
+            if(prevMonth === 0){
+                prevMonth = 12;
+                prevYear = currentYear - 1;
+            }
+            
+            const startOfPrevMonth = new Date(prevYear, prevMonth - 1, 1);
+            const endOfPrevMonth = new Date(prevYear, prevMonth, 0);
+            
+            previousWhere = {
+                date: {
+                    gte: startOfPrevMonth,
+                    lte: endOfPrevMonth
+                }
+            };
+        }
+        else if(filters.startDate && filters.endDate){
+            const durationMs = filters.endDate.getTime() - filters.startDate.getTime();
+            const previousEndDate = new Date(filters.startDate.getTime() - 1);
+            const previousStartDate = new Date(previousEndDate.getTime() - durationMs);
+            
+            previousWhere = {
+                date: {
+                    gte: previousStartDate,
+                    lte: previousEndDate
+                }
+            };
+        }
+        else {
+            const currentYear = new Date().getFullYear();
+            const prevYear = currentYear - 1;
+            const startOfPrevYear = new Date(prevYear, 0, 1);
+            const endOfPrevYear = new Date(prevYear, 11, 31);
+            
+            previousWhere = {
+                date: {
+                    gte: startOfPrevYear,
+                    lte: endOfPrevYear
+                }
+            };
+        }
+        
+        // Previous INDIVIDUAL
+        let prevIndividualWhere = { ...previousWhere, type: 'INDIVIDUAL' };
+        if(filters.villaId){
+            prevIndividualWhere.villaId = filters.villaId;
+        }
+        
+        const prevIndividualResult = await prisma.expense.aggregate({
+            where: prevIndividualWhere,
+            _sum: {
+                amount: true
+            }
+        });
+        
+        const prevIndividualTotal = prevIndividualResult._sum.amount || 0;
+        
+        // Previous SPLIT
+        let prevSplitWhere = { ...previousWhere, type: 'SPLIT' };
+        
+        const prevSplitResult = await prisma.expenseVilla.aggregate({
+            where: {
+                expense: prevSplitWhere,
+                ...(filters.villaId ? { villaId: filters.villaId } : {})
+            },
+            _sum: {
+                amount: true
+            }
+        });
+        
+        const prevSplitTotal = prevSplitResult._sum.amount || 0;
+        
+        const previousTotalExpense = prevIndividualTotal + prevSplitTotal;
+        
+        // Growth calculation
+        let growthPercentage = 0;
+        if(previousTotalExpense > 0){
+            growthPercentage = ((currentTotalExpense - previousTotalExpense) / previousTotalExpense) * 100;
+        } 
+        else if(currentTotalExpense > 0){
+            growthPercentage = 100;
+        }
+        
+        const isGrowthPositive = (growthPercentage >= 0);
+        
+        return {
+            totalExpenses: currentTotalExpense,
+            growthPercentage: Math.round(growthPercentage * 100) / 100,
+            isGrowthPositive: isGrowthPositive
+        };
 
     } 
     catch (error) { 
-        console.error(error); 
-        throw error;
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting total expense : ${message}`);
+        throw new Error(`Error while getting total expense : ${message}`);
     }
 }
 
-// Service to Calculate Net Profit/Loss Card Data
+// Service 3: Calculate Net Profit/Loss Card Data
 export async function getNetProfitLossService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
-        // Step 1: Get total income using getTotalIncomeService
-        // - Call getTotalIncomeService(filters)
-        // - Extract totalIncome value
+        const incomeData = await getTotalIncomeService(filters);
+        const expenseData = await getTotalExpenseService(filters);
         
-        // Step 2: Get total expenses using getTotalExpenseService
-        // - Call getTotalExpenseService(filters)
-        // - Extract totalExpenses value
+        const totalIncome = incomeData.totalIncome;
+        const totalExpenses = expenseData.totalExpenses;
         
-        // Step 3: Calculate net profit/loss
-        // - netAmount = totalIncome - totalExpenses
-        // - isProfit = netAmount > 0
+        const netAmount = totalIncome - totalExpenses;
+        const isProfit = netAmount > 0;
         
-        // Step 4: Calculate profit margin
-        // - profitMargin = (netAmount / totalIncome) * 100
-        // - Handle division by zero case (if totalIncome = 0)
+        let profitMargin = 0;
+        if(totalIncome > 0){
+            profitMargin = (netAmount / totalIncome) * 100;
+        }
         
-        // Step 5: Calculate period comparison
-        // - Get previous period profit/loss
-        // - Calculate growth/decline percentage
+        // Previous period profit/loss
+        const previousIncome = incomeData.totalIncome / (1 + incomeData.growthPercentage / 100);
+        const previousExpense = expenseData.totalExpenses / (1 + expenseData.growthPercentage / 100);
+        const previousNetAmount = previousIncome - previousExpense;
         
-        // Step 6: Return formatted data for Net Profit/Loss Card
-        // Return: { netAmount: number, isProfit: boolean, profitMargin: number, growthPercentage: number }
+        let growthPercentage = 0;
+        if(previousNetAmount !== 0){
+            growthPercentage = ((netAmount - previousNetAmount) / Math.abs(previousNetAmount)) * 100;
+        } 
+        else if(netAmount !== 0){
+            growthPercentage = 100;
+        }
+        
+        return {
+            netAmount: netAmount,
+            isProfit: isProfit,
+            profitMargin: Math.round(profitMargin * 100) / 100,
+            growthPercentage: Math.round(growthPercentage * 100) / 100
+        };
 
     } 
     catch (error) { 
-        console.error(error); 
-        throw error;
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting net profit/loss : ${message}`);
+        throw new Error(`Error while getting net profit/loss : ${message}`);
     }
 }
 
-// Service to Calculate Average Monthly Profit Card Data
+// Service 4: Calculate Average Monthly Profit Card Data
 export async function getAverageMonthlyProfitService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
-        // Step 1: Determine time period for calculation
-        // - If month filter: get that month's data only
-        // - If date range: use that range
-        // - Default: current year (12 months)
+        const monthlyData = await getMonthlyIncomeExpenseChartService(filters);
         
-        // Step 2: Get monthly income data
-        // - Group bookings by month
-        // - Sum totalPayableAmount per month
+        if(!monthlyData || monthlyData.length === 0){
+            return { averageMonthlyProfit: 0 };
+        }
         
-        // Step 3: Get monthly expense data
-        // - Group expenses by month
-        // - Sum amounts per month (handle SPLIT vs INDIVIDUAL)
+        const totalProfit = monthlyData.reduce((sum: number, item: any) => {
+            return sum + (item.income - item.expense);
+        }, 0);
         
-        // Step 4: Calculate monthly profits
-        // - For each month: monthlyProfit = monthlyIncome - monthlyExpense
+        const averageMonthlyProfit = totalProfit / monthlyData.length;
         
-        // Step 5: Calculate average monthly profit
-        // - averageMonthly = sum of all monthly profits / number of months
-        // - Handle cases where no data exists
-        
-        // Step 6: Return formatted data for Average Monthly Card
-        // Return: { averageMonthlyProfit: number }
+        return {
+            averageMonthlyProfit: Math.round(averageMonthlyProfit)
+        };
 
     } 
     catch (error) { 
-        console.error(error); 
-        throw error;
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting average monthly profit : ${message}`);
+        throw new Error(`Error while getting average monthly profit : ${message}`);
     }
 }
 
-// Service to Get Monthly Income vs Expense Chart Data
+// Service 5: Get Monthly Income vs Expense Chart Data
 export async function getMonthlyIncomeExpenseChartService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
-        // Step 1: Determine months to show based on filters
-        // - If month filter: show last 6 months including selected month
-        // - If date range: show months in that range
-        // - Default: show current year months (Jan-Dec)
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let startMonth = 0;
+        let endMonth = 11;
+        let year = new Date().getFullYear();
         
-        // Step 2: Get monthly income breakdown
-        // - Group bookings by month
-        // - Sum totalPayableAmount per month
-        // - Create array: [{ month: "Jan", income: 450000 }, ...]
+        if(filters.month){
+            // Show last 6 months including selected
+            endMonth = filters.month - 1;
+            startMonth = Math.max(0, endMonth - 5);
+        }
+        else if(filters.startDate && filters.endDate){
+            startMonth = filters.startDate.getMonth();
+            endMonth = filters.endDate.getMonth();
+            year = filters.startDate.getFullYear();
+        }
         
-        // Step 3: Get monthly expense breakdown
-        // - Group expenses by month (handle SPLIT vs INDIVIDUAL)
-        // - Sum amounts per month
-        // - Create array: [{ month: "Jan", expense: 150000 }, ...]
+        const result = [];
         
-        // Step 4: Combine income and expense data
-        // - Merge both arrays by month
-        // - Ensure all months have both income and expense values (default 0)
+        for(let i = startMonth; i <= endMonth; i++){
+            const monthStart = new Date(year, i, 1);
+            const monthEnd = new Date(year, i + 1, 0);
+            
+            let incomeWhere: any = {
+                checkIn: {
+                    gte: monthStart,
+                    lte: monthEnd
+                }
+            };
+            
+            if(filters.villaId){
+                incomeWhere.villaId = filters.villaId;
+            }
+            
+            const incomeResult = await prisma.booking.aggregate({
+                where: incomeWhere,
+                _sum: {
+                    totalPayableAmount: true
+                }
+            });
+            
+            // Expense calculation
+            let expenseWhere: any = {
+                date: {
+                    gte: monthStart,
+                    lte: monthEnd
+                }
+            };
+            
+            let individualWhere = { ...expenseWhere, type: 'INDIVIDUAL' };
+            if(filters.villaId){
+                individualWhere.villaId = filters.villaId;
+            }
+            
+            const individualExpense = await prisma.expense.aggregate({
+                where: individualWhere,
+                _sum: { amount: true }
+            });
+            
+            let splitWhere = { ...expenseWhere, type: 'SPLIT' };
+            const splitExpense = await prisma.expenseVilla.aggregate({
+                where: {
+                    expense: splitWhere,
+                    ...(filters.villaId ? { villaId: filters.villaId } : {})
+                },
+                _sum: { amount: true }
+            });
+            
+            const monthIncome = incomeResult._sum.totalPayableAmount || 0;
+            const monthExpense = (individualExpense._sum.amount || 0) + (splitExpense._sum.amount || 0);
+            
+            result.push({
+                month: months[i],
+                income: monthIncome,
+                expense: monthExpense
+            });
+        }
         
-        // Step 5: Format data for bar chart
-        // - Return array for frontend chart component
-        // Return: [{ month: "Jan", income: 450000, expense: 150000 }, ...]
+        return result;
 
     } 
     catch (error) { 
-        console.error(error); 
-        throw error;
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting monthly chart data : ${message}`);
+        throw new Error(`Error while getting monthly chart data : ${message}`);
     }
 }
 
-// Service to Get Profit Trend Chart Data
+// Service 6: Get Profit Trend Chart Data
 export async function getProfitTrendChartService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
-        // Step 1: Get monthly income and expense data
-        // - Use getMonthlyIncomeExpenseChartService to get base data
+        const monthlyData = await getMonthlyIncomeExpenseChartService(filters);
         
-        // Step 2: Calculate monthly profits
-        // - For each month: profit = income - expense
+        const profitTrend = monthlyData.map((item: any) => ({
+            month: item.month,
+            profit: item.income - item.expense
+        }));
         
-        // Step 3: Format data for line chart
-        // - Create array with month and profit values
-        // - Handle negative profits (losses)
-        
-        // Step 4: Calculate trend indicators
-        // - Identify growth/decline patterns
-        // - Calculate month-over-month changes
-        
-        // Step 5: Return formatted data for profit trend chart
-        // Return: [{ month: "Jan", profit: 300000 }, { month: "Feb", profit: 280000 }, ...]
+        return profitTrend;
 
     } 
     catch (error) { 
-        console.error(error); 
-        throw error;
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting profit trend : ${message}`);
+        throw new Error(`Error while getting profit trend : ${message}`);
     }
 }
 
-// Service to Get Villa Performance Data
+// Service 7: Get Villa Performance Data
 export async function getVillaPerformanceService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
-        // Step 1: Get all villas or specific villa if villaId provided
-        // - If villaId in filters: get only that villa
-        // - Else: get all villas from database
+        let villas;
         
-        // Step 2: For each villa, calculate income
-        // - Query bookings for each villa with date filters
-        // - Sum totalPayableAmount per villa
+        if(filters.villaId){
+            villas = await prisma.villa.findMany({
+                where: { id: filters.villaId },
+                select: { id: true, name: true }
+            });
+        } else {
+            villas = await prisma.villa.findMany({
+                select: { id: true, name: true }
+            });
+        }
         
-        // Step 3: For each villa, calculate expenses
-        // - Query INDIVIDUAL expenses (direct villa mapping)
-        // - Query SPLIT expenses (from ExpenseVilla table)
-        // - Sum total expenses per villa
+        const performance = [];
         
-        // Step 4: Calculate performance metrics per villa
-        // - villaProfit = villaIncome - villaExpenses
-        // - profitMargin = (villaProfit / villaIncome) * 100
+        for(const villa of villas){
+            const villaFilters = { ...filters, villaId: villa.id };
+            
+            const incomeData = await getTotalIncomeService(villaFilters);
+            const expenseData = await getTotalExpenseService(villaFilters);
+            
+            const income = incomeData.totalIncome;
+            const expenses = expenseData.totalExpenses;
+            const profit = income - expenses;
+            
+            let profitMargin = 0;
+            if(income > 0){
+                profitMargin = (profit / income) * 100;
+            }
+            
+            performance.push({
+                villaId: villa.id,
+                villaName: villa.name,
+                income: income,
+                profit: profit,
+                profitMargin: Math.round(profitMargin * 100) / 100
+            });
+        }
         
-        // Step 5: Sort villas by performance
-        // - Sort by profit descending (best performing first)
+        performance.sort((a, b) => b.profit - a.profit);
         
-        // Step 6: Format data for villa performance list
-        // Return: [{ villaId, villaName, income, profit, profitMargin }, ...]
+        return performance;
 
     } 
     catch (error) { 
-        console.error(error); 
-        throw error;
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting villa performance : ${message}`);
+        throw new Error(`Error while getting villa performance : ${message}`);
     }
 }
 
-// Service to Get Expense Breakdown Pie Chart Data
+// Service 8: Get Expense Breakdown Pie Chart Data
 export async function getExpenseBreakdownService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
-        // Step 1: Build base query for Expense table with ExpenseCategory join
+        let where: any = {};
         
-        // Step 2: Apply date and villa filters (same as getTotalExpenseService)
+        if(filters.month){
+            const currentYear = new Date().getFullYear();
+            const startOfMonth = new Date(currentYear, filters.month - 1, 1);
+            const endOfMonth = new Date(currentYear, filters.month, 0);
+            
+            where.date = {
+                gte: startOfMonth,
+                lte: endOfMonth
+            };
+        }
+        else if(filters.startDate && filters.endDate && !filters.month){
+            where.date = {
+                gte: filters.startDate,
+                lte: filters.endDate
+            };
+        }
+        else {
+            const currentYear = new Date().getFullYear();
+            const startOfYear = new Date(currentYear, 0, 1);
+            const endOfYear = new Date(currentYear, 11, 31);
+            
+            where.date = {
+                gte: startOfYear,
+                lte: endOfYear
+            };
+        }
         
-        // Step 3: Handle different expense types and calculate amounts by category
-        // - For INDIVIDUAL type: use expense.amount directly
-        // - For SPLIT type: use ExpenseVilla.amount
+        const categories = await prisma.expenseCategory.findMany();
+        const breakdown = [];
         
-        // Step 4: Group expenses by category
-        // - Group by ExpenseCategory.name
-        // - Sum amounts per category
+        for(const category of categories){
+            let categoryWhere = { ...where, categoryId: category.id };
+            
+            // INDIVIDUAL expenses
+            let individualWhere = { ...categoryWhere, type: 'INDIVIDUAL' };
+            if(filters.villaId){
+                individualWhere.villaId = filters.villaId;
+            }
+            
+            const individualResult = await prisma.expense.aggregate({
+                where: individualWhere,
+                _sum: { amount: true }
+            });
+            
+            // SPLIT expenses
+            let splitWhere = { ...categoryWhere, type: 'SPLIT' };
+            const splitResult = await prisma.expenseVilla.aggregate({
+                where: {
+                    expense: splitWhere,
+                    ...(filters.villaId ? { villaId: filters.villaId } : {})
+                },
+                _sum: { amount: true }
+            });
+            
+            const categoryAmount = (individualResult._sum.amount || 0) + (splitResult._sum.amount || 0);
+            
+            if(categoryAmount > 0){
+                breakdown.push({
+                    category: category.name,
+                    amount: categoryAmount
+                });
+            }
+        }
         
-        // Step 5: Calculate percentages for pie chart
-        // - totalExpenses = sum of all category amounts
-        // - For each category: percentage = (categoryAmount / totalExpenses) * 100
+        const totalExpenses = breakdown.reduce((sum, item) => sum + item.amount, 0);
         
-        // Step 6: Format data for pie chart
-        // - Sort categories by amount (largest first)
-        // Return: [{ category: "Maintenance", amount: 280000, percentage: 35 }, ...]
+        const result = breakdown.map(item => ({
+            category: item.category,
+            amount: item.amount,
+            percentage: totalExpenses > 0 ? Math.round((item.amount / totalExpenses) * 10000) / 100 : 0
+        }));
+        
+        result.sort((a, b) => b.amount - a.amount);
+        
+        return result;
 
     } 
     catch (error) { 
-        console.error(error); 
-        throw error;
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting expense breakdown : ${message}`);
+        throw new Error(`Error while getting expense breakdown : ${message}`);
     }
 }
 
-// Service to Orchestrate All Dashboard Data
+// Main Service: Orchestrate All Dashboard Data
 export async function getFinanceDashboardService(queryParams: getFinanceQueryParamsData): Promise<any> {
     try {
         if(queryParams.villaId){
