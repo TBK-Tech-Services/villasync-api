@@ -4,8 +4,8 @@ import { getAnalyticsSummary, getMonthlyRevenue, getVillaPerformance } from "../
 const router = Router();
 
 // Owner Analytics Endpoints
-router.get("/summary", getAnalyticsSummary);
-router.get("/villas/performance", getVillaPerformance);
-router.get("/revenue/monthly", getMonthlyRevenue);
+router.get("/summary/:ownerId", getAnalyticsSummary);
+router.get("/villas/performance/:ownerId", getVillaPerformance);
+router.get("/revenue/monthly/:ownerId", getMonthlyRevenue);
 
 export default router;
