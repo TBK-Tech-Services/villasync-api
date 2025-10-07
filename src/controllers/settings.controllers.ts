@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
+import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
 import { sendSuccess } from "../utils/general/response.ts";
 import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
@@ -13,6 +13,7 @@ import { assignVillasToOwnerSchema } from "../validators/data-validators/setting
 import { updateVillaAssignmentParamSchema } from "../validators/data-validators/settings/updateVillasAssignmentParam.ts";
 import { updateVillaAssignmentBodySchema } from "../validators/data-validators/settings/updateVillasAssignmentBody.ts";
 import { unassignSpecificVillaParamSchema } from "../validators/data-validators/settings/unassignSpecificVillaParam.ts";
+import { unassignAllVillasParamSchema } from "../validators/data-validators/settings/unassignAllVillasParam.ts";
 
 // Controller to get All Roles
 export const getAllRoles = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -238,7 +239,16 @@ export const unassignSpecificVilla = catchAsync(async (req: Request, res: Respon
 
 // Controller to Un-Assign All Villas From Owner
 export const unassignAllVillasFromOwner = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const paramsValidation = unassignAllVillasParamSchema.safeParse(req.params);
     
+    if (!paramsValidation.success) {
+        throw new ValidationError("Invalid Owner ID format");
+    }
+    
+    const ownerId = paramsValidation.data.ownerId;
+
+    const unassignedVillas = await unassignAllVillasFromOwnerService({ownerId: ownerId});
+    return sendSuccess(res , unassignedVillas , "Successfully Un-Assigned All Villas to Owner" , 200);
 });
 
 // Controller to get All Owners

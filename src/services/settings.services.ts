@@ -284,12 +284,22 @@ export async function unassignSpecificVillaService({villaId , ownerId}: {villaId
 }
 
 // Service to Un-Assign All Villas From Owner
-export async function unassignAllVillasFromOwnerService(): Promise<void> {
+export async function unassignAllVillasFromOwnerService({ownerId}: {ownerId: number}): Promise<{count: number}> {
     try {
+        const unassignedVillas = await prisma.villa.updateMany({
+            where : {
+                ownerId: ownerId
+            },
+            data : {
+                ownerId : null
+            }
+        });
 
+        return unassignedVillas;
     } 
     catch (error) { 
-        console.error(error); 
+        console.error(`Error unassigning all villas from owner: ${error}`);
+        throw new InternalServerError("Failed to unassign all villas from owner");
     }
 }
 
