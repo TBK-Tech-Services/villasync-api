@@ -4,6 +4,6 @@ import { getOwnerCalendarAvailability } from "../controllers/ownerCalendar.contr
 const router = Router();
 
 // Owner Calendar Endpoint
-router.get("/availability", getOwnerCalendarAvailability);
+router.get("/availability/:ownerId", getOwnerCalendarAvailability);
 
 export default router;
