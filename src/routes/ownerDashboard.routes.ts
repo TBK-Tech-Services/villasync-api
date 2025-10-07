@@ -4,8 +4,8 @@ import { getOwnerDashboardStats, getOwnerVillas, getRecentBookings } from "../co
 const router = Router();
 
 // Owner Dashboard Endpoints
-router.get("/stats", getOwnerDashboardStats);
-router.get("/villas", getOwnerVillas);
-router.get("/bookings/recent", getRecentBookings);
+router.get("/stats/:ownerId", getOwnerDashboardStats);
+router.get("/villas/:ownerId", getOwnerVillas);
+router.get("/bookings/recent/:ownerId", getRecentBookings);
 
 export default router;
