@@ -1,4 +1,4 @@
-import type { GeneralSetting, Permission, PrismaClient, Role, User } from "@prisma/client";
+import type { GeneralSetting, Permission, PrismaClient, Role, User, Villa } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { createUserData } from "../validators/data-validators/settings/createUser.ts";
 import type { AssignRolePermissionsInput } from "../validators/data-validators/settings/assignRolePermissionsInput.ts";
@@ -264,12 +264,22 @@ export async function updateOwnerVillaAssignmentsService({ownerId , villas}: {ow
 }
 
 // Service to Un-Assign Specific Villa
-export async function unassignSpecificVillaService(): Promise<void> {
+export async function unassignSpecificVillaService({villaId , ownerId}: {villaId : number , ownerId : number}): Promise<Villa> {
     try {
+        const unassignedVilla = await prisma.villa.update({
+            where : {
+                id: villaId,
+            },
+            data : {
+                ownerId : null
+            }
+        });
 
+        return unassignedVilla;
     } 
     catch (error) { 
-        console.error(error); 
+        console.error(`Error unassigning villa: ${error}`);
+        throw new InternalServerError("Failed to unassign villa");
     }
 }
 
