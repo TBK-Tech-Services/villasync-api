@@ -7,6 +7,9 @@ import usersRoutes from '../src/routes/users.routes.ts';
 import villasRoutes from '../src/routes/villas.routes.ts';
 import adminDashboardRoutes from '../src/routes/adminDashboard.routes.ts';
 import settingsRoutes from '../src/routes/settings.routes.ts';
+import ownerDashboardRoutes from '../src/routes/ownerDashboard.routes.ts';
+import ownerCalenderRoutes from '../src/routes/ownerCalendar.routes.ts';
+import ownerAnalyticsRoutes from '../src/routes/ownerAnalytics.routes.ts';
 import agentRoutes from '../src/routes/agent.routes.ts';
 import healthRoutes from '../src/routes/health.routes.ts';
 import { globalErrorHandler } from './middlewares/errorHandler.ts';
@@ -35,6 +38,11 @@ app.use("/expenses/v1" , expensesRoutes);
 app.use("/finance/v1" , financeRoutes);
 app.use("/users/v1" , usersRoutes);
 app.use("/settings/v1" , settingsRoutes);
+
+// Routes for Owner Dashboard
+app.use("/owner/v1" , ownerDashboardRoutes);
+app.use("/owner/v1/calender" , ownerCalenderRoutes);
+app.use("/owner/v1/analytics" , ownerAnalyticsRoutes);
 
 // Routes for Agent Landing Page
 app.use("/agent/v1" , agentRoutes);
