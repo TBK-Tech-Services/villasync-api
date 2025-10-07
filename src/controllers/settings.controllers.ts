@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllOwnersWithVillasService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
+import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllOwnersWithVillasService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, getVillaOwnerManagementStatsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
 import { sendSuccess } from "../utils/general/response.ts";
 import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
@@ -273,5 +273,6 @@ export const getAllOwnersWithVillas = catchAsync(async (req: Request, res: Respo
 
 // Controller to get All Stats
 export const getVillaOwnerManagementStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    
+    const stats = await getVillaOwnerManagementStatsService();
+    return sendSuccess(res , stats , "Successfully get Villa Owner Management Stats" , 200);
 });

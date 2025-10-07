@@ -346,11 +346,42 @@ export async function getAllOwnersWithVillasService(): Promise<User[]> {
 }
 
 // Service to get All Stats
-export async function getVillaOwnerManagementStatsService(): Promise<void> {
+export async function getVillaOwnerManagementStatsService(): Promise<{totalOwners: number , totalAssignedVillas: number , totalUnassignedVillas: number}> {
     try {
+        const result = await prisma.$transaction(async (tx) => {
+            const totalOwners = await tx.user.count({
+                where: {
+                    role: {
+                        name: 'Owner'
+                    }
+                }
+            });
 
+            const totalAssignedVillas = await tx.villa.count({
+                where: {
+                    ownerId: {
+                        not: null 
+                    }
+                }
+            });
+
+            const totalUnassignedVillas = await tx.villa.count({
+                where: {
+                    ownerId: null  
+                }
+            });
+
+            return {
+                totalOwners,
+                totalAssignedVillas,
+                totalUnassignedVillas
+            };
+        });
+
+        return result;  
     } 
     catch (error) { 
-        console.error(error); 
+        console.error(`Error getting villa owner management stats: ${error}`);
+        throw new InternalServerError("Failed to get villa owner management stats");
     }
 }
