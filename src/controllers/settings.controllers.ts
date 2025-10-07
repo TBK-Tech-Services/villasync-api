@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, updateGeneralSettingsService } from "../services/settings.services.ts";
+import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
 import { sendSuccess } from "../utils/general/response.ts";
 import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
@@ -10,6 +10,8 @@ import { updateGeneralSettingBodySchema } from "../validators/data-validators/se
 import catchAsync from "../utils/general/catchAsync.ts";
 import { ValidationError, NotFoundError, ConflictError, InternalServerError } from "../utils/errors/customErrors.ts";
 import { assignVillasToOwnerSchema } from "../validators/data-validators/settings/assignVillasToOwner.ts";
+import { updateVillaAssignmentParamSchema } from "../validators/data-validators/settings/updateVillasAssignmentParam.ts";
+import { updateVillaAssignmentBodySchema } from "../validators/data-validators/settings/updateVillasAssignmentBody.ts";
 
 // Controller to get All Roles
 export const getAllRoles = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -180,7 +182,6 @@ export const assignVillasToOwner = catchAsync(async (req: Request, res: Response
     }
 
     const villaAssignment = await assignVillasToOwnerService({ownerId : validatedData.ownerId , villas: validatedData.villaIds});
-
     if(villaAssignment === null){
         throw new InternalServerError("Failed to assign villas to owner");
     }
@@ -190,7 +191,33 @@ export const assignVillasToOwner = catchAsync(async (req: Request, res: Response
 
 // Controller to Update a Villa Assignment to Owner
 export const updateOwnerVillaAssignments = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const paramsValidation = updateVillaAssignmentParamSchema.safeParse(req.params);
     
+    if (!paramsValidation.success) {
+        throw new ValidationError("Invalid villa ID format");
+    }
+    
+    const ownerId = paramsValidation.data.ownerId;
+    
+    const bodyValidation = updateVillaAssignmentBodySchema.safeParse(req.body);
+    
+    if (!bodyValidation.success) {
+        throw bodyValidation.error;
+    }
+    
+    const validatedData = bodyValidation.data;
+
+    const owner = await checkIfOwnerExistsService({ownerId : ownerId});
+    if(owner === null){
+        throw new NotFoundError("Selected Owner does not exist");
+    }
+
+    const updatedVillaAssignment = await updateOwnerVillaAssignmentsService({ownerId: ownerId , villas: validatedData.villaIds});
+    if(updatedVillaAssignment === null){
+        throw new InternalServerError("Failed to update villa assignment to owner");
+    }
+
+    return sendSuccess(res , updatedVillaAssignment , "Successfully Updated Villa Assignment to Owner" , 200);
 });
 
 // Controller to Un-Assign Specific Villa

@@ -229,12 +229,37 @@ export async function assignVillasToOwnerService({ownerId , villas}: {ownerId: n
 }
 
 // Service to Update a Villa Assignment to Owner
-export async function updateOwnerVillaAssignmentsService(): Promise<void> {
+export async function updateOwnerVillaAssignmentsService({ownerId , villas}: {ownerId: number , villas: number[]}): Promise<{count: number}> {
     try {
+        const result = await prisma.$transaction(async (tx) => {
+            const unassignedVillas = await tx.villa.updateMany({
+                where : {
+                    ownerId: ownerId
+                },
+                data : {
+                    ownerId : null
+                }
+            });
 
+            const updatedVillas = await tx.villa.updateMany({
+                where : {
+                    id : {
+                        in : villas
+                    }
+                },
+                data : {
+                    ownerId : ownerId
+                }
+            });
+
+            return updatedVillas;
+        });
+
+        return result;
     } 
     catch (error) { 
-        console.error(error); 
+        console.error(`Error updating villa assignment to owner: ${error}`);
+        throw new InternalServerError("Failed to update villa assignment to owner");
     }
 }
 

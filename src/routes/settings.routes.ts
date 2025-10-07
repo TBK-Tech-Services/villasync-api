@@ -27,7 +27,7 @@ router.post("/general", addGeneralSettings);
 router.put("/general/:id", updateGeneralSettings);  
 router.get("/general", getGeneralSettings);  
 router.post("/villa-owner-management/assign" , assignVillasToOwner);
-router.patch("/villa-owner-management/assign" , updateOwnerVillaAssignments);
+router.patch("/villa-owner-management/assign/:ownerId" , updateOwnerVillaAssignments);
 router.delete("/villa-owner-management/unassign-villa/:villaId/:ownerId" , unassignSpecificVilla);
 router.delete("/villa-owner-management/unassign-owner/:ownerId" , unassignAllVillasFromOwner);
 router.get("/villa-owner-management/owners" , getAllOwners);
