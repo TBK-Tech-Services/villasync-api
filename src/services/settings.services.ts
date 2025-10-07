@@ -312,10 +312,6 @@ export async function getAllOwnersService(): Promise<User[]> {
                     name : 'Owner'
                 }
             },
-            include : {
-                role : true,
-                ownedVillas : true
-            }
         });
 
         return owners;
@@ -327,12 +323,25 @@ export async function getAllOwnersService(): Promise<User[]> {
 }
 
 // Service to get All Owners with Villas
-export async function getAllOwnersWithVillasService(): Promise<void> {
+export async function getAllOwnersWithVillasService(): Promise<User[]> {
     try {
+        const owners = await prisma.user.findMany({
+            where : {
+                role: {
+                    name : 'Owner'
+                }
+            },
+            include : {
+                role : true,
+                ownedVillas : true
+            }
+        });
 
+        return owners;
     } 
     catch (error) { 
-        console.error(error); 
+        console.error(`Error getting all owners with villas: ${error}`);
+        throw new InternalServerError("Failed to get all owners with villas");
     }
 }
 

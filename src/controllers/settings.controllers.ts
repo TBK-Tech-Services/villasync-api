@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
+import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllOwnersWithVillasService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
 import { sendSuccess } from "../utils/general/response.ts";
 import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
@@ -263,7 +263,12 @@ export const getAllOwners = catchAsync(async (req: Request, res: Response, next:
 
 // Controller to get All Owners with Villas
 export const getAllOwnersWithVillas = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    
+    const owners = await getAllOwnersWithVillasService();
+    if (owners.length === 0) {
+        throw new NotFoundError("No owners found");
+    }
+
+    return sendSuccess(res , owners , "Successfully Get all Owners with Villas" , 200);
 });
 
 // Controller to get All Stats
