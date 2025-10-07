@@ -189,13 +189,42 @@ export async function getGeneralSettingsService(): Promise<GeneralSetting[] | nu
     }
 }
 
-// Service to Assign Villas to Owner
-export async function assignVillasToOwnerService(): Promise<void> {
+// Service to check if Owner Exist
+export async function checkIfOwnerExistsService({ownerId}: {ownerId: number}): Promise<User | null> {
     try {
+        const owner = await prisma.user.findUnique({
+            where : {
+                id : ownerId,
+            }
+        });
 
+        return owner;
     } 
     catch (error) { 
-        console.error(error); 
+        console.error(`Error checking if owner exist: ${error}`);
+        throw new InternalServerError("Failed to check if owner exist");
+    }
+}
+
+// Service to Assign Villas to Owner
+export async function assignVillasToOwnerService({ownerId , villas}: {ownerId: number , villas: number[]}): Promise<{count: number}> {
+    try {
+        const villaOwners = await prisma.villa.updateMany({
+            where : {
+                id : {
+                    in : villas
+                }
+            },
+            data : {
+                ownerId: ownerId
+            }
+        })
+
+        return villaOwners;
+    } 
+    catch (error) { 
+        console.error(`Error assigning villas to owner: ${error}`);
+        throw new InternalServerError("Failed to assign villas to owner");
     }
 }
 

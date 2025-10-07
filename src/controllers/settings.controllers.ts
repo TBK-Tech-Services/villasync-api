@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addGeneralSettingsService, assignPermissionsToRoleService, checkIfGeneralSettingExistService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, updateGeneralSettingsService } from "../services/settings.services.ts";
+import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, updateGeneralSettingsService } from "../services/settings.services.ts";
 import { sendSuccess } from "../utils/general/response.ts";
 import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
@@ -9,6 +9,7 @@ import { updateGeneralSettingParamSchema } from "../validators/data-validators/s
 import { updateGeneralSettingBodySchema } from "../validators/data-validators/settings/updateGeneralSettingsBody.ts";
 import catchAsync from "../utils/general/catchAsync.ts";
 import { ValidationError, NotFoundError, ConflictError, InternalServerError } from "../utils/errors/customErrors.ts";
+import { assignVillasToOwnerSchema } from "../validators/data-validators/settings/assignVillasToOwner.ts";
 
 // Controller to get All Roles
 export const getAllRoles = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -164,71 +165,55 @@ export const getGeneralSettings = catchAsync(async (req: Request, res: Response,
 });
 
 // Controller to Assign Villas to Owner
-export async function assignVillasToOwner(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try { 
-        
-    } 
-    catch (error) { 
-        next(error);
+export const assignVillasToOwner = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const validationResult = assignVillasToOwnerSchema.safeParse(req.body);
+    
+    if (!validationResult.success) {
+        throw validationResult.error;
     }
-}
+    
+    const validatedData = validationResult.data;
+
+    const owner = await checkIfOwnerExistsService({ownerId : validatedData.ownerId});
+    if(owner === null){
+        throw new NotFoundError("Selected Owner does not exist");
+    }
+
+    const villaAssignment = await assignVillasToOwnerService({ownerId : validatedData.ownerId , villas: validatedData.villaIds});
+
+    if(villaAssignment === null){
+        throw new InternalServerError("Failed to assign villas to owner");
+    }
+
+    return sendSuccess(res , villaAssignment , "Successfully Assigned Villas to Owner" , 200);
+});
 
 // Controller to Update a Villa Assignment to Owner
-export async function updateOwnerVillaAssignments(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try { 
-        
-    } 
-    catch (error) { 
-        next(error);
-    }
-}
+export const updateOwnerVillaAssignments = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    
+});
 
 // Controller to Un-Assign Specific Villa
-export async function unassignSpecificVilla(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try { 
-        
-    } 
-    catch (error) { 
-        next(error);
-    }
-}
+export const unassignSpecificVilla = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    
+});
 
 // Controller to Un-Assign All Villas From Owner
-export async function unassignAllVillasFromOwner(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try { 
-        
-    } 
-    catch (error) { 
-        next(error);
-    }
-}
+export const unassignAllVillasFromOwner = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    
+});
 
 // Controller to get All Owners
-export async function getAllOwners(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try { 
-        
-    } 
-    catch (error) { 
-        next(error);
-    }
-}
+export const getAllOwners = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    
+});
 
 // Controller to get All Owners with Villas
-export async function getAllOwnersWithVillas(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try { 
-        
-    } 
-    catch (error) { 
-        next(error);
-    }
-}
+export const getAllOwnersWithVillas = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    
+});
 
 // Controller to get All Stats
-export async function getVillaOwnerManagementStats(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try { 
-        
-    } 
-    catch (error) { 
-        next(error);
-    }
-}
+export const getVillaOwnerManagementStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    
+});
