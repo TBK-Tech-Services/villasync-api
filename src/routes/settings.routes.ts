@@ -13,7 +13,7 @@ import {
   getAllOwners,
   getAllOwnersWithVillas,
   getVillaOwnerManagementStats,
-  getAllUnAssignedVillas
+  getAllUnAssignedVillas,
 } from "../controllers/settings.controllers.ts";
 import { authenticate } from "../middlewares/auth/authenticate.ts";
 import { authorize } from "../middlewares/auth/authorize.ts";
