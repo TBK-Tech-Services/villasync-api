@@ -284,7 +284,7 @@ export async function unassignSpecificVillaService({villaId , ownerId}: {villaId
 }
 
 // Service to Un-Assign All Villas From Owner
-export async function unassignAllVillasFromOwnerService({ownerId}: {ownerId: number}): Promise<{count: number}> {
+export async function unassignAllVillasFromOwnerService({ownerId}: {ownerId: number}): Promise<User[]> {
     try {
         const unassignedVillas = await prisma.villa.updateMany({
             where : {
@@ -304,12 +304,25 @@ export async function unassignAllVillasFromOwnerService({ownerId}: {ownerId: num
 }
 
 // Service to get All Owners
-export async function getAllOwnersService(): Promise<void> {
+export async function getAllOwnersService(): Promise<User[]> {
     try {
+        const owners = await prisma.user.findMany({
+            where : {
+                role: {
+                    name : 'Owner'
+                }
+            },
+            include : {
+                role : true,
+                ownedVillas : true
+            }
+        });
 
+        return owners;
     } 
     catch (error) { 
-        console.error(error); 
+        console.error(`Error getting all owners: ${error}`);
+        throw new InternalServerError("Failed to get all owners");
     }
 }
 
