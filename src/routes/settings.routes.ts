@@ -12,7 +12,8 @@ import {
   unassignAllVillasFromOwner,
   getAllOwners,
   getAllOwnersWithVillas,
-  getVillaOwnerManagementStats
+  getVillaOwnerManagementStats,
+  getAllUnAssignedVillas
 } from "../controllers/settings.controllers.ts";
 import { authenticate } from "../middlewares/auth/authenticate.ts";
 import { authorize } from "../middlewares/auth/authorize.ts";
@@ -30,6 +31,7 @@ router.post("/villa-owner-management/assign" , assignVillasToOwner);
 router.patch("/villa-owner-management/assign/:ownerId" , updateOwnerVillaAssignments);
 router.patch("/villa-owner-management/unassign-villa/:villaId/:ownerId" , unassignSpecificVilla);
 router.patch("/villa-owner-management/unassign-owner/:ownerId" , unassignAllVillasFromOwner);
+router.get("/villa-owner-management/unassigned/villas" , getAllUnAssignedVillas);
 router.get("/villa-owner-management/owners" , getAllOwners);
 router.get("/villa-owner-management/owners-with-villas" , getAllOwnersWithVillas);
 router.get("/villa-owner-management/stats" , getVillaOwnerManagementStats);

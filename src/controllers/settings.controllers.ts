@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllOwnersWithVillasService, getAllPermissionsService, getAllRolesService, getGeneralSettingsService, getVillaOwnerManagementStatsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
+import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllOwnersWithVillasService, getAllPermissionsService, getAllRolesService, getAllUnAssignedVillasService, getGeneralSettingsService, getVillaOwnerManagementStatsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
 import { sendSuccess } from "../utils/general/response.ts";
 import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
@@ -249,6 +249,16 @@ export const unassignAllVillasFromOwner = catchAsync(async (req: Request, res: R
 
     const unassignedVillas = await unassignAllVillasFromOwnerService({ownerId: ownerId});
     return sendSuccess(res , unassignedVillas , "Successfully Un-Assigned All Villas to Owner" , 200);
+});
+
+// Controller to Get All Un-Assigned Villas 
+export const getAllUnAssignedVillas = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const unassignedVillas = await getAllUnAssignedVillasService();
+    if(unassignedVillas === null){
+        throw new InternalServerError("Error Getting All Un-Assigned Villas");
+    }
+
+    return sendSuccess(res , unassignedVillas , "Successfully get all un-assigned villas" , 200);
 });
 
 // Controller to get All Owners

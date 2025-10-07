@@ -303,6 +303,23 @@ export async function unassignAllVillasFromOwnerService({ownerId}: {ownerId: num
     }
 }
 
+// Service to Get All Un-Assigned Villas
+export async function getAllUnAssignedVillasService(): Promise<Villa[] | null> {
+    try {
+        const unassignedVillas = await prisma.villa.findMany({
+            where : {
+                ownerId : null
+            }
+        })
+
+        return unassignedVillas;
+    } 
+    catch (error) { 
+        console.error(`Error getting un-assigned villas: ${error}`);
+        throw new InternalServerError("Error getting un-assigned villas");
+    }
+}
+
 // Service to get All Owners
 export async function getAllOwnersService(): Promise<User[]> {
     try {
