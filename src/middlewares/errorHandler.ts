@@ -29,8 +29,13 @@ const handleJWTExpiredError = (err: any): AppError => {
 
 // Helper to Handle Zod Error
 const handleZodError = (err: any): AppError => {
-    const message = err.errors.map((error: any) => error.message).join('. ');
-    return new AppError(`Validation Error : ${message}` , 400);
+    if (err.issues && Array.isArray(err.issues)) {
+        const message = err.issues
+            .map((issue: any) => `${issue.path.join('.')}: ${issue.message}`)
+            .join('. ');
+        return new AppError(`Validation Error: ${message}`, 400);
+    }
+    return new AppError('Validation Error', 400);
 };
 
 // Helper to Send Development Error Response

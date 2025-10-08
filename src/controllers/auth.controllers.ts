@@ -44,6 +44,7 @@ export const createAdmin = catchAsync(async (req: Request, res: Response, next: 
 // Controller to Login User
 export const loginUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const validationResult = loginSchema.safeParse(req.body);
+
   if (!validationResult.success) {
     throw validationResult.error;
   }
