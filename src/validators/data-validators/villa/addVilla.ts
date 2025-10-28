@@ -12,7 +12,7 @@ export const addVillaSchema = z.object({
     }),
     amenities: z.array(z.number().min(1, "Amenity ID must be valid")).min(1, "At least one amenity is required"),
     description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
-    image: z.string(),
+    imageUrl: z.string().max(500, "Image URL must be less than 500 characters"), 
 });
 
 export type addVillaData = z.infer<typeof addVillaSchema>;

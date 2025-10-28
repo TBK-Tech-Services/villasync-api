@@ -106,7 +106,6 @@ export const updateVilla = catchAsync(async (req: Request, res: Response, next: 
     throw new NotFoundError("Villa with this ID does not exist");
   }
 
-  // Check if villa name is being updated and if it conflicts
   if (updateData.villaName && updateData.villaName !== existingVilla.name) {
     const nameConflict = await checkIfVillaExistService(updateData.villaName);
     if (nameConflict) {

@@ -51,6 +51,7 @@ export async function addVillaService(validatedData: addVillaData): Promise<Vill
                 price: validatedData.pricePerNight,
                 status: validatedData.status,
                 description: validatedData.description,
+                imageUrl: validatedData.imageUrl,
                 amenities: {
                     create: validatedData.amenities.map((amenityId) => ({
                         amenity: { 
@@ -60,15 +61,17 @@ export async function addVillaService(validatedData: addVillaData): Promise<Vill
                         }
                     }))
                 },
-                images: {
-                    create: validatedData.images.map((imageUrl) => ({
-                        link: imageUrl
-                    }))
-                }
             },
             include: {
-                amenities: true,
-                images: true
+                amenities: {
+                    include: {
+                        amenity: {
+                            include: {
+                                category: true
+                            }
+                        }
+                    }
+                },
             }
         });
 
@@ -79,7 +82,6 @@ export async function addVillaService(validatedData: addVillaData): Promise<Vill
         if (error.code === 'P2025') {
             throw new NotFoundError("One or more amenity IDs are invalid");
         }
-        
         console.error(`Error creating villa: ${error}`);
         throw new InternalServerError("Failed to create villa");
     }
@@ -99,7 +101,6 @@ export async function getAllVillasService(): Promise<Villa[] | null> {
                         }
                     }
                 },
-                images: true
             },
             orderBy: {
                 createdAt: 'desc'
@@ -155,7 +156,6 @@ export async function getSingleVillaService(villaId: number): Promise<Villa | nu
                         }
                     }
                 },
-                images: true
             }
         });
 
@@ -196,6 +196,9 @@ export async function updateVillaService(villaId: number, updateData: updateVill
         if (updateData.description !== undefined) {
             villaUpdateData.description = updateData.description;
         }
+        if (updateData.imageUrl !== undefined) { 
+            villaUpdateData.imageUrl = updateData.imageUrl;
+        }
 
         const updatedVilla = await prisma.villa.update({
             where: {
@@ -214,17 +217,6 @@ export async function updateVillaService(villaId: number, updateData: updateVill
                             }))
                         }
                     }),
-
-                ...((updateData.images !== undefined) 
-                    && 
-                    {
-                        images: {
-                            deleteMany: {},
-                            create: updateData.images.map((imageUrl) => ({
-                                link: imageUrl
-                            }))
-                        }
-                    })
             },
             include: {
                 amenities: {
@@ -236,7 +228,6 @@ export async function updateVillaService(villaId: number, updateData: updateVill
                         }
                     }
                 },
-                images: true
             }
         });
 
