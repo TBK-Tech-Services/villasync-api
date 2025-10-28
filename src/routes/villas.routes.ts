@@ -13,7 +13,7 @@ import {
 const router = Router();
 
 // Villas Endpoints
-router.post("/", addVilla);  
+router.post("/", addVilla);
 router.put("/:id", updateVilla);
 router.delete("/:id", deleteVilla);
 router.get("/", getAllVillas);  
