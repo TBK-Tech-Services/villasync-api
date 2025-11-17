@@ -12,7 +12,7 @@ export async function generateJWT({firstName , lastName , email , role} : JWT_Pa
             throw new Error("SECRET_KEY is not defined in environment variables");
         }
 
-        const jwt_token = jwt.sign(payload , secret_key);
+        const jwt_token = jwt.sign(payload , secret_key, {expiresIn : '24h'});
 
         return jwt_token;
     }
