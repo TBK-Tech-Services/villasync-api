@@ -16,78 +16,88 @@ import { updatePaymentStatusParamsSchema } from "../validators/data-validators/b
 import { updatePaymentStatusBodySchema } from "../validators/data-validators/booking/updatePaymentStatusBody.ts";
 import catchAsync from "../utils/general/catchAsync.ts";
 import { ValidationError, NotFoundError, ConflictError, InternalServerError } from "../utils/errors/customErrors.ts";
+import type { Booking_Data } from "../types/booking/bookingData.ts";
+import { Booking_Status, Payment_Status } from "@prisma/client";
 
 // Controller to Add a Booking
 export const addBooking = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const validationResult = createBookingSchema.safeParse(req.body);
   if (!validationResult.success) {
     throw validationResult.error;
-  }
+  };
 
   const validatedData = validationResult.data;
 
   const villa = await isVillaPresentService({ villaId: validatedData.villaId });
   if (!villa) {
     throw new NotFoundError("Villa with this ID does not exist");
-  }
+  };
 
   if (validatedData.totalGuests > villa.maxGuests) {
     throw new ValidationError(`Number of guests (${validatedData.totalGuests}) exceeds villa's maximum capacity (${villa.maxGuests})`);
-  }
+  };
 
   const { checkInDate, checkOutDate } = parseBookingDates(validatedData.checkIn, validatedData.checkOut);
-
   if (checkOutDate.getTime() <= checkInDate.getTime()) {
     throw new ValidationError("Check-out date must be after check-in date");
-  }
+  };
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   if (checkInDate.getTime() < today.getTime()) {
     throw new ValidationError("Check-in date cannot be in the past");
-  }
+  };
 
-  const totalDaysOfStay = getTotalDaysOfStay(checkInDate, checkOutDate);
+  const numberOfNights = getTotalDaysOfStay(checkInDate, checkOutDate);
 
-  const isVillaAvailable = await checkVillaAvailabilityService({ 
-    villaId: validatedData.villaId, 
-    checkInDate, 
-    checkOutDate 
+  const isVillaAvailable = await checkVillaAvailabilityService({
+    villaId: validatedData.villaId,
+    checkInDate,
+    checkOutDate
   });
 
   if (!isVillaAvailable) {
     throw new ConflictError("Villa is not available for the selected dates");
   }
 
-  let totalGST = 0;
-  let totalAmountToPay = 0;
-  const subTotal = villa.price * totalDaysOfStay;
+  const basePrice = (villa.price * numberOfNights);
+  const customPriceValue = (validatedData.customPrice || 0);
+  const effectivePrice = ((customPriceValue > 0) ? customPriceValue : basePrice);
+  const extraPersonCharge = (validatedData.extraPersonCharge || 0);
+  const discount = (validatedData.discount || 0);
+  const subTotalAmount = (effectivePrice + extraPersonCharge - discount);
+  const totalTax = (validatedData.isGSTIncluded ? (subTotalAmount * 0.18) : 0);
+  const totalPayableAmount = (subTotalAmount + totalTax);
+  const advancePaid = (validatedData.advancePaid || 0);
+  const dueAmount = (totalPayableAmount - advancePaid);
+  const paymentStatus: Payment_Status = (dueAmount <= 0) ? Payment_Status.PAID : Payment_Status.PENDING;
 
-  if (validatedData.isGSTIncluded) {
-    totalGST = (subTotal * 18) / 100;
-    totalAmountToPay = subTotal + totalGST;
-  } else {
-    totalGST = 0;
-    totalAmountToPay = subTotal + totalGST;
-  }
-
-  const formData = {
+  const bookingData: Booking_Data = {
     guestName: validatedData.guestName,
-    guestEmail: validatedData.guestEmail,
+    guestEmail: validatedData.guestEmail || null,
     guestPhone: validatedData.guestPhone,
+    alternatePhone: validatedData.alternatePhone || null,
     villaId: validatedData.villaId,
     checkIn: checkInDate,
     checkOut: checkOutDate,
     totalGuests: validatedData.totalGuests,
-    specialRequest: validatedData.specialRequest || "",
-    subTotalAmount: subTotal,
+    numberOfNights,
+    specialRequest: validatedData.specialRequest || null,
+    bookingStatus: Booking_Status.CONFIRMED,
+    paymentStatus,
+    basePrice,
+    customPrice: customPriceValue > 0 ? customPriceValue : null,
+    extraPersonCharge,
+    discount,
+    subTotalAmount,
     isGSTIncluded: validatedData.isGSTIncluded,
-    totalTax: totalGST,
-    totalPayableAmount: totalAmountToPay
+    totalTax,
+    totalPayableAmount,
+    advancePaid,
+    dueAmount
   };
 
-  const booking = await addBookingService(formData);
+  const booking = await addBookingService(bookingData);
 
   if (!booking) {
     throw new InternalServerError("Failed to create booking");

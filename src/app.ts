@@ -22,30 +22,30 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin : 'http://localhost:5173',
-    credentials : true
+    origin: 'http://localhost:5173',
+    credentials: true
 }));
 
 // Routes for Health Check
-app.use("/health/v1" , healthRoutes);
+app.use("/health/v1", healthRoutes);
 
 // Routes for Admin Dashboard
-app.use("/auth/v1" , authRoutes);
-app.use("/dashboard/v1" , adminDashboardRoutes);
-app.use("/bookings/v1" , bookingsRoutes);
-app.use("/villas/v1" , villasRoutes);
-app.use("/expenses/v1" , expensesRoutes);
-app.use("/finance/v1" , financeRoutes);
-app.use("/users/v1" , usersRoutes);
-app.use("/settings/v1" , settingsRoutes);
+app.use("/auth/v1", authRoutes);
+app.use("/dashboard/v1", adminDashboardRoutes);
+app.use("/bookings/v1", bookingsRoutes);
+app.use("/villas/v1", villasRoutes);
+app.use("/expenses/v1", expensesRoutes);
+app.use("/finance/v1", financeRoutes);
+app.use("/users/v1", usersRoutes);
+app.use("/settings/v1", settingsRoutes);
 
 // Routes for Owner Dashboard
-app.use("/owner/v1" , ownerDashboardRoutes);
-app.use("/owner/v1/calender" , ownerCalenderRoutes);
-app.use("/owner/v1/analytics" , ownerAnalyticsRoutes);
+app.use("/owner/v1", ownerDashboardRoutes);
+app.use("/owner/v1/calender", ownerCalenderRoutes);
+app.use("/owner/v1/analytics", ownerAnalyticsRoutes);
 
 // Routes for Agent Landing Page
-app.use("/agent/v1" , agentRoutes);
+app.use("/agent/v1", agentRoutes);
 
 // Global Error Middleware
 app.use(globalErrorHandler);

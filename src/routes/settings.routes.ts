@@ -21,19 +21,19 @@ import { authorize } from "../middlewares/auth/authorize.ts";
 const router = Router();
 
 // Settings Endpoints
-router.get("/user-management/roles", authenticate , getAllRoles);  
-router.get("/user-management/permissions", authenticate , getAllPermissions);  
-router.post("/user-management/invite-user", authenticate , authorize('INVITE_USER') , inviteNewUser);  
-router.post("/general", addGeneralSettings); 
-router.put("/general/:id", updateGeneralSettings);  
-router.get("/general", getGeneralSettings);  
-router.post("/villa-owner-management/assign" , assignVillasToOwner);
-router.patch("/villa-owner-management/assign/:ownerId" , updateOwnerVillaAssignments);
-router.patch("/villa-owner-management/unassign-villa/:villaId/:ownerId" , unassignSpecificVilla);
-router.patch("/villa-owner-management/unassign-owner/:ownerId" , unassignAllVillasFromOwner);
-router.get("/villa-owner-management/unassigned/villas" , getAllUnAssignedVillas);
-router.get("/villa-owner-management/owners" , getAllOwners);
-router.get("/villa-owner-management/owners-with-villas" , getAllOwnersWithVillas);
-router.get("/villa-owner-management/stats" , getVillaOwnerManagementStats);
+router.get("/user-management/roles", authenticate, getAllRoles);
+router.get("/user-management/permissions", authenticate, getAllPermissions);
+router.post("/user-management/invite-user", authenticate, inviteNewUser);
+router.post("/general", addGeneralSettings);
+router.put("/general/:id", updateGeneralSettings);
+router.get("/general", getGeneralSettings);
+router.post("/villa-owner-management/assign", assignVillasToOwner);
+router.patch("/villa-owner-management/assign/:ownerId", updateOwnerVillaAssignments);
+router.patch("/villa-owner-management/unassign-villa/:villaId/:ownerId", unassignSpecificVilla);
+router.patch("/villa-owner-management/unassign-owner/:ownerId", unassignAllVillasFromOwner);
+router.get("/villa-owner-management/unassigned/villas", getAllUnAssignedVillas);
+router.get("/villa-owner-management/owners", getAllOwners);
+router.get("/villa-owner-management/owners-with-villas", getAllOwnersWithVillas);
+router.get("/villa-owner-management/stats", getVillaOwnerManagementStats);
 
 export default router;

@@ -13,13 +13,13 @@ import {
 const router = Router();
 
 // Bookings Endpoints
-router.post("/", addBooking);  
-router.get("/search", searchAndFilterBookings);  
-router.get("/", getAllBookings);  
-router.put("/:id", updateBooking);  
-router.patch("/:id/status", updateBookingStatus);  
-router.patch("/:id/payment-status", updatePaymentStatus);  
-router.delete("/:id", deleteBooking);  
-router.get("/:id", getABooking);  
+router.post("/", addBooking);
+router.get("/search", searchAndFilterBookings);
+router.get("/", getAllBookings);
+router.put("/:id", updateBooking);
+router.patch("/:id/status", updateBookingStatus);
+router.patch("/:id/payment-status", updatePaymentStatus);
+router.delete("/:id", deleteBooking);
+router.get("/:id", getABooking);
 
 export default router;

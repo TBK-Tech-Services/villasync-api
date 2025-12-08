@@ -1,24 +1,24 @@
 import z from "zod";
 
 export const createBookingSchema = z.object({
-    guestName: z.string().min(1, "Full name is required").max(100 , "Guest name must be less than 100 characters"),
+    guestName: z.string().min(1, "Full name is required").max(100, "Guest name must be less than 100 characters"),
     guestEmail: z.string().optional().or(z.literal("")),
     guestPhone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
     alternatePhone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits").optional().or(z.literal("")),
-    villaId: z.number().int().positive("Villa is required"),
+    villaId: z.coerce.number().int().positive("Villa is required"), // ⭐ Added coerce
     checkIn: z.string().refine(val => !isNaN(Date.parse(val)), {
         message: "Invalid check-in date",
     }),
     checkOut: z.string().refine(val => !isNaN(Date.parse(val)), {
         message: "Invalid check-out date",
     }),
-    totalGuests: z.number().int().positive("At least 1 guest required"),
+    totalGuests: z.coerce.number().int().positive("At least 1 guest required"), // ⭐ Added coerce
     specialRequest: z.string().max(500).optional().or(z.literal("")),
     isGSTIncluded: z.boolean().default(false),
-    customPrice: z.number().min(0, "Price cannot be negative").optional().nullable(),
-    extraPersonCharge: z.number().min(0, "Extra charge cannot be negative").optional().nullable(),
-    discount: z.number().min(0, "Discount cannot be negative").optional().nullable(),
-    advancePaid: z.number().min(0, "Advance cannot be negative").optional().nullable(),
+    customPrice: z.coerce.number().min(0, "Price cannot be negative").optional().nullable(), // ⭐ Added coerce
+    extraPersonCharge: z.coerce.number().min(0, "Extra charge cannot be negative").optional().nullable(), // ⭐ Added coerce
+    discount: z.coerce.number().min(0, "Discount cannot be negative").optional().nullable(), // ⭐ Added coerce
+    advancePaid: z.coerce.number().min(0, "Advance cannot be negative").optional().nullable(), // ⭐ Added coerce
 });
 
-export type createBookingData = z.infer<typeof createBookingSchema>; 
+export type createBookingData = z.infer<typeof createBookingSchema>;
