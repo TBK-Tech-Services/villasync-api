@@ -4,7 +4,8 @@ import type { Booking_Data } from "../types/booking/bookingData.ts";
 import type { searchAndFilterBookingData } from "../validators/data-validators/booking/searchAndFilterBooking.ts";
 import type { updateBookingStatusBodyData } from "../validators/data-validators/booking/updateBookingStatusBody.ts";
 import type { updatePaymentStatusBodyData } from "../validators/data-validators/booking/updatePaymentStatusBody.ts";
-import { NotFoundError, InternalServerError } from "../utils/errors/customErrors.ts";
+import { NotFoundError, InternalServerError, ConflictError } from "../utils/errors/customErrors.ts";
+import { appendToSheet } from "./googleSheets.services.ts";
 
 // Service to check if a booking exist
 export async function checkIfBookingExistService(bookingId: number): Promise<Booking | null> {
@@ -123,6 +124,75 @@ export async function addBookingService(formData: Booking_Data): Promise<Booking
         console.error(`Error creating booking: ${error}`);
         throw new InternalServerError("Failed to create booking");
     }
+};
+
+// Service for Transaction-based availability check
+export async function checkVillaAvailabilityWithTx(tx: any, villaId: number, checkIn: Date, checkOut: Date): Promise<boolean> {
+    const villa = await tx.villa.findUnique({
+        where: { id: villaId },
+        include: {
+            bookings: {
+                where: {
+                    bookingStatus: { in: ['CONFIRMED', 'CHECKED_IN'] }
+                },
+                select: {
+                    checkIn: true,
+                    checkOut: true
+                }
+            }
+        }
+    });
+
+    if (!villa) {
+        return false;
+    }
+
+    for (const booking of villa.bookings) {
+        const hasOverlap = (checkIn < booking.checkOut) && (checkOut > booking.checkIn);
+        if (hasOverlap) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// Service to Create Booking with Google Sheets Sync
+export async function createBookingWithSheetSync(bookingData: Booking_Data, villaName: string): Promise<Booking> {
+    try {
+        const booking = await prisma.$transaction(async (tx) => {
+            const isAvailable = await checkVillaAvailabilityWithTx(
+                tx,
+                bookingData.villaId,
+                bookingData.checkIn,
+                bookingData.checkOut
+            );
+
+            if (!isAvailable) {
+                throw new ConflictError("Villa is not available for the selected dates");
+            };
+
+            const newBooking = await tx.booking.create({
+                data: bookingData
+            });
+
+            const sheetsResult = await appendToSheet(newBooking, villaName);
+
+            if (!sheetsResult.success) {
+                throw new Error(`Failed to sync with Google Sheets: ${sheetsResult.error}`);
+            };
+
+            return newBooking;
+        }, {
+            timeout: 15000
+        });
+
+        return booking;
+    }
+    catch (error: any) {
+        console.error(`Error creating booking with Sheets sync: ${error}`);
+        throw new InternalServerError(error.message || "Failed to create booking");
+    };
 };
 
 // Service to Update a Booking

@@ -4,7 +4,7 @@ import { sendSuccess } from "../utils/general/response.ts";
 import { isVillaPresentService } from "../services/villas.services.ts";
 import { parseBookingDates } from "../utils/booking/parseBookingDates.ts";
 import { getTotalDaysOfStay } from "../utils/booking/calculateTotalDaysOfStay.ts";
-import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, deleteBookingService, getABookingService, getAllBookingsService, searchAndFilterBookingsService, updateBookingService, updateBookingStatusService, updatePaymentStatusService } from "../services/bookings.services.ts";
+import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, createBookingWithSheetSync, deleteBookingService, getABookingService, getAllBookingsService, searchAndFilterBookingsService, updateBookingService, updateBookingStatusService, updatePaymentStatusService } from "../services/bookings.services.ts";
 import { deleteBookingSchema } from "../validators/data-validators/booking/deleteBooking.ts";
 import { updateBookingParamsSchema } from "../validators/data-validators/booking/updateBookingParam.ts";
 import { updateBookingBodySchema } from "../validators/data-validators/booking/updateBookingBody.ts";
@@ -49,17 +49,6 @@ export const addBooking = catchAsync(async (req: Request, res: Response, next: N
   };
 
   const numberOfNights = getTotalDaysOfStay(checkInDate, checkOutDate);
-
-  const isVillaAvailable = await checkVillaAvailabilityService({
-    villaId: validatedData.villaId,
-    checkInDate,
-    checkOutDate
-  });
-
-  if (!isVillaAvailable) {
-    throw new ConflictError("Villa is not available for the selected dates");
-  }
-
   const basePrice = (villa.price * numberOfNights);
   const customPriceValue = (validatedData.customPrice || 0);
   const effectivePrice = ((customPriceValue > 0) ? customPriceValue : basePrice);
@@ -97,11 +86,9 @@ export const addBooking = catchAsync(async (req: Request, res: Response, next: N
     dueAmount
   };
 
-  const booking = await addBookingService(bookingData);
+  const villaName = villa.name;
 
-  if (!booking) {
-    throw new InternalServerError("Failed to create booking");
-  }
+  const booking = await createBookingWithSheetSync(bookingData, villaName);
 
   sendSuccess(res, booking, "Booking created successfully", 201);
 });
