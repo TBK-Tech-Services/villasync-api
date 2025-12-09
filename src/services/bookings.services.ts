@@ -329,15 +329,45 @@ export async function searchAndFilterBookingsService(validatedData: searchAndFil
         let where: any = {};
 
         if (validatedData.searchText && validatedData.searchText.trim()) {
-            where.guestName = {
-                contains: validatedData.searchText,
-                mode: 'insensitive'
-            };
+            where.OR = [
+                {
+                    guestName: {
+                        contains: validatedData.searchText
+                    }
+                },
+                {
+                    guestPhone: {
+                        contains: validatedData.searchText
+                    }
+                },
+                {
+                    villa: {
+                        name: {
+                            contains: validatedData.searchText
+                        }
+                    }
+                }
+            ];
         }
 
-        if (validatedData.status && validatedData.status.trim()) {
-            where.bookingStatus = validatedData.status;
-        }
+        if (validatedData.bookingStatus && validatedData.bookingStatus.trim()) {
+            where.bookingStatus = validatedData.bookingStatus;
+        };
+
+        if (validatedData.paymentStatus && validatedData.paymentStatus.trim()) {
+            where.paymentStatus = validatedData.paymentStatus;
+        };
+
+        if (validatedData.checkInDate && validatedData.checkInDate.trim()) {
+            const selectedDate = new Date(validatedData.checkInDate);
+            const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+            const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+
+            where.checkIn = {
+                gte: startOfDay,
+                lte: endOfDay
+            };
+        };
 
         const bookings = await prisma.booking.findMany({
             where: where,
@@ -354,5 +384,5 @@ export async function searchAndFilterBookingsService(validatedData: searchAndFil
     catch (error) {
         console.error(`Error searching and filtering bookings: ${error}`);
         throw new InternalServerError("Failed to search bookings");
-    }
-}
+    };
+};
