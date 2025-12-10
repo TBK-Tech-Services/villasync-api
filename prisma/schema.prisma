@@ -113,31 +113,31 @@ model Villa {
 model Booking {
   id                 Int              @id @default(autoincrement())
   guestName          String           @db.VarChar(100)
-  guestEmail         String?           @db.VarChar(100)
+  guestEmail         String?          @db.VarChar(100)
   guestPhone         String           @db.VarChar(20)
   alternatePhone     String?          @db.VarChar(20)
   villaId            Int
-  checkIn            DateTime         
-  checkOut           DateTime         
+  checkIn            DateTime
+  checkOut           DateTime
   totalGuests        Int
-  numberOfNights     Int               
+  numberOfNights     Int
   specialRequest     String?          @db.VarChar(500)
   bookingStatus      Booking_Status   @default(CONFIRMED)
   paymentStatus      Payment_Status   @default(PENDING)
-  basePrice          Decimal          @db.Decimal(10, 2) 
-  customPrice        Decimal?         @db.Decimal(10, 2) 
+  basePrice          Decimal          @db.Decimal(10, 2)
+  customPrice        Decimal?         @db.Decimal(10, 2)
   extraPersonCharge  Decimal          @default(0) @db.Decimal(10, 2)
-  discount           Decimal          @default(0) @db.Decimal(10, 2) 
+  discount           Decimal          @default(0) @db.Decimal(10, 2)
   subTotalAmount     Decimal          @db.Decimal(10, 2)
   isGSTIncluded      Boolean          @default(false)
-  totalTax           Decimal          @db.Decimal(10, 2) 
-  totalPayableAmount Decimal          @db.Decimal(10, 2) 
+  totalTax           Decimal          @db.Decimal(10, 2)
+  totalPayableAmount Decimal          @db.Decimal(10, 2)
   advancePaid        Decimal          @default(0) @db.Decimal(10, 2)
   dueAmount          Decimal          @db.Decimal(10, 2)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   villa              Villa            @relation(fields: [villaId], references: [id], onDelete: Cascade)
-  expenses           BookingExpense[] 
+  expenses           BookingExpense[]
 }
 
 model ExpenseCategory {

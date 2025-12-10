@@ -18,6 +18,8 @@ import catchAsync from "../utils/general/catchAsync.ts";
 import { ValidationError, NotFoundError, ConflictError, InternalServerError } from "../utils/errors/customErrors.ts";
 import type { Booking_Data } from "../types/booking/bookingData.ts";
 import { Booking_Status, Payment_Status } from "@prisma/client";
+import { generateVoucherSchema } from "../validators/data-validators/automation/voucher.ts";
+import { generateVoucherService } from "../services/automation.services.ts";
 
 // Controller to Add a Booking
 export const addBooking = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -337,4 +339,28 @@ export const searchAndFilterBookings = catchAsync(async (req: Request, res: Resp
   }
 
   sendSuccess(res, results, "Search and filter results retrieved successfully", 200);
+});
+
+// Controller to Generate Booking Voucher
+export const generateVoucher = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  // Validate bookingId from params
+  const { bookingId } = req.params;
+
+  const validationResult = generateVoucherSchema.safeParse({ bookingId });
+
+  if (!validationResult.success) {
+    throw validationResult.error;
+  }
+
+  const validatedData = validationResult.data;
+
+  // Generate voucher
+  const result = await generateVoucherService(validatedData);
+
+  if (!result) {
+    throw new InternalServerError("Failed to generate voucher");
+  }
+
+  // Success response
+  sendSuccess(res, result, "Voucher generated successfully", 200);
 });
