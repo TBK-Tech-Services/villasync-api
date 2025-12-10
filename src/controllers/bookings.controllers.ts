@@ -20,6 +20,8 @@ import type { Booking_Data } from "../types/booking/bookingData.ts";
 import { Booking_Status, Payment_Status } from "@prisma/client";
 import { generateVoucherSchema } from "../validators/data-validators/automation/voucher.ts";
 import { generateVoucherService } from "../services/automation.services.ts";
+import { sendVoucherEmailSchema } from "../validators/data-validators/automation/email.ts";
+import { sendVoucherEmailService } from "../services/email.services.ts";
 
 // Controller to Add a Booking
 export const addBooking = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -363,4 +365,37 @@ export const generateVoucher = catchAsync(async (req: Request, res: Response, ne
 
   // Success response
   sendSuccess(res, result, "Voucher generated successfully", 200);
+});
+
+// Controller to Send Booking Voucher through Email
+export const sendVoucherEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  // Extract bookingId from params
+  const { bookingId } = req.params;
+
+  // Check if bookingId exists
+  if (!bookingId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Booking ID is required'
+    });
+  }
+
+  // Validate request body
+  const validationResult = sendVoucherEmailSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    throw validationResult.error;
+  }
+
+  const validatedData = validationResult.data;
+
+  // Send voucher email - Now bookingId is guaranteed to be string
+  const result = await sendVoucherEmailService(bookingId, validatedData);
+
+  if (!result) {
+    throw new InternalServerError("Failed to send voucher email");
+  }
+
+  // Success response
+  sendSuccess(res, result, "Voucher sent via email successfully", 200);
 });

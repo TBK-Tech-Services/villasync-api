@@ -8,7 +8,8 @@ import {
   searchAndFilterBookings,
   updateBookingStatus,
   updatePaymentStatus,
-  generateVoucher
+  generateVoucher,
+  sendVoucherEmail
 } from "../controllers/bookings.controllers.ts";
 
 const router = Router();
@@ -23,5 +24,6 @@ router.patch("/:id/payment-status", updatePaymentStatus);
 router.delete("/:id", deleteBooking);
 router.get("/:id", getABooking);
 router.post("/:bookingId/generate-voucher", generateVoucher);
+router.post("/:bookingId/send-voucher-email", sendVoucherEmail);
 
 export default router;
