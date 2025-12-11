@@ -1,3 +1,5 @@
+import puppeteer from 'puppeteer';
+import { createFinanceReportHTML } from "../templates/financeReport.template.ts";
 import prisma from "../db/DB.ts";
 import type { getFinanceQueryParamsData } from "../validators/data-validators/finance/getFinanceParams.ts";
 import { isVillaPresentService } from "./villas.services.ts";
@@ -691,68 +693,362 @@ export async function getFinanceDashboardService(queryParams: getFinanceQueryPar
     }
 };
 
+// Service to Get Bookings in Range
 export async function getBookingsInRange(filters: getFinanceQueryParamsData): Promise<any> {
     try {
+        let where: any = {};
 
+        // Date filters
+        if (filters.month) {
+            const currentYear = new Date().getFullYear();
+            const startOfMonth = new Date(currentYear, filters.month - 1, 1);
+            const endOfMonth = new Date(currentYear, filters.month, 0);
+
+            where.checkIn = {
+                gte: startOfMonth,
+                lte: endOfMonth
+            };
+        }
+        else if (filters.startDate && filters.endDate && !filters.month) {
+            where.checkIn = {
+                gte: filters.startDate,
+                lte: filters.endDate
+            };
+        }
+        else {
+            const currentYear = new Date().getFullYear();
+            const startOfYear = new Date(currentYear, 0, 1);
+            const endOfYear = new Date(currentYear, 11, 31);
+
+            where.checkIn = {
+                gte: startOfYear,
+                lte: endOfYear
+            };
+        }
+
+        // Villa filter
+        if (filters.villaId) {
+            where.villaId = filters.villaId;
+        }
+
+        const bookings = await prisma.booking.findMany({
+            where: where,
+            include: {
+                villa: { select: { name: true, location: true } }
+            },
+            orderBy: { checkIn: 'asc' }
+        });
+
+        return bookings;
     }
     catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting bookings in range : ${message}`);
         throw new Error(`Error while getting bookings in range : ${message}`);
     }
-};
+}
 
+// Service to Get Expenses in Range
 export async function getExpensesInRange(filters: getFinanceQueryParamsData): Promise<any> {
     try {
+        let where: any = {};
 
+        // Date filters
+        if (filters.month) {
+            const currentYear = new Date().getFullYear();
+            const startOfMonth = new Date(currentYear, filters.month - 1, 1);
+            const endOfMonth = new Date(currentYear, filters.month, 0);
+
+            where.date = {
+                gte: startOfMonth,
+                lte: endOfMonth
+            };
+        }
+        else if (filters.startDate && filters.endDate && !filters.month) {
+            where.date = {
+                gte: filters.startDate,
+                lte: filters.endDate
+            };
+        }
+        else {
+            const currentYear = new Date().getFullYear();
+            const startOfYear = new Date(currentYear, 0, 1);
+            const endOfYear = new Date(currentYear, 11, 31);
+
+            where.date = {
+                gte: startOfYear,
+                lte: endOfYear
+            };
+        }
+
+        const expenses = await prisma.expense.findMany({
+            where: where,
+            include: {
+                villa: { select: { name: true } },
+                category: { select: { name: true } },
+                villas: {
+                    include: {
+                        villa: { select: { name: true } }
+                    }
+                }
+            },
+            orderBy: { date: 'asc' }
+        });
+
+        return expenses;
     }
     catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting expenses in range : ${message}`);
         throw new Error(`Error while getting expenses in range : ${message}`);
     }
-};
+}
 
+// Service to Calculate Financial Metrics
 export async function calculateFinancialMetrics(bookings: any, expenses: any): Promise<any> {
     try {
+        // Calculate total income
+        const totalIncome = bookings.reduce((sum: number, b: any) =>
+            sum + Number(b.totalPayableAmount), 0
+        );
 
+        const paidAmount = bookings
+            .filter((b: any) => b.paymentStatus === 'PAID')
+            .reduce((sum: number, b: any) => sum + Number(b.totalPayableAmount), 0);
+
+        const pendingAmount = bookings
+            .filter((b: any) => b.paymentStatus === 'PENDING')
+            .reduce((sum: number, b: any) => sum + Number(b.dueAmount), 0);
+
+        const confirmedBookings = bookings.filter((b: any) =>
+            b.bookingStatus === 'CONFIRMED' || b.bookingStatus === 'CHECKED_IN'
+        ).length;
+
+        const cancelledBookings = bookings.filter((b: any) =>
+            b.bookingStatus === 'CANCELLED'
+        ).length;
+
+        const totalGuests = bookings.reduce((sum: number, b: any) => sum + b.totalGuests, 0);
+
+        // Calculate total expenses (INDIVIDUAL + SPLIT)
+        const individualExpenses = expenses
+            .filter((e: any) => e.type === 'INDIVIDUAL')
+            .reduce((sum: number, e: any) => sum + e.amount, 0);
+
+        const splitExpenses = expenses
+            .filter((e: any) => e.type === 'SPLIT')
+            .reduce((sum: number, e: any) => {
+                const splitAmount = e.villas.reduce((s: number, v: any) => s + v.amount, 0);
+                return sum + splitAmount;
+            }, 0);
+
+        const totalExpenses = individualExpenses + splitExpenses;
+
+        // Calculate profit metrics
+        const netProfit = totalIncome - totalExpenses;
+        const profitMargin = totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(2) : '0.00';
+
+        return {
+            totalIncome,
+            paidAmount,
+            pendingAmount,
+            averageBookingValue: bookings.length > 0 ? Math.round(totalIncome / bookings.length) : 0,
+            totalBookings: bookings.length,
+            confirmedBookings,
+            cancelledBookings,
+            totalGuests,
+            totalExpenses,
+            expenseCount: expenses.length,
+            netProfit,
+            profitMargin: parseFloat(profitMargin),
+            isProfit: netProfit > 0
+        };
     }
     catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while calculating financial metrics : ${message}`);
         throw new Error(`Error while calculating financial metrics : ${message}`);
     }
-};
+}
 
+// Service to Calculate Villa Performance
 export async function calculateVillaPerformance(bookings: any, expenses: any): Promise<any> {
     try {
+        const villaMap = new Map();
 
+        // Calculate income per villa
+        bookings.forEach((booking: any) => {
+            const villaName = booking.villa.name;
+            const villaId = booking.villaId;
+
+            if (!villaMap.has(villaId)) {
+                villaMap.set(villaId, {
+                    villaId,
+                    villaName,
+                    income: 0,
+                    expenses: 0,
+                    bookingCount: 0
+                });
+            }
+
+            const villa = villaMap.get(villaId);
+            villa.income += Number(booking.totalPayableAmount);
+            villa.bookingCount += 1;
+        });
+
+        // Add expenses per villa
+        expenses.forEach((expense: any) => {
+            if (expense.type === 'INDIVIDUAL' && expense.villa) {
+                const villaId = expense.villaId;
+                if (villaMap.has(villaId)) {
+                    const villa = villaMap.get(villaId);
+                    villa.expenses += expense.amount;
+                }
+            }
+            else if (expense.type === 'SPLIT' && expense.villas.length > 0) {
+                expense.villas.forEach((v: any) => {
+                    const villaId = v.villaId;
+                    if (villaMap.has(villaId)) {
+                        const villa = villaMap.get(villaId);
+                        villa.expenses += v.amount;
+                    }
+                });
+            }
+        });
+
+        // Calculate profit and margin
+        const performance = Array.from(villaMap.values()).map(villa => ({
+            villaName: villa.villaName,
+            bookingCount: villa.bookingCount,
+            income: villa.income,
+            expenses: villa.expenses,
+            netProfit: villa.income - villa.expenses,
+            profitMargin: villa.income > 0
+                ? ((villa.income - villa.expenses) / villa.income * 100).toFixed(2)
+                : '0.00'
+        }));
+
+        // Sort by profit descending
+        performance.sort((a: any, b: any) => b.netProfit - a.netProfit);
+
+        return performance;
     }
     catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while calculating villa performance : ${message}`);
         throw new Error(`Error while calculating villa performance : ${message}`);
     }
-};
+}
 
-export async function calculateMonthlyTrends(bookings: any, expenses: any): Promise<any> {
+// Service to Calculate Monthly Trends
+export async function calculateMonthlyTrends(bookings: any, expenses: any, filters: getFinanceQueryParamsData): Promise<any> {
     try {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let startMonth = 0;
+        let endMonth = 11;
+        let year = new Date().getFullYear();
 
+        if (filters.month) {
+            endMonth = filters.month - 1;
+            startMonth = Math.max(0, endMonth - 5);
+        }
+        else if (filters.startDate && filters.endDate) {
+            startMonth = filters.startDate.getMonth();
+            endMonth = filters.endDate.getMonth();
+            year = filters.startDate.getFullYear();
+        }
+
+        const result = [];
+
+        for (let i = startMonth; i <= endMonth; i++) {
+            const monthStart = new Date(year, i, 1);
+            const monthEnd = new Date(year, i + 1, 0);
+
+            // Filter bookings for this month
+            const monthBookings = bookings.filter((b: any) => {
+                const checkInDate = new Date(b.checkIn);
+                return checkInDate >= monthStart && checkInDate <= monthEnd;
+            });
+
+            const monthIncome = monthBookings.reduce((sum: number, b: any) =>
+                sum + Number(b.totalPayableAmount), 0
+            );
+
+            // Filter expenses for this month
+            const monthExpenses = expenses.filter((e: any) => {
+                const expenseDate = new Date(e.date);
+                return expenseDate >= monthStart && expenseDate <= monthEnd;
+            });
+
+            const individualExpense = monthExpenses
+                .filter((e: any) => e.type === 'INDIVIDUAL')
+                .reduce((sum: number, e: any) => sum + e.amount, 0);
+
+            const splitExpense = monthExpenses
+                .filter((e: any) => e.type === 'SPLIT')
+                .reduce((sum: number, e: any) => {
+                    return sum + e.villas.reduce((s: number, v: any) => s + v.amount, 0);
+                }, 0);
+
+            const monthExpense = individualExpense + splitExpense;
+            const monthProfit = monthIncome - monthExpense;
+
+            result.push({
+                month: months[i],
+                income: monthIncome,
+                expense: monthExpense,
+                profit: monthProfit
+            });
+        }
+
+        return result;
     }
     catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while calculating monthly trends : ${message}`);
         throw new Error(`Error while calculating monthly trends : ${message}`);
     }
-};
+}
 
+// Service to Generate Finance Report PDF
 export async function generateFinanceReportPDF(data: any): Promise<any> {
     try {
+        // Create HTML from template
+        const html = createFinanceReportHTML(data);
 
+        // Launch Puppeteer
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
+        const page = await browser.newPage();
+
+        // Set content
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+
+        // Wait for charts to render (FIXED)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Generate PDF
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '20mm',
+                right: '15mm',
+                bottom: '20mm',
+                left: '15mm'
+            }
+        });
+
+        await browser.close();
+
+        return pdfBuffer;
     }
     catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while generating finance report PDF : ${message}`);
         throw new Error(`Error while generating finance report PDF : ${message}`);
     }
-};
+}
