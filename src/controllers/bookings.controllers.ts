@@ -403,8 +403,30 @@ export const sendVoucherEmail = catchAsync(async (req: Request, res: Response, n
 
 // Controller to Export Bookings
 export const exportBookings = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  // Get all bookings
-  const bookings = await getAllBookingsService();
+  // Validate query parameters
+  const validationResult = searchAndFilterBookingSchema.safeParse(req.query);
+
+  if (!validationResult.success) {
+    throw validationResult.error;
+  }
+
+  const { searchText, bookingStatus, paymentStatus, checkInDate } = validationResult.data;
+
+  // Get filtered bookings instead of all bookings
+  let bookings;
+
+  if (searchText || bookingStatus || paymentStatus || checkInDate) {
+    // Use search/filter logic - data is already validated
+    bookings = await searchAndFilterBookingsService({
+      searchText,
+      bookingStatus,
+      paymentStatus,
+      checkInDate
+    });
+  } else {
+    // No filters - get all bookings
+    bookings = await getAllBookingsService();
+  }
 
   if (!bookings || bookings.length === 0) {
     throw new NotFoundError("No bookings found to export");
