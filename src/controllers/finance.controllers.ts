@@ -7,16 +7,26 @@ import { getFinanceDashboardService } from "../services/finance.services.ts";
 export async function getFinanceDashboard(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
     const validatedParams = getFinanceQueryParamsSchema.parse(req.query);
-    
+
     const financeDashboardData = await getFinanceDashboardService(validatedParams);
 
-    if(financeDashboardData === null){
-      return sendError(res , "Didnt Get Data For Finance Dashboard!" , 404 , null);
+    if (financeDashboardData === null) {
+      return sendError(res, "Didnt Get Data For Finance Dashboard!", 404, null);
     }
 
-    return sendSuccess(res , financeDashboardData , "Successfully Got Data For Finance Dashboard!" , 200);
-  } 
+    return sendSuccess(res, financeDashboardData, "Successfully Got Data For Finance Dashboard!", 200);
+  }
   catch (error) {
     next(error);
   }
 }
+
+// Controller to Generate Finance Report
+export async function generateFinanceReport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+
+  }
+  catch (error) {
+    next(error);
+  }
+};

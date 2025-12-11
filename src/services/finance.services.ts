@@ -6,18 +6,18 @@ import { isVillaPresentService } from "./villas.services.ts";
 export async function getTotalIncomeService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
         let where: any = {};
-        
-        if(filters.month){
+
+        if (filters.month) {
             const currentYear = new Date().getFullYear();
             const startOfMonth = new Date(currentYear, filters.month - 1, 1);
             const endOfMonth = new Date(currentYear, filters.month, 0);
-            
+
             where.checkIn = {
                 gte: startOfMonth,
                 lte: endOfMonth
             };
         }
-        else if((filters.startDate && filters.endDate) && (!filters.month)){
+        else if ((filters.startDate && filters.endDate) && (!filters.month)) {
             where.checkIn = {
                 gte: filters.startDate,
                 lte: filters.endDate
@@ -27,41 +27,41 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
             const currentYear = new Date().getFullYear();
             const startOfYear = new Date(currentYear, 0, 1);
             const endOfYear = new Date(currentYear, 11, 31);
-            
+
             where.checkIn = {
                 gte: startOfYear,
                 lte: endOfYear
             };
         }
-        
-        if(filters.villaId){
+
+        if (filters.villaId) {
             where.villaId = filters.villaId;
         }
-        
+
         const totalIncomeResult = await prisma.booking.aggregate({
             where: where,
             _sum: {
                 totalPayableAmount: true
             }
         });
-        
+
         const currentTotalIncome = totalIncomeResult._sum.totalPayableAmount || 0;
-        
+
         let previousWhere: any = {};
-        
-        if(filters.month){
+
+        if (filters.month) {
             const currentYear = new Date().getFullYear();
             let prevMonth = filters.month - 1;
             let prevYear = currentYear;
-            
-            if(prevMonth === 0){
+
+            if (prevMonth === 0) {
                 prevMonth = 12;
                 prevYear = currentYear - 1;
             }
-            
+
             const startOfPrevMonth = new Date(prevYear, prevMonth - 1, 1);
             const endOfPrevMonth = new Date(prevYear, prevMonth, 0);
-            
+
             previousWhere = {
                 checkIn: {
                     gte: startOfPrevMonth,
@@ -69,11 +69,11 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
                 }
             };
         }
-        else if(filters.startDate && filters.endDate){
+        else if (filters.startDate && filters.endDate) {
             const durationMs = filters.endDate.getTime() - filters.startDate.getTime();
             const previousEndDate = new Date(filters.startDate.getTime() - 1);
             const previousStartDate = new Date(previousEndDate.getTime() - durationMs);
-            
+
             previousWhere = {
                 checkIn: {
                     gte: previousStartDate,
@@ -86,7 +86,7 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
             const prevYear = currentYear - 1;
             const startOfPrevYear = new Date(prevYear, 0, 1);
             const endOfPrevYear = new Date(prevYear, 11, 31);
-            
+
             previousWhere = {
                 checkIn: {
                     gte: startOfPrevYear,
@@ -94,38 +94,38 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
                 }
             };
         }
-        
-        if(filters.villaId){
+
+        if (filters.villaId) {
             previousWhere.villaId = filters.villaId;
         }
-        
+
         const previousIncomeResult = await prisma.booking.aggregate({
             where: previousWhere,
             _sum: {
                 totalPayableAmount: true
             }
         });
-        
+
         const previousTotalIncome = previousIncomeResult._sum.totalPayableAmount || 0;
-        
+
         let growthPercentage = 0;
-        if(previousTotalIncome > 0){
+        if (previousTotalIncome > 0) {
             growthPercentage = ((currentTotalIncome - previousTotalIncome) / previousTotalIncome) * 100;
-        } 
-        else if(currentTotalIncome > 0){
+        }
+        else if (currentTotalIncome > 0) {
             growthPercentage = 100;
         }
-        
+
         const isGrowthPositive = (growthPercentage >= 0);
-        
+
         return {
             totalIncome: currentTotalIncome,
             growthPercentage: Math.round(growthPercentage * 100) / 100,
             isGrowthPositive: isGrowthPositive
         };
 
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting total income : ${message}`);
         throw new Error(`Error while getting total income : ${message}`);
@@ -136,19 +136,19 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
 export async function getTotalExpenseService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
         let where: any = {};
-        
+
         // Date filters
-        if(filters.month){
+        if (filters.month) {
             const currentYear = new Date().getFullYear();
             const startOfMonth = new Date(currentYear, filters.month - 1, 1);
             const endOfMonth = new Date(currentYear, filters.month, 0);
-            
+
             where.date = {
                 gte: startOfMonth,
                 lte: endOfMonth
             };
         }
-        else if(filters.startDate && filters.endDate && !filters.month){
+        else if (filters.startDate && filters.endDate && !filters.month) {
             where.date = {
                 gte: filters.startDate,
                 lte: filters.endDate
@@ -158,31 +158,31 @@ export async function getTotalExpenseService(filters: getFinanceQueryParamsData)
             const currentYear = new Date().getFullYear();
             const startOfYear = new Date(currentYear, 0, 1);
             const endOfYear = new Date(currentYear, 11, 31);
-            
+
             where.date = {
                 gte: startOfYear,
                 lte: endOfYear
             };
         }
-        
+
         // Calculate INDIVIDUAL expenses
         let individualWhere = { ...where, type: 'INDIVIDUAL' };
-        if(filters.villaId){
+        if (filters.villaId) {
             individualWhere.villaId = filters.villaId;
         }
-        
+
         const individualExpensesResult = await prisma.expense.aggregate({
             where: individualWhere,
             _sum: {
                 amount: true
             }
         });
-        
+
         const individualTotal = individualExpensesResult._sum.amount || 0;
-        
+
         // Calculate SPLIT expenses
         let splitWhere = { ...where, type: 'SPLIT' };
-        
+
         const splitExpenses = await prisma.expenseVilla.aggregate({
             where: {
                 expense: splitWhere,
@@ -192,27 +192,27 @@ export async function getTotalExpenseService(filters: getFinanceQueryParamsData)
                 amount: true
             }
         });
-        
+
         const splitTotal = splitExpenses._sum.amount || 0;
-        
+
         const currentTotalExpense = individualTotal + splitTotal;
-        
+
         // Previous period calculation
         let previousWhere: any = {};
-        
-        if(filters.month){
+
+        if (filters.month) {
             const currentYear = new Date().getFullYear();
             let prevMonth = filters.month - 1;
             let prevYear = currentYear;
-            
-            if(prevMonth === 0){
+
+            if (prevMonth === 0) {
                 prevMonth = 12;
                 prevYear = currentYear - 1;
             }
-            
+
             const startOfPrevMonth = new Date(prevYear, prevMonth - 1, 1);
             const endOfPrevMonth = new Date(prevYear, prevMonth, 0);
-            
+
             previousWhere = {
                 date: {
                     gte: startOfPrevMonth,
@@ -220,11 +220,11 @@ export async function getTotalExpenseService(filters: getFinanceQueryParamsData)
                 }
             };
         }
-        else if(filters.startDate && filters.endDate){
+        else if (filters.startDate && filters.endDate) {
             const durationMs = filters.endDate.getTime() - filters.startDate.getTime();
             const previousEndDate = new Date(filters.startDate.getTime() - 1);
             const previousStartDate = new Date(previousEndDate.getTime() - durationMs);
-            
+
             previousWhere = {
                 date: {
                     gte: previousStartDate,
@@ -237,7 +237,7 @@ export async function getTotalExpenseService(filters: getFinanceQueryParamsData)
             const prevYear = currentYear - 1;
             const startOfPrevYear = new Date(prevYear, 0, 1);
             const endOfPrevYear = new Date(prevYear, 11, 31);
-            
+
             previousWhere = {
                 date: {
                     gte: startOfPrevYear,
@@ -245,25 +245,25 @@ export async function getTotalExpenseService(filters: getFinanceQueryParamsData)
                 }
             };
         }
-        
+
         // Previous INDIVIDUAL
         let prevIndividualWhere = { ...previousWhere, type: 'INDIVIDUAL' };
-        if(filters.villaId){
+        if (filters.villaId) {
             prevIndividualWhere.villaId = filters.villaId;
         }
-        
+
         const prevIndividualResult = await prisma.expense.aggregate({
             where: prevIndividualWhere,
             _sum: {
                 amount: true
             }
         });
-        
+
         const prevIndividualTotal = prevIndividualResult._sum.amount || 0;
-        
+
         // Previous SPLIT
         let prevSplitWhere = { ...previousWhere, type: 'SPLIT' };
-        
+
         const prevSplitResult = await prisma.expenseVilla.aggregate({
             where: {
                 expense: prevSplitWhere,
@@ -273,30 +273,30 @@ export async function getTotalExpenseService(filters: getFinanceQueryParamsData)
                 amount: true
             }
         });
-        
+
         const prevSplitTotal = prevSplitResult._sum.amount || 0;
-        
+
         const previousTotalExpense = prevIndividualTotal + prevSplitTotal;
-        
+
         // Growth calculation
         let growthPercentage = 0;
-        if(previousTotalExpense > 0){
+        if (previousTotalExpense > 0) {
             growthPercentage = ((currentTotalExpense - previousTotalExpense) / previousTotalExpense) * 100;
-        } 
-        else if(currentTotalExpense > 0){
+        }
+        else if (currentTotalExpense > 0) {
             growthPercentage = 100;
         }
-        
+
         const isGrowthPositive = (growthPercentage >= 0);
-        
+
         return {
             totalExpenses: currentTotalExpense,
             growthPercentage: Math.round(growthPercentage * 100) / 100,
             isGrowthPositive: isGrowthPositive
         };
 
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting total expense : ${message}`);
         throw new Error(`Error while getting total expense : ${message}`);
@@ -308,31 +308,31 @@ export async function getNetProfitLossService(filters: getFinanceQueryParamsData
     try {
         const incomeData = await getTotalIncomeService(filters);
         const expenseData = await getTotalExpenseService(filters);
-        
+
         const totalIncome = incomeData.totalIncome;
         const totalExpenses = expenseData.totalExpenses;
-        
+
         const netAmount = totalIncome - totalExpenses;
         const isProfit = netAmount > 0;
-        
+
         let profitMargin = 0;
-        if(totalIncome > 0){
+        if (totalIncome > 0) {
             profitMargin = (netAmount / totalIncome) * 100;
         }
-        
+
         // Previous period profit/loss
         const previousIncome = incomeData.totalIncome / (1 + incomeData.growthPercentage / 100);
         const previousExpense = expenseData.totalExpenses / (1 + expenseData.growthPercentage / 100);
         const previousNetAmount = previousIncome - previousExpense;
-        
+
         let growthPercentage = 0;
-        if(previousNetAmount !== 0){
+        if (previousNetAmount !== 0) {
             growthPercentage = ((netAmount - previousNetAmount) / Math.abs(previousNetAmount)) * 100;
-        } 
-        else if(netAmount !== 0){
+        }
+        else if (netAmount !== 0) {
             growthPercentage = 100;
         }
-        
+
         return {
             netAmount: netAmount,
             isProfit: isProfit,
@@ -340,8 +340,8 @@ export async function getNetProfitLossService(filters: getFinanceQueryParamsData
             growthPercentage: Math.round(growthPercentage * 100) / 100
         };
 
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting net profit/loss : ${message}`);
         throw new Error(`Error while getting net profit/loss : ${message}`);
@@ -352,23 +352,23 @@ export async function getNetProfitLossService(filters: getFinanceQueryParamsData
 export async function getAverageMonthlyProfitService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
         const monthlyData = await getMonthlyIncomeExpenseChartService(filters);
-        
-        if(!monthlyData || monthlyData.length === 0){
+
+        if (!monthlyData || monthlyData.length === 0) {
             return { averageMonthlyProfit: 0 };
         }
-        
+
         const totalProfit = monthlyData.reduce((sum: number, item: any) => {
             return sum + (item.income - item.expense);
         }, 0);
-        
+
         const averageMonthlyProfit = totalProfit / monthlyData.length;
-        
+
         return {
             averageMonthlyProfit: Math.round(averageMonthlyProfit)
         };
 
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting average monthly profit : ${message}`);
         throw new Error(`Error while getting average monthly profit : ${message}`);
@@ -382,42 +382,42 @@ export async function getMonthlyIncomeExpenseChartService(filters: getFinanceQue
         let startMonth = 0;
         let endMonth = 11;
         let year = new Date().getFullYear();
-        
-        if(filters.month){
+
+        if (filters.month) {
             // Show last 6 months including selected
             endMonth = filters.month - 1;
             startMonth = Math.max(0, endMonth - 5);
         }
-        else if(filters.startDate && filters.endDate){
+        else if (filters.startDate && filters.endDate) {
             startMonth = filters.startDate.getMonth();
             endMonth = filters.endDate.getMonth();
             year = filters.startDate.getFullYear();
         }
-        
+
         const result = [];
-        
-        for(let i = startMonth; i <= endMonth; i++){
+
+        for (let i = startMonth; i <= endMonth; i++) {
             const monthStart = new Date(year, i, 1);
             const monthEnd = new Date(year, i + 1, 0);
-            
+
             let incomeWhere: any = {
                 checkIn: {
                     gte: monthStart,
                     lte: monthEnd
                 }
             };
-            
-            if(filters.villaId){
+
+            if (filters.villaId) {
                 incomeWhere.villaId = filters.villaId;
             }
-            
+
             const incomeResult = await prisma.booking.aggregate({
                 where: incomeWhere,
                 _sum: {
                     totalPayableAmount: true
                 }
             });
-            
+
             // Expense calculation
             let expenseWhere: any = {
                 date: {
@@ -425,17 +425,17 @@ export async function getMonthlyIncomeExpenseChartService(filters: getFinanceQue
                     lte: monthEnd
                 }
             };
-            
+
             let individualWhere = { ...expenseWhere, type: 'INDIVIDUAL' };
-            if(filters.villaId){
+            if (filters.villaId) {
                 individualWhere.villaId = filters.villaId;
             }
-            
+
             const individualExpense = await prisma.expense.aggregate({
                 where: individualWhere,
                 _sum: { amount: true }
             });
-            
+
             let splitWhere = { ...expenseWhere, type: 'SPLIT' };
             const splitExpense = await prisma.expenseVilla.aggregate({
                 where: {
@@ -444,21 +444,21 @@ export async function getMonthlyIncomeExpenseChartService(filters: getFinanceQue
                 },
                 _sum: { amount: true }
             });
-            
+
             const monthIncome = incomeResult._sum.totalPayableAmount || 0;
             const monthExpense = (individualExpense._sum.amount || 0) + (splitExpense._sum.amount || 0);
-            
+
             result.push({
                 month: months[i],
                 income: monthIncome,
                 expense: monthExpense
             });
         }
-        
+
         return result;
 
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting monthly chart data : ${message}`);
         throw new Error(`Error while getting monthly chart data : ${message}`);
@@ -469,16 +469,16 @@ export async function getMonthlyIncomeExpenseChartService(filters: getFinanceQue
 export async function getProfitTrendChartService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
         const monthlyData = await getMonthlyIncomeExpenseChartService(filters);
-        
+
         const profitTrend = monthlyData.map((item: any) => ({
             month: item.month,
             profit: item.income - item.expense
         }));
-        
+
         return profitTrend;
 
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting profit trend : ${message}`);
         throw new Error(`Error while getting profit trend : ${message}`);
@@ -489,8 +489,8 @@ export async function getProfitTrendChartService(filters: getFinanceQueryParamsD
 export async function getVillaPerformanceService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
         let villas;
-        
-        if(filters.villaId){
+
+        if (filters.villaId) {
             villas = await prisma.villa.findMany({
                 where: { id: filters.villaId },
                 select: { id: true, name: true }
@@ -500,24 +500,24 @@ export async function getVillaPerformanceService(filters: getFinanceQueryParamsD
                 select: { id: true, name: true }
             });
         }
-        
+
         const performance = [];
-        
-        for(const villa of villas){
+
+        for (const villa of villas) {
             const villaFilters = { ...filters, villaId: villa.id };
-            
+
             const incomeData = await getTotalIncomeService(villaFilters);
             const expenseData = await getTotalExpenseService(villaFilters);
-            
+
             const income = incomeData.totalIncome;
             const expenses = expenseData.totalExpenses;
             const profit = income - expenses;
-            
+
             let profitMargin = 0;
-            if(income > 0){
+            if (income > 0) {
                 profitMargin = (profit / income) * 100;
             }
-            
+
             performance.push({
                 villaId: villa.id,
                 villaName: villa.name,
@@ -526,13 +526,13 @@ export async function getVillaPerformanceService(filters: getFinanceQueryParamsD
                 profitMargin: Math.round(profitMargin * 100) / 100
             });
         }
-        
+
         performance.sort((a, b) => b.profit - a.profit);
-        
+
         return performance;
 
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting villa performance : ${message}`);
         throw new Error(`Error while getting villa performance : ${message}`);
@@ -543,18 +543,18 @@ export async function getVillaPerformanceService(filters: getFinanceQueryParamsD
 export async function getExpenseBreakdownService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
         let where: any = {};
-        
-        if(filters.month){
+
+        if (filters.month) {
             const currentYear = new Date().getFullYear();
             const startOfMonth = new Date(currentYear, filters.month - 1, 1);
             const endOfMonth = new Date(currentYear, filters.month, 0);
-            
+
             where.date = {
                 gte: startOfMonth,
                 lte: endOfMonth
             };
         }
-        else if(filters.startDate && filters.endDate && !filters.month){
+        else if (filters.startDate && filters.endDate && !filters.month) {
             where.date = {
                 gte: filters.startDate,
                 lte: filters.endDate
@@ -564,30 +564,30 @@ export async function getExpenseBreakdownService(filters: getFinanceQueryParamsD
             const currentYear = new Date().getFullYear();
             const startOfYear = new Date(currentYear, 0, 1);
             const endOfYear = new Date(currentYear, 11, 31);
-            
+
             where.date = {
                 gte: startOfYear,
                 lte: endOfYear
             };
         }
-        
+
         const categories = await prisma.expenseCategory.findMany();
         const breakdown = [];
-        
-        for(const category of categories){
+
+        for (const category of categories) {
             let categoryWhere = { ...where, categoryId: category.id };
-            
+
             // INDIVIDUAL expenses
             let individualWhere = { ...categoryWhere, type: 'INDIVIDUAL' };
-            if(filters.villaId){
+            if (filters.villaId) {
                 individualWhere.villaId = filters.villaId;
             }
-            
+
             const individualResult = await prisma.expense.aggregate({
                 where: individualWhere,
                 _sum: { amount: true }
             });
-            
+
             // SPLIT expenses
             let splitWhere = { ...categoryWhere, type: 'SPLIT' };
             const splitResult = await prisma.expenseVilla.aggregate({
@@ -597,31 +597,31 @@ export async function getExpenseBreakdownService(filters: getFinanceQueryParamsD
                 },
                 _sum: { amount: true }
             });
-            
+
             const categoryAmount = (individualResult._sum.amount || 0) + (splitResult._sum.amount || 0);
-            
-            if(categoryAmount > 0){
+
+            if (categoryAmount > 0) {
                 breakdown.push({
                     category: category.name,
                     amount: categoryAmount
                 });
             }
         }
-        
+
         const totalExpenses = breakdown.reduce((sum, item) => sum + item.amount, 0);
-        
+
         const result = breakdown.map(item => ({
             category: item.category,
             amount: item.amount,
             percentage: totalExpenses > 0 ? Math.round((item.amount / totalExpenses) * 10000) / 100 : 0
         }));
-        
+
         result.sort((a, b) => b.amount - a.amount);
-        
+
         return result;
 
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting expense breakdown : ${message}`);
         throw new Error(`Error while getting expense breakdown : ${message}`);
@@ -631,14 +631,14 @@ export async function getExpenseBreakdownService(filters: getFinanceQueryParamsD
 // Main Service: Orchestrate All Dashboard Data
 export async function getFinanceDashboardService(queryParams: getFinanceQueryParamsData): Promise<any> {
     try {
-        if(queryParams.villaId){
+        if (queryParams.villaId) {
             const villa = await isVillaPresentService({ villaId: queryParams.villaId });
 
-            if(!villa) {
+            if (!villa) {
                 throw new Error(`Villa with ID ${queryParams.villaId} not found`);
             }
         }
-        
+
         const [
             totalIncomeData,
             totalExpenseData,
@@ -658,7 +658,7 @@ export async function getFinanceDashboardService(queryParams: getFinanceQueryPar
             getVillaPerformanceService(queryParams),
             getExpenseBreakdownService(queryParams)
         ]);
-        
+
         const financeDashboardData = {
             summaryCards: {
                 totalIncome: totalIncomeData,
@@ -673,20 +673,86 @@ export async function getFinanceDashboardService(queryParams: getFinanceQueryPar
             },
             villaPerformance: villaPerformanceData
         };
-        
-        if(!totalIncomeData && !totalExpenseData) {
+
+        if (!totalIncomeData && !totalExpenseData) {
             return {
                 message: "No data found for the specified filters",
                 data: financeDashboardData
             };
         }
-        
+
         return financeDashboardData;
 
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         const message = error instanceof Error ? (error.message) : String(error);
         console.error(`Error while getting finance dashboard data : ${message}`);
         throw new Error(`Error while getting finance dashboard data : ${message}`);
     }
-}
+};
+
+export async function getBookingsInRange(filters: getFinanceQueryParamsData): Promise<any> {
+    try {
+
+    }
+    catch (error) {
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting bookings in range : ${message}`);
+        throw new Error(`Error while getting bookings in range : ${message}`);
+    }
+};
+
+export async function getExpensesInRange(filters: getFinanceQueryParamsData): Promise<any> {
+    try {
+
+    }
+    catch (error) {
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting expenses in range : ${message}`);
+        throw new Error(`Error while getting expenses in range : ${message}`);
+    }
+};
+
+export async function calculateFinancialMetrics(bookings: any, expenses: any): Promise<any> {
+    try {
+
+    }
+    catch (error) {
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while calculating financial metrics : ${message}`);
+        throw new Error(`Error while calculating financial metrics : ${message}`);
+    }
+};
+
+export async function calculateVillaPerformance(bookings: any, expenses: any): Promise<any> {
+    try {
+
+    }
+    catch (error) {
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while calculating villa performance : ${message}`);
+        throw new Error(`Error while calculating villa performance : ${message}`);
+    }
+};
+
+export async function calculateMonthlyTrends(bookings: any, expenses: any): Promise<any> {
+    try {
+
+    }
+    catch (error) {
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while calculating monthly trends : ${message}`);
+        throw new Error(`Error while calculating monthly trends : ${message}`);
+    }
+};
+
+export async function generateFinanceReportPDF(data: any): Promise<any> {
+    try {
+
+    }
+    catch (error) {
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while generating finance report PDF : ${message}`);
+        throw new Error(`Error while generating finance report PDF : ${message}`);
+    }
+};

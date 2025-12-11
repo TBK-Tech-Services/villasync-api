@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { addExpenseSchema } from "../validators/data-validators/expense/addExpense.ts";
 import { sendSuccess } from "../utils/general/response.ts";
-import { addExpenseService, checkIfExpenseExistService, deleteExpenseService, getAllExpenseCategoriesService, getAllExpensesService, getExpenseService, updateExpenseService } from "../services/expenses.services.ts";
+import { addExpenseService, calculateExpenseSummary, checkIfExpenseExistService, deleteExpenseService, generateExpenseReportPDF, getAllExpenseCategoriesService, getAllExpensesService, getExpenseService, getFilteredExpenses, groupByCategory, groupByVilla, updateExpenseService } from "../services/expenses.services.ts";
 import { updateExpenseParamsSchema } from "../validators/data-validators/expense/updateExpenseParams.ts";
 import { updateExpenseBodySchema } from "../validators/data-validators/expense/updateExpenseBody.ts";
 import { getExpenseSchema } from "../validators/data-validators/expense/getExpense.ts";
@@ -125,4 +125,43 @@ export const deleteExpense = catchAsync(async (req: Request, res: Response, next
   }
 
   sendSuccess(res, deletedExpense, "Expense deleted successfully", 200);
+});
+
+// Controller to Generate Expense Report (No Filters)
+export const generateExpenseReport = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  // Fetch ALL expenses (no filters)
+  const expenses = await getAllExpensesService();
+
+  if (!expenses || expenses.length === 0) {
+    throw new NotFoundError("No expenses found");
+  }
+
+  // Calculate summary
+  const summary = await calculateExpenseSummary(expenses);
+
+  // Group by category
+  const categoryBreakdown = await groupByCategory(expenses);
+
+  // Group by villa
+  const villaBreakdown = await groupByVilla(expenses);
+
+  // Generate PDF
+  const pdfBuffer = await generateExpenseReportPDF({
+    expenses,
+    summary,
+    categoryBreakdown,
+    villaBreakdown
+  });
+
+  if (!pdfBuffer) {
+    throw new InternalServerError("Failed to generate expense report PDF");
+  }
+
+  // Set response headers
+  const filename = `Expense_Report_${Date.now()}.pdf`;
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+  // Send PDF
+  res.send(pdfBuffer);
 });

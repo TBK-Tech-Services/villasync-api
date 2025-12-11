@@ -5,13 +5,15 @@ import {
   updateExpense,
   deleteExpense,
   getAllExpenseCategories,
-  getExpense
+  getExpense,
+  generateExpenseReport
 } from "../controllers/expenses.controllers.ts";
 
 const router = Router();
 
 // Expense Endpoints
 router.post("/", addExpense);
+router.get("/report", generateExpenseReport);
 router.put("/:id", updateExpense);
 router.get("/categories", getAllExpenseCategories);
 router.delete("/:id", deleteExpense);
