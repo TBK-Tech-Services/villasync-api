@@ -6,6 +6,7 @@ import type { updateBookingStatusBodyData } from "../validators/data-validators/
 import type { updatePaymentStatusBodyData } from "../validators/data-validators/booking/updatePaymentStatusBody.ts";
 import { NotFoundError, InternalServerError, ConflictError } from "../utils/errors/customErrors.ts";
 import { appendToSheet } from "./googleSheets.services.ts";
+import { escapeCSVValue, formatAmount, formatDate, formatDateTime } from "../utils/csv/csvHelpers.ts";
 
 // Service to check if a booking exist
 export async function checkIfBookingExistService(bookingId: number): Promise<Booking | null> {
@@ -386,3 +387,39 @@ export async function searchAndFilterBookingsService(validatedData: searchAndFil
         throw new InternalServerError("Failed to search bookings");
     };
 };
+
+// Service to Format Bookings for CSV
+export async function formatBookingsForCSV(bookings: any[]) {
+    try {
+        return bookings.map(booking => ({
+            'Booking ID': escapeCSVValue(booking.id),
+            'Guest Name': escapeCSVValue(booking.guestName),
+            'Guest Email': escapeCSVValue(booking.guestEmail || ''),
+            'Guest Phone': escapeCSVValue(booking.guestPhone),
+            'Alternate Phone': escapeCSVValue(booking.alternatePhone || ''),
+            'Villa Name': escapeCSVValue(booking.villa.name),
+            'Villa Location': escapeCSVValue(booking.villa.location),
+            'Check-in Date': escapeCSVValue(formatDate(booking.checkIn)),
+            'Check-out Date': escapeCSVValue(formatDate(booking.checkOut)),
+            'Number of Guests': escapeCSVValue(booking.totalGuests),
+            'Number of Nights': escapeCSVValue(booking.numberOfNights),
+            'Booking Status': escapeCSVValue(booking.bookingStatus),
+            'Payment Status': escapeCSVValue(booking.paymentStatus),
+            'Base Price': escapeCSVValue(formatAmount(booking.basePrice)),
+            'Custom Price': escapeCSVValue(booking.customPrice ? formatAmount(booking.customPrice) : ''),
+            'Extra Charges': escapeCSVValue(formatAmount(booking.extraPersonCharge)),
+            'Discount': escapeCSVValue(formatAmount(booking.discount)),
+            'Tax Amount': escapeCSVValue(formatAmount(booking.totalTax)),
+            'Total Amount': escapeCSVValue(formatAmount(booking.totalPayableAmount)),
+            'Advance Paid': escapeCSVValue(formatAmount(booking.advancePaid)),
+            'Due Amount': escapeCSVValue(formatAmount(booking.dueAmount)),
+            'Special Requests': escapeCSVValue(booking.specialRequest || ''),
+            'Created Date': escapeCSVValue(formatDateTime(booking.createdAt)),
+            'Updated Date': escapeCSVValue(formatDateTime(booking.updatedAt))
+        }));
+    }
+    catch (error) {
+        console.error(`Error formatting bookings for CSV: ${error}`);
+        throw new InternalServerError("Failed to format bookings data");
+    }
+}

@@ -4,7 +4,7 @@ import { sendSuccess } from "../utils/general/response.ts";
 import { isVillaPresentService } from "../services/villas.services.ts";
 import { parseBookingDates } from "../utils/booking/parseBookingDates.ts";
 import { getTotalDaysOfStay } from "../utils/booking/calculateTotalDaysOfStay.ts";
-import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, createBookingWithSheetSync, deleteBookingService, getABookingService, getAllBookingsService, searchAndFilterBookingsService, updateBookingService, updateBookingStatusService, updatePaymentStatusService } from "../services/bookings.services.ts";
+import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, createBookingWithSheetSync, deleteBookingService, formatBookingsForCSV, getABookingService, getAllBookingsService, searchAndFilterBookingsService, updateBookingService, updateBookingStatusService, updatePaymentStatusService } from "../services/bookings.services.ts";
 import { deleteBookingSchema } from "../validators/data-validators/booking/deleteBooking.ts";
 import { updateBookingParamsSchema } from "../validators/data-validators/booking/updateBookingParam.ts";
 import { updateBookingBodySchema } from "../validators/data-validators/booking/updateBookingBody.ts";
@@ -22,6 +22,7 @@ import { generateVoucherSchema } from "../validators/data-validators/automation/
 import { generateVoucherService } from "../services/automation.services.ts";
 import { sendVoucherEmailSchema } from "../validators/data-validators/automation/email.ts";
 import { sendVoucherEmailService } from "../services/email.services.ts";
+import { generateCSV } from "../utils/csv/csvGenerator.ts";
 
 // Controller to Add a Booking
 export const addBooking = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -398,4 +399,31 @@ export const sendVoucherEmail = catchAsync(async (req: Request, res: Response, n
 
   // Success response
   sendSuccess(res, result, "Voucher sent via email successfully", 200);
+});
+
+// Controller to Export Bookings
+export const exportBookings = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  // Get all bookings
+  const bookings = await getAllBookingsService();
+
+  if (!bookings || bookings.length === 0) {
+    throw new NotFoundError("No bookings found to export");
+  }
+
+  // Format bookings for CSV
+  const formattedData = await formatBookingsForCSV(bookings);
+
+  // Generate CSV string
+  const csvString = generateCSV(formattedData);
+
+  // Add UTF-8 BOM for Excel compatibility
+  const BOM = '\uFEFF';
+  const csvWithBOM = BOM + csvString;
+
+  // Set response headers
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="TBK_Bookings_${Date.now()}.csv"`);
+
+  // Send CSV file
+  res.send(csvWithBOM);
 });
