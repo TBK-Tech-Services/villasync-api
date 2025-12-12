@@ -8,9 +8,10 @@ export const filterVillasSchema = z.object({
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().min(1).max(20))
     .optional(),
-  amenities: z
+  bedrooms: z
     .string()
-    .transform((val) => val.split(',').map(item => parseInt(item.trim(), 10)).filter(id => !isNaN(id)))
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().min(1).max(10))
     .optional()
 });
 

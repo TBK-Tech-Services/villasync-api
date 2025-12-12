@@ -8,7 +8,6 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
         let where: any = {};
 
         let include: any = {
-            images: true,
             amenities: {
                 include: {
                     amenity: {
@@ -26,30 +25,29 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
                 }
             }
         };
-        
+
+        // Filter by guests
         if (updatedData.guests) {
             where.maxGuests = {
                 gte: updatedData.guests
             }
         }
-        
-        if (updatedData.amenities && updatedData.amenities.length > 0) {
-            where.amenities = {
-                some: {
-                    amenityId: {
-                        in: updatedData.amenities
-                    }
-                }
+
+        // Filter by bedrooms
+        if (updatedData.bedrooms) {
+            where.bedrooms = {
+                gte: updatedData.bedrooms
             }
         }
-        
+
+        // Filter by availability (check-in and check-out dates)
         if (updatedData.checkIn && updatedData.checkOut) {
             where.bookings = {
                 none: {
                     AND: [
                         {
                             checkIn: {
-                                lt: new Date(updatedData.checkOut), 
+                                lt: new Date(updatedData.checkOut),
                             }
                         },
                         {
@@ -66,12 +64,12 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
                 }
             };
         }
-        
+
         const villas = await prisma.villa.findMany({
             where: where,
             include: include
         });
-        
+
         if (!villas || villas.length === 0) {
             return null;
         }
@@ -86,10 +84,11 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
             bathrooms: villa.bathrooms,
             description: villa.description,
             status: villa.status,
-            
-            images: (villa.images as any[])?.map((img: any) => img.link) || [],
-            image: (villa.images as any[])?.[0]?.link || '', 
-            
+
+            // ✅ Use imageUrl directly from Villa model
+            images: villa.imageUrl ? [villa.imageUrl] : [],  // Array with single image
+            image: villa.imageUrl || '',  // Single image for card display
+
             amenities: (villa.amenities as any[])?.map((va: any) => ({
                 id: va.amenity.id,
                 name: va.amenity.name,
@@ -98,7 +97,7 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
                     name: va.amenity.category.name
                 }
             })) || [],
-            
+
             bookedDates: (villa.bookings as any[])
                 ?.filter((booking: any) => booking.bookingStatus !== 'CANCELLED')
                 ?.map((booking: any) => ({
@@ -108,8 +107,8 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
         }));
 
         return transformedVillas;
-        
-    } catch (error) { 
+
+    } catch (error) {
         console.error(`Error filtering villas: ${error}`);
         throw new InternalServerError("Failed to filter villas");
     }
@@ -121,8 +120,8 @@ export async function getAllAmmenitiesService(): Promise<any[] | null> {
         const amenities = await prisma.amenity.findMany();
 
         return amenities;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error fetching amenities: ${error}`);
         throw new InternalServerError("Failed to fetch amenities");
     }
