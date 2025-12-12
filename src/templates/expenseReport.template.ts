@@ -1,35 +1,35 @@
 // Helper functions for formatting
 function formatAmount(amountInPaise: number): string {
-    return (amountInPaise / 100).toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
+  return (amountInPaise / 100).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
 function formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 }
 
 function formatDateTime(date: Date): string {
-    return new Date(date).toLocaleString('en-IN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    });
+  return new Date(date).toLocaleString('en-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
 }
 
 // Function to Create Expense Report HTML (No Filters)
 export function createExpenseReportHTML(data: any) {
-    const { expenses, summary, categoryBreakdown, villaBreakdown } = data;
+  const { expenses, summary, categoryBreakdown, villaBreakdown } = data;
 
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>

@@ -1,47 +1,47 @@
 // Helper functions for formatting
 function formatAmount(amountInPaise: number): string {
-    return (amountInPaise / 100).toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
+  return (amountInPaise / 100).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
 function formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 }
 
 function formatDateTime(date: Date): string {
-    return new Date(date).toLocaleString('en-IN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    });
+  return new Date(date).toLocaleString('en-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
 }
 
 function formatReportPeriod(filters: any): string {
-    if (filters.month) {
-        const months = ['January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'];
-        return `${months[filters.month - 1]} ${new Date().getFullYear()}`;
-    }
-    if (filters.startDate && filters.endDate) {
-        return `${formatDate(filters.startDate)} to ${formatDate(filters.endDate)}`;
-    }
-    return `Full Year ${new Date().getFullYear()}`;
+  if (filters.month) {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${months[filters.month - 1]} ${new Date().getFullYear()}`;
+  }
+  if (filters.startDate && filters.endDate) {
+    return `${formatDate(filters.startDate)} to ${formatDate(filters.endDate)}`;
+  }
+  return `Full Year ${new Date().getFullYear()}`;
 }
 
 // Function to create finance report HTML
 export function createFinanceReportHTML(data: any) {
-    const { filters, financialMetrics, villaPerformance, monthlyTrends } = data;
+  const { filters, financialMetrics, villaPerformance, monthlyTrends } = data;
 
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
