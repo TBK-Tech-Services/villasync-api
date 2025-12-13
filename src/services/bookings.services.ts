@@ -7,6 +7,7 @@ import type { updatePaymentStatusBodyData } from "../validators/data-validators/
 import { NotFoundError, InternalServerError, ConflictError } from "../utils/errors/customErrors.ts";
 import { appendToSheet } from "./googleSheets.services.ts";
 import { escapeCSVValue, formatAmount, formatDate, formatDateTime } from "../utils/csv/csvHelpers.ts";
+import type { getCalendarBookingsData } from "../validators/data-validators/booking/getBookingAvailability.ts";
 
 // Service to check if a booking exist
 export async function checkIfBookingExistService(bookingId: number): Promise<Booking | null> {
@@ -423,3 +424,74 @@ export async function formatBookingsForCSV(bookings: any[]) {
         throw new InternalServerError("Failed to format bookings data");
     }
 }
+
+// Service to Get Calendar Bookings
+export async function getCalendarBookingsService(validatedData: getCalendarBookingsData) {
+    try {
+        const { villaId, month, year } = validatedData;
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+        let where: any = {
+            bookingStatus: {
+                in: ['CONFIRMED', 'CHECKED_IN']
+            },
+            OR: [
+                {
+                    AND: [
+                        { checkIn: { gte: startDate } },
+                        { checkIn: { lte: endDate } }
+                    ]
+                },
+                {
+                    AND: [
+                        { checkOut: { gte: startDate } },
+                        { checkOut: { lte: endDate } }
+                    ]
+                },
+                {
+                    AND: [
+                        { checkIn: { lte: startDate } },
+                        { checkOut: { gte: endDate } }
+                    ]
+                }
+            ]
+        };
+
+        if (villaId) {
+            where.villaId = villaId;
+        }
+
+        const bookings = await prisma.booking.findMany({
+            where,
+            select: {
+                id: true,
+                villaId: true,
+                checkIn: true,
+                checkOut: true,
+                villa: {
+                    select: {
+                        name: true
+                    }
+                }
+            },
+            orderBy: {
+                checkIn: 'asc'
+            }
+        });
+
+        const formattedBookings = bookings.map(booking => ({
+            id: booking.id.toString(),
+            villaId: booking.villaId.toString(),
+            villaName: booking.villa.name,
+            checkIn: booking.checkIn.toISOString().split('T')[0],
+            checkOut: booking.checkOut.toISOString().split('T')[0]
+        }));
+
+        return formattedBookings;
+    }
+    catch (error) {
+        console.error(`Error fetching calendar bookings: ${error}`);
+        throw new InternalServerError("Failed to fetch calendar bookings");
+    }
+};

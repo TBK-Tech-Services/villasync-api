@@ -10,7 +10,8 @@ import {
   updatePaymentStatus,
   generateVoucher,
   sendVoucherEmail,
-  exportBookings
+  exportBookings,
+  getCalendarBookings
 } from "../controllers/bookings.controllers.ts";
 
 const router = Router();
@@ -19,6 +20,7 @@ const router = Router();
 router.post("/", addBooking);
 router.get("/search", searchAndFilterBookings);
 router.get("/export", exportBookings);
+router.get("/calendar", getCalendarBookings);
 router.get("/", getAllBookings);
 router.put("/:id", updateBooking);
 router.patch("/:id/status", updateBookingStatus);

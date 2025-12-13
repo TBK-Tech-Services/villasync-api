@@ -4,7 +4,7 @@ import { sendSuccess } from "../utils/general/response.ts";
 import { isVillaPresentService } from "../services/villas.services.ts";
 import { parseBookingDates } from "../utils/booking/parseBookingDates.ts";
 import { getTotalDaysOfStay } from "../utils/booking/calculateTotalDaysOfStay.ts";
-import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, createBookingWithSheetSync, deleteBookingService, formatBookingsForCSV, getABookingService, getAllBookingsService, searchAndFilterBookingsService, updateBookingService, updateBookingStatusService, updatePaymentStatusService } from "../services/bookings.services.ts";
+import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, createBookingWithSheetSync, deleteBookingService, formatBookingsForCSV, getABookingService, getAllBookingsService, getCalendarBookingsService, searchAndFilterBookingsService, updateBookingService, updateBookingStatusService, updatePaymentStatusService } from "../services/bookings.services.ts";
 import { deleteBookingSchema } from "../validators/data-validators/booking/deleteBooking.ts";
 import { updateBookingParamsSchema } from "../validators/data-validators/booking/updateBookingParam.ts";
 import { updateBookingBodySchema } from "../validators/data-validators/booking/updateBookingBody.ts";
@@ -23,6 +23,7 @@ import { generateVoucherService } from "../services/automation.services.ts";
 import { sendVoucherEmailSchema } from "../validators/data-validators/automation/email.ts";
 import { sendVoucherEmailService } from "../services/email.services.ts";
 import { generateCSV } from "../utils/csv/csvGenerator.ts";
+import { getCalendarBookingsSchema } from "../validators/data-validators/booking/getBookingAvailability.ts";
 
 // Controller to Add a Booking
 export const addBooking = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -448,4 +449,23 @@ export const exportBookings = catchAsync(async (req: Request, res: Response, nex
 
   // Send CSV file
   res.send(csvWithBOM);
+});
+
+// Controller to Get Calendar Bookings
+export const getCalendarBookings = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const validationResult = getCalendarBookingsSchema.safeParse(req.query);
+
+  if (!validationResult.success) {
+    throw validationResult.error;
+  }
+
+  const validatedData = validationResult.data;
+
+  const bookings = await getCalendarBookingsService(validatedData);
+
+  if (!bookings || bookings.length === 0) {
+    return sendSuccess(res, [], "No bookings found for this period", 200);
+  }
+
+  sendSuccess(res, bookings, "Calendar bookings retrieved successfully", 200);
 });
