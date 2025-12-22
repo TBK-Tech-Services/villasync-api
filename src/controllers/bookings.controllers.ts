@@ -24,6 +24,8 @@ import { sendVoucherEmailSchema } from "../validators/data-validators/automation
 import { sendVoucherEmailService } from "../services/email.services.ts";
 import { generateCSV } from "../utils/csv/csvGenerator.ts";
 import { getCalendarBookingsSchema } from "../validators/data-validators/booking/getBookingAvailability.ts";
+import { sendVoucherWhatsappSchema } from "../validators/data-validators/automation/whatsapp.ts";
+import { sendVoucherWhatsAppService } from "../services/whatsapp.services.ts";
 
 // Controller to Add a Booking
 export const addBooking = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -369,39 +371,6 @@ export const generateVoucher = catchAsync(async (req: Request, res: Response, ne
   sendSuccess(res, result, "Voucher generated successfully", 200);
 });
 
-// Controller to Send Booking Voucher through Email
-export const sendVoucherEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  // Extract bookingId from params
-  const { bookingId } = req.params;
-
-  // Check if bookingId exists
-  if (!bookingId) {
-    return res.status(400).json({
-      success: false,
-      message: 'Booking ID is required'
-    });
-  }
-
-  // Validate request body
-  const validationResult = sendVoucherEmailSchema.safeParse(req.body);
-
-  if (!validationResult.success) {
-    throw validationResult.error;
-  }
-
-  const validatedData = validationResult.data;
-
-  // Send voucher email - Now bookingId is guaranteed to be string
-  const result = await sendVoucherEmailService(bookingId, validatedData);
-
-  if (!result) {
-    throw new InternalServerError("Failed to send voucher email");
-  }
-
-  // Success response
-  sendSuccess(res, result, "Voucher sent via email successfully", 200);
-});
-
 // Controller to Export Bookings
 export const exportBookings = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   // Validate query parameters
@@ -468,4 +437,72 @@ export const getCalendarBookings = catchAsync(async (req: Request, res: Response
   }
 
   sendSuccess(res, bookings, "Calendar bookings retrieved successfully", 200);
+});
+
+// Controller to Send Booking Voucher through Email
+export const sendVoucherEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  // Extract bookingId from params
+  const { bookingId } = req.params;
+
+  // Check if bookingId exists
+  if (!bookingId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Booking ID is required'
+    });
+  }
+
+  // Validate request body
+  const validationResult = sendVoucherEmailSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    throw validationResult.error;
+  }
+
+  const validatedData = validationResult.data;
+
+  // Send voucher email - Now bookingId is guaranteed to be string
+  const result = await sendVoucherEmailService(bookingId, validatedData);
+
+  if (!result) {
+    throw new InternalServerError("Failed to send voucher email");
+  }
+
+  // Success response
+  sendSuccess(res, result, "Voucher sent via email successfully", 200);
+});
+
+// Controller to Send Booking Voucher through WhatsApp
+export const sendVoucherWhatsApp = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  // Extract bookingId from params
+  const { bookingId } = req.params;
+
+  // Check if bookingId exists
+  if (!bookingId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Booking ID is required'
+    });
+  }
+
+  // Validate request body
+  const validationResult = sendVoucherWhatsappSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    throw validationResult.error;
+  }
+
+  const validatedData = validationResult.data;
+
+  // Send voucher via WhatsApp
+  console.log("Before Sending Voucher via WhatsApp");
+  const result = await sendVoucherWhatsAppService(bookingId, validatedData);
+  console.log("After Sending Voucher via WhatsApp");
+
+  if (!result) {
+    throw new InternalServerError("Failed to send voucher via WhatsApp");
+  }
+
+  // Success response
+  sendSuccess(res, result, "Voucher sent via WhatsApp successfully", 200);
 });

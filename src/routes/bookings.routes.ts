@@ -11,7 +11,8 @@ import {
   generateVoucher,
   sendVoucherEmail,
   exportBookings,
-  getCalendarBookings
+  getCalendarBookings,
+  sendVoucherWhatsApp
 } from "../controllers/bookings.controllers.ts";
 
 const router = Router();
@@ -29,5 +30,6 @@ router.delete("/:id", deleteBooking);
 router.get("/:id", getABooking);
 router.post("/:bookingId/generate-voucher", generateVoucher);
 router.post("/:bookingId/send-voucher-email", sendVoucherEmail);
+router.post("/:bookingId/send-voucher-whatsapp", sendVoucherWhatsApp);
 
 export default router;
