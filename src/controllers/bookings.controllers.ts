@@ -495,9 +495,7 @@ export const sendVoucherWhatsApp = catchAsync(async (req: Request, res: Response
   const validatedData = validationResult.data;
 
   // Send voucher via WhatsApp
-  console.log("Before Sending Voucher via WhatsApp");
   const result = await sendVoucherWhatsAppService(bookingId, validatedData);
-  console.log("After Sending Voucher via WhatsApp");
 
   if (!result) {
     throw new InternalServerError("Failed to send voucher via WhatsApp");

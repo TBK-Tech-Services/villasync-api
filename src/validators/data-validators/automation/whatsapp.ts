@@ -4,8 +4,8 @@ export const sendVoucherWhatsappSchema = z.object({
     phoneNumber: z
         .string()
         .min(10, 'Phone number must be at least 10 digits')
-        .max(15, 'Phone number must not exceed 15 digits')
-        .regex(/^(\+?\d{1,3}[-.\s]?)?\d{10,14}$/, 'Invalid phone number format'),
+        .max(20, 'Phone number must not exceed 20 digits')
+        .regex(/^[\+]?[0-9\s\-\(\)]+$/, 'Invalid phone number format'),
     message: z
         .string()
         .optional()

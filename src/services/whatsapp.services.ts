@@ -29,61 +29,43 @@ export async function sendVoucherWhatsAppService(
         }
 
         // 3. Check if voucher exists and has PDF URL
-        // Note: Adjust this based on your actual schema structure
-        // If voucher is stored differently, modify accordingly
-        const voucherUrl = validatedData.voucherUrl; // From request body
+        const voucherUrl = validatedData.voucherUrl;
 
         if (!voucherUrl) {
             throw new Error('Booking voucher PDF URL is required. Please generate voucher first.');
         }
 
-        // 4. Prepare template parameters
-        const guestName = booking.guestName;
-        const villaName = booking.villa.name;
-        const bookingIdDisplay = `#${booking.id}`;
-
-        // Format dates
-        const formatDate = (date: Date) => {
-            return date.toLocaleDateString('en-IN', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            });
-        };
-
-        const checkIn = formatDate(new Date(booking.checkIn));
-        const checkOut = formatDate(new Date(booking.checkOut));
-
-        // 5. Get WhatsApp-compatible phone number (without + sign)
+        // 4. Get WhatsApp-compatible phone number (without + sign)
         const whatsappNumber = getWhatsAppNumber(formattedPhone);
 
-        // 6. Send WhatsApp message using template
-        // Note: Template parameters order must match your Meta template
-        const templateParams = [
-            guestName,        // {{1}}
-            villaName,        // {{2}}
-            bookingIdDisplay, // {{3}}
-            checkIn,          // {{4}}
-            checkOut          // {{5}}
-        ];
+        // 5. Send WhatsApp message using hello_world template (FOR DEMO)
+        console.log('📤 Sending WhatsApp with hello_world:');
+        console.log('   To:', whatsappNumber);
+        console.log('   Template:', 'hello_world');
 
         const whatsappResponse = await sendTemplateMessage(
             whatsappNumber,
-            whatsappConfig.templates.bookingVoucher,
-            templateParams
+            'hello_world',  // ✅ Using hello_world for demo
+            []  // ✅ No parameters for hello_world
         );
 
-        // 7. Return success response
+        // 6. Validate response and return success
+        const messageId = whatsappResponse.messages?.[0]?.id;
+
+        if (!messageId) {
+            throw new Error('WhatsApp API did not return a valid message ID');
+        }
+
         return {
             success: true,
-            messageId: whatsappResponse.messages?.[0]?.id || 'unknown',
+            messageId: messageId,
             sentTo: formattedPhone,
-            guestName: guestName,
+            guestName: booking.guestName,
             bookingId: booking.id,
-            templateUsed: whatsappConfig.templates.bookingVoucher
+            templateUsed: 'hello_world'
         };
-
-    } catch (error: any) {
+    }
+    catch (error: any) {
         console.error('Error in sendVoucherWhatsAppService:', error);
         throw new Error(error.message || 'Failed to send voucher via WhatsApp');
     }

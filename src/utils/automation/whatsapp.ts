@@ -34,12 +34,12 @@ export async function sendTemplateMessage(
             template: {
                 name: templateName,
                 language: {
-                    code: 'en_US'
+                    code: 'en_US' // Changed from en_US to just en
                 }
             }
         };
 
-        // Add template parameters if provided
+        // Add template components
         if (templateParams.length > 0) {
             payload.template.components = [
                 {
@@ -52,6 +52,8 @@ export async function sendTemplateMessage(
             ];
         }
 
+        console.log('📤 WhatsApp API Payload:', JSON.stringify(payload, null, 2));
+
         const response = await axios.post(url, payload, {
             headers: {
                 'Authorization': `Bearer ${whatsappConfig.accessToken}`,
@@ -59,9 +61,11 @@ export async function sendTemplateMessage(
             }
         });
 
+        console.log('✅ WhatsApp API Response:', response.data);
+
         return response.data;
     } catch (error: any) {
-        console.error('WhatsApp API Error:', error.response?.data || error.message);
+        console.error('❌ WhatsApp API Error:', error.response?.data || error.message);
         throw new Error(
             error.response?.data?.error?.message ||
             'Failed to send WhatsApp message'
