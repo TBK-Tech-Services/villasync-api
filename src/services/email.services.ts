@@ -169,8 +169,8 @@ export async function sendVoucherEmailService(
                       
                       <!-- Attachment Info -->
                       <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border-radius: 12px; padding: 20px; margin: 25px 0; border-left: 4px solid #6366F1;">
-                        <p style="margin: 0; font-size: 14px; color: #4338CA; font-weight: 600;">📎 Attachment Included</p>
-                        <p style="margin: 8px 0 0; font-size: 14px; color: #6B7280; line-height: 1.5;">Your detailed booking voucher is attached to this email. Please keep it handy for check-in.</p>
+                        <p style="margin: 0; font-size: 14px; color: #4338CA; font-weight: 600;">📎 Download Your Voucher</p>
+                        <p style="margin: 8px 0 0; font-size: 14px; color: #6B7280; line-height: 1.5;">Your detailed booking voucher is ready. Click the download button below to save it for check-in.</p>
                       </div>
                       
                       <!-- Important Note -->
@@ -183,13 +183,47 @@ export async function sendVoucherEmailService(
                         </ul>
                       </div>
                       
-                      <!-- CTA Button -->
+                      <!-- CTA Buttons -->
                       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 30px 0;">
                         <tr>
                           <td align="center">
-                            <a href="mailto:${process.env.GMAIL_USER}" style="background: linear-gradient(135deg, #FF6B35 0%, #FF8F5C 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 50px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3); transition: all 0.3s;">
-                              📧 Contact Us
-                            </a>
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                              <tr>
+                                <!-- Download Button -->
+                                <td style="padding: 0 10px;">
+                                  <a href="${validatedData.voucherUrl}" 
+                                     target="_blank"
+                                     style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); 
+                                            color: white; 
+                                            text-decoration: none; 
+                                            padding: 16px 30px; 
+                                            border-radius: 50px; 
+                                            font-weight: 600; 
+                                            font-size: 16px; 
+                                            display: inline-block; 
+                                            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); 
+                                            white-space: nowrap;">
+                                    📄 Download Voucher
+                                  </a>
+                                </td>
+                                <!-- Contact Button -->
+                                <td style="padding: 0 10px;">
+                                  <a href="mailto:${process.env.GMAIL_USER}" 
+                                     style="background: linear-gradient(135deg, #FF6B35 0%, #FF8F5C 100%); 
+                                            color: white; 
+                                            text-decoration: none; 
+                                            padding: 16px 30px; 
+                                            border-radius: 50px; 
+                                            font-weight: 600; 
+                                            font-size: 16px; 
+                                            display: inline-block; 
+                                            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3); 
+                                            white-space: nowrap;">
+                                    📧 Contact Us
+                                  </a>
+                                </td>
+                              </tr>
+                            </table>
                           </td>
                         </tr>
                       </table>
