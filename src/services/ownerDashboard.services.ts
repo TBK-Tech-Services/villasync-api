@@ -43,24 +43,25 @@ export async function getOwnerDashboardStatsService({ ownerId }: { ownerId: numb
             }
         });
 
-        const monthlyRevenue = monthlyBookings.reduce((sum, booking) => sum + booking.totalPayableAmount, 0);
+        // FIX: Convert Decimal to Number before arithmetic
+        const monthlyRevenue = monthlyBookings.reduce((sum, booking) => sum + Number(booking.totalPayableAmount), 0);
 
         const totalGuestsData = await prisma.booking.findMany({
-        where: {
-            villa: {
-                ownerId: ownerId
+            where: {
+                villa: {
+                    ownerId: ownerId
+                },
+                checkIn: {
+                    gte: currentMonthStart,
+                    lte: currentMonthEnd
+                },
+                bookingStatus: {
+                    not: 'CANCELLED'
+                }
             },
-            checkIn: {
-                gte: currentMonthStart,
-                lte: currentMonthEnd
-            },
-            bookingStatus: {
-                not: 'CANCELLED'
+            select: {
+                totalGuests: true
             }
-        },
-        select: {
-            totalGuests: true
-        }
         });
 
         const totalGuests = totalGuestsData.reduce((sum, booking) => sum + booking.totalGuests, 0);
@@ -71,7 +72,7 @@ export async function getOwnerDashboardStatsService({ ownerId }: { ownerId: numb
             monthlyRevenue,
             totalGuests
         };
-    } 
+    }
     catch (error) {
         console.error(`Error while getting owner dashboard stats: ${error}`);
         throw new InternalServerError("Failed to retrieve dashboard statistics");
@@ -79,31 +80,31 @@ export async function getOwnerDashboardStatsService({ ownerId }: { ownerId: numb
 }
 
 // Service to Get Owner Villas
-export async function getOwnerVillasService({ ownerId }: { ownerId: number }): Promise<any>  {
+export async function getOwnerVillasService({ ownerId }: { ownerId: number }): Promise<any> {
     try {
         const villas = await prisma.villa.findMany({
-        where: {
-            ownerId: ownerId
-        },
-        select: {
-            id: true,
-            name: true,
-            location: true,
-            maxGuests: true,
-            price: true,
-            status: true,
-            _count: {
+            where: {
+                ownerId: ownerId
+            },
             select: {
-                bookings: {
-                where: {
-                    bookingStatus: {
-                    in: ['CONFIRMED', 'CHECKED_IN']
+                id: true,
+                name: true,
+                location: true,
+                maxGuests: true,
+                price: true,
+                status: true,
+                _count: {
+                    select: {
+                        bookings: {
+                            where: {
+                                bookingStatus: {
+                                    in: ['CONFIRMED', 'CHECKED_IN']
+                                }
+                            }
+                        }
                     }
                 }
-                }
             }
-            }
-        }
         });
 
         const totalCount = villas.length;
@@ -122,7 +123,7 @@ export async function getOwnerVillasService({ ownerId }: { ownerId: number }): P
             totalCount,
             villas: villasWithBookings
         };
-    } 
+    }
     catch (error) {
         console.error(`Error while getting owner villas: ${error}`);
         throw new InternalServerError("Failed to retrieve villas");
@@ -130,7 +131,7 @@ export async function getOwnerVillasService({ ownerId }: { ownerId: number }): P
 }
 
 // Service to Get Recent Bookings
-export async function getRecentBookingsService({ ownerId }: { ownerId: number }): Promise<any>  {
+export async function getRecentBookingsService({ ownerId }: { ownerId: number }): Promise<any> {
     try {
         const bookings = await prisma.booking.findMany({
             where: {
@@ -174,14 +175,15 @@ export async function getRecentBookingsService({ ownerId }: { ownerId: number })
             totalGuests: booking.totalGuests,
             bookedOn: booking.createdAt,
             paymentStatus: booking.paymentStatus,
-            amount: booking.totalPayableAmount
+            // FIX: Convert Decimal to Number
+            amount: Number(booking.totalPayableAmount)
         }));
 
         return {
             totalCount,
             bookings: formattedBookings
         };
-    } 
+    }
     catch (error) {
         console.error(`Error while getting recent bookings: ${error}`);
         throw new InternalServerError("Failed to retrieve recent bookings");
