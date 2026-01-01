@@ -1,4 +1,4 @@
-import type { Booking } from "@prisma/client";
+import type { Booking, Voucher_Approver } from "@prisma/client";
 import prisma from "../db/DB.ts";
 import type { Booking_Data } from "../types/booking/bookingData.ts";
 import type { searchAndFilterBookingData } from "../validators/data-validators/booking/searchAndFilterBooking.ts";
@@ -8,6 +8,10 @@ import { NotFoundError, InternalServerError, ConflictError } from "../utils/erro
 import { appendToSheet } from "./googleSheets.services.ts";
 import { escapeCSVValue, formatAmount, formatDate, formatDateTime } from "../utils/csv/csvHelpers.ts";
 import type { getCalendarBookingsData } from "../validators/data-validators/booking/getBookingAvailability.ts";
+import { getAdminContactsService } from "./settings.services.ts";
+import { generateVoucherService } from "./automation.services.ts";
+import { sendVoucherEmailService } from "./email.services.ts";
+import { sendVoucherWhatsAppService } from "./whatsapp.services.ts";
 
 // Service to check if a booking exist
 export async function checkIfBookingExistService(bookingId: number): Promise<Booking | null> {
@@ -494,4 +498,113 @@ export async function getCalendarBookingsService(validatedData: getCalendarBooki
         console.error(`Error fetching calendar bookings: ${error}`);
         throw new InternalServerError("Failed to fetch calendar bookings");
     }
+};
+
+// Service to Send Voucher to Both Admins
+export async function sendVoucherToAdminsService(bookingId: number) {
+    try {
+        const admins = await getAdminContactsService();
+
+        if (!admins.admin1.email || !admins.admin1.phone || !admins.admin2.email || !admins.admin2.phone) {
+            throw new InternalServerError("Admin contact details not configured");
+        };
+
+        const voucherResult = await generateVoucherService({ bookingId: bookingId.toString() });
+
+        if (!voucherResult || !voucherResult.voucherUrl) {
+            throw new InternalServerError("Failed to generate voucher");
+        };
+
+        const voucherUrl = voucherResult.voucherUrl;
+        const message = "Please review this booking voucher for approval.";
+
+        const results = await Promise.allSettled([
+            sendVoucherEmailService(bookingId.toString(), {
+                email: admins.admin1.email,
+                message: message,
+                voucherUrl: voucherUrl
+            }),
+            sendVoucherEmailService(bookingId.toString(), {
+                email: admins.admin2.email,
+                message: message,
+                voucherUrl: voucherUrl
+            }),
+            sendVoucherWhatsAppService(bookingId.toString(), {
+                phoneNumber: admins.admin1.phone,
+                message: message,
+                voucherUrl: voucherUrl
+            }),
+            sendVoucherWhatsAppService(bookingId.toString(), {
+                phoneNumber: admins.admin2.phone,
+                message: message,
+                voucherUrl: voucherUrl
+            })
+        ]);
+
+        const emailResults = results.slice(0, 2);
+        const whatsappResults = results.slice(2, 4);
+
+        const emailSuccessCount = emailResults.filter(r => r.status === "fulfilled").length;
+        const whatsappSuccessCount = whatsappResults.filter(r => r.status === "fulfilled").length;
+
+        const emailFailures = emailResults.filter(r => r.status === "rejected");
+        const whatsappFailures = whatsappResults.filter(r => r.status === "rejected");
+
+        if (emailSuccessCount === 0 && whatsappSuccessCount === 0) {
+            throw new InternalServerError("Failed to send voucher to any admin");
+        }
+
+        await prisma.booking.update({
+            where: { id: bookingId },
+            data: { voucherSentToAdminsAt: new Date() }
+        });
+
+        const successMessages: string[] = [];
+        const failureMessages: string[] = [];
+
+        if (emailSuccessCount > 0) {
+            successMessages.push(`Email sent to ${emailSuccessCount} admin(s)`);
+        }
+        if (whatsappSuccessCount > 0) {
+            successMessages.push(`WhatsApp sent to ${whatsappSuccessCount} admin(s)`);
+        }
+        if (emailFailures.length > 0) {
+            failureMessages.push(`Email failed for ${emailFailures.length} admin(s)`);
+        }
+        if (whatsappFailures.length > 0) {
+            failureMessages.push(`WhatsApp failed for ${whatsappFailures.length} admin(s)`);
+        }
+
+        return {
+            success: true,
+            message: successMessages.join(", "),
+            warnings: failureMessages.length > 0 ? failureMessages.join(", ") : null,
+            emailsSent: emailSuccessCount,
+            whatsappSent: whatsappSuccessCount
+        };
+    }
+    catch (error: any) {
+        console.error(`Error sending voucher to admins: ${error}`);
+        throw new InternalServerError(error.message || "Failed to send voucher to admins");
+    };
+};
+
+// Service to Update Voucher Approval Status
+export async function updateVoucherApprovalService(bookingId: number, approvedBy: Voucher_Approver) {
+    try {
+        const booking = await prisma.booking.update({
+            where: { id: bookingId },
+            data: {
+                voucherApprovalStatus: "APPROVED",
+                voucherApprovedBy: approvedBy,
+                voucherApprovedAt: new Date()
+            }
+        });
+
+        return booking;
+    }
+    catch (error) {
+        console.error(`Error updating voucher approval status: ${error}`);
+        throw new InternalServerError("Failed to update voucher approval status");
+    };
 };

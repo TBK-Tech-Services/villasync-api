@@ -39,14 +39,14 @@ export const getAllPermissions = catchAsync(async (req: Request, res: Response, 
 
 // Controller to Invite a New User
 export const inviteNewUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const {firstName, lastName, email, password, role, permissions} = req.body;
+    const { firstName, lastName, email, password, role, permissions } = req.body;
 
     if (!firstName || !lastName || !email || !password || !role || role < 0) {
         throw new ValidationError("All fields are required: firstName, lastName, email, password, role");
     }
 
     const result = await prisma.$transaction(async (tx) => {
-        const user = await getUserService({email}, tx);
+        const user = await getUserService({ email }, tx);
 
         if (user) {
             throw new ConflictError("User already exists with this email");
@@ -65,7 +65,7 @@ export const inviteNewUser = catchAsync(async (req: Request, res: Response, next
                 throw new NotFoundError("Selected role does not exist");
             }
 
-            const newUser = await createNewUserService({firstName, lastName, email, password: hashedPassword, roleId: role}, tx);
+            const newUser = await createNewUserService({ firstName, lastName, email, password: hashedPassword, roleId: role }, tx);
 
             return { newUser, message: "User created successfully" };
         }
@@ -82,7 +82,7 @@ export const inviteNewUser = catchAsync(async (req: Request, res: Response, next
                 throw new InternalServerError("Failed to create new role");
             }
 
-            const newUser = await createNewUserService({firstName, lastName, email, password: hashedPassword, roleId: newRole?.id}, tx);
+            const newUser = await createNewUserService({ firstName, lastName, email, password: hashedPassword, roleId: newRole?.id }, tx);
 
             if (!newUser) {
                 throw new InternalServerError("Failed to create user");
@@ -92,7 +92,7 @@ export const inviteNewUser = catchAsync(async (req: Request, res: Response, next
                 throw new InternalServerError("User created but role assignment failed");
             }
 
-            await assignPermissionsToRoleService({roleId: newUser?.roleId, permissionIds: permissions}, tx);
+            await assignPermissionsToRoleService({ roleId: newUser?.roleId, permissionIds: permissions }, tx);
 
             return { newUser, message: "User and role created successfully" };
         }
@@ -171,94 +171,94 @@ export const getGeneralSettings = catchAsync(async (req: Request, res: Response,
 // Controller to Assign Villas to Owner
 export const assignVillasToOwner = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const validationResult = assignVillasToOwnerSchema.safeParse(req.body);
-    
+
     if (!validationResult.success) {
         throw validationResult.error;
     }
-    
+
     const validatedData = validationResult.data;
 
-    const owner = await checkIfOwnerExistsService({ownerId : validatedData.ownerId});
-    if(owner === null){
+    const owner = await checkIfOwnerExistsService({ ownerId: validatedData.ownerId });
+    if (owner === null) {
         throw new NotFoundError("Selected Owner does not exist");
     }
 
-    const villaAssignment = await assignVillasToOwnerService({ownerId : validatedData.ownerId , villas: validatedData.villaIds});
-    if(villaAssignment === null){
+    const villaAssignment = await assignVillasToOwnerService({ ownerId: validatedData.ownerId, villas: validatedData.villaIds });
+    if (villaAssignment === null) {
         throw new InternalServerError("Failed to assign villas to owner");
     }
 
-    return sendSuccess(res , villaAssignment , "Successfully Assigned Villas to Owner" , 200);
+    return sendSuccess(res, villaAssignment, "Successfully Assigned Villas to Owner", 200);
 });
 
 // Controller to Update a Villa Assignment to Owner
 export const updateOwnerVillaAssignments = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const paramsValidation = updateVillaAssignmentParamSchema.safeParse(req.params);
-    
+
     if (!paramsValidation.success) {
         throw new ValidationError("Invalid villa ID format");
     }
-    
+
     const ownerId = paramsValidation.data.ownerId;
-    
+
     const bodyValidation = updateVillaAssignmentBodySchema.safeParse(req.body);
-    
+
     if (!bodyValidation.success) {
         throw bodyValidation.error;
     }
-    
+
     const validatedData = bodyValidation.data;
 
-    const owner = await checkIfOwnerExistsService({ownerId : ownerId});
-    if(owner === null){
+    const owner = await checkIfOwnerExistsService({ ownerId: ownerId });
+    if (owner === null) {
         throw new NotFoundError("Selected Owner does not exist");
     }
 
-    const updatedVillaAssignment = await updateOwnerVillaAssignmentsService({ownerId: ownerId , villas: validatedData.villaIds});
-    if(updatedVillaAssignment === null){
+    const updatedVillaAssignment = await updateOwnerVillaAssignmentsService({ ownerId: ownerId, villas: validatedData.villaIds });
+    if (updatedVillaAssignment === null) {
         throw new InternalServerError("Failed to update villa assignment to owner");
     }
 
-    return sendSuccess(res , updatedVillaAssignment , "Successfully Updated Villa Assignment to Owner" , 200);
+    return sendSuccess(res, updatedVillaAssignment, "Successfully Updated Villa Assignment to Owner", 200);
 });
 
 // Controller to Un-Assign Specific Villa
 export const unassignSpecificVilla = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const paramsValidation = unassignSpecificVillaParamSchema.safeParse(req.params);
-    
+
     if (!paramsValidation.success) {
         throw new ValidationError("Invalid ID's format");
     }
-    
+
     const villaId = paramsValidation.data.villaId;
     const ownerId = paramsValidation.data.ownerId;
 
-    const unassignedSpecificVilla = await unassignSpecificVillaService({villaId: villaId , ownerId: ownerId});
-    return sendSuccess(res , unassignedSpecificVilla , "Successfully Un-Assigned Specifc Villa to Owner" , 200);
+    const unassignedSpecificVilla = await unassignSpecificVillaService({ villaId: villaId, ownerId: ownerId });
+    return sendSuccess(res, unassignedSpecificVilla, "Successfully Un-Assigned Specifc Villa to Owner", 200);
 });
 
 // Controller to Un-Assign All Villas From Owner
 export const unassignAllVillasFromOwner = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const paramsValidation = unassignAllVillasParamSchema.safeParse(req.params);
-    
+
     if (!paramsValidation.success) {
         throw new ValidationError("Invalid Owner ID format");
     }
-    
+
     const ownerId = paramsValidation.data.ownerId;
 
-    const unassignedVillas = await unassignAllVillasFromOwnerService({ownerId: ownerId});
-    return sendSuccess(res , unassignedVillas , "Successfully Un-Assigned All Villas to Owner" , 200);
+    const unassignedVillas = await unassignAllVillasFromOwnerService({ ownerId: ownerId });
+    return sendSuccess(res, unassignedVillas, "Successfully Un-Assigned All Villas to Owner", 200);
 });
 
 // Controller to Get All Un-Assigned Villas 
 export const getAllUnAssignedVillas = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const unassignedVillas = await getAllUnAssignedVillasService();
-    if(unassignedVillas === null){
+    if (unassignedVillas === null) {
         throw new InternalServerError("Error Getting All Un-Assigned Villas");
     }
 
-    return sendSuccess(res , unassignedVillas , "Successfully get all un-assigned villas" , 200);
+    return sendSuccess(res, unassignedVillas, "Successfully get all un-assigned villas", 200);
 });
 
 // Controller to get All Owners
@@ -268,7 +268,7 @@ export const getAllOwners = catchAsync(async (req: Request, res: Response, next:
         throw new NotFoundError("No owners found");
     }
 
-    return sendSuccess(res , owners , "Successfully Get all Owners" , 200);
+    return sendSuccess(res, owners, "Successfully Get all Owners", 200);
 });
 
 // Controller to get All Owners with Villas
@@ -278,11 +278,11 @@ export const getAllOwnersWithVillas = catchAsync(async (req: Request, res: Respo
         throw new NotFoundError("No owners found");
     }
 
-    return sendSuccess(res , owners , "Successfully Get all Owners with Villas" , 200);
+    return sendSuccess(res, owners, "Successfully Get all Owners with Villas", 200);
 });
 
 // Controller to get All Stats
 export const getVillaOwnerManagementStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const stats = await getVillaOwnerManagementStatsService();
-    return sendSuccess(res , stats , "Successfully get Villa Owner Management Stats" , 200);
+    return sendSuccess(res, stats, "Successfully get Villa Owner Management Stats", 200);
 });

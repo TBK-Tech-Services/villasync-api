@@ -12,7 +12,9 @@ import {
   sendVoucherEmail,
   exportBookings,
   getCalendarBookings,
-  sendVoucherWhatsApp
+  sendVoucherWhatsApp,
+  sendVoucherToAdmins,
+  updateVoucherApproval
 } from "../controllers/bookings.controllers.ts";
 
 const router = Router();
@@ -29,6 +31,8 @@ router.patch("/:id/payment-status", updatePaymentStatus);
 router.delete("/:id", deleteBooking);
 router.get("/:id", getABooking);
 router.post("/:bookingId/generate-voucher", generateVoucher);
+router.post("/:bookingId/send-voucher-to-admins", sendVoucherToAdmins);
+router.patch("/:id/voucher-approval", updateVoucherApproval);
 router.post("/:bookingId/send-voucher-email", sendVoucherEmail);
 router.post("/:bookingId/send-voucher-whatsapp", sendVoucherWhatsApp);
 

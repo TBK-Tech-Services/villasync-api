@@ -4,7 +4,7 @@ import { sendSuccess } from "../utils/general/response.ts";
 import { isVillaPresentService } from "../services/villas.services.ts";
 import { parseBookingDates } from "../utils/booking/parseBookingDates.ts";
 import { getTotalDaysOfStay } from "../utils/booking/calculateTotalDaysOfStay.ts";
-import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, createBookingWithSheetSync, deleteBookingService, formatBookingsForCSV, getABookingService, getAllBookingsService, getCalendarBookingsService, searchAndFilterBookingsService, updateBookingService, updateBookingStatusService, updatePaymentStatusService } from "../services/bookings.services.ts";
+import { addBookingService, checkIfBookingExistService, checkVillaAvailabilityForUpdateService, checkVillaAvailabilityService, createBookingWithSheetSync, deleteBookingService, formatBookingsForCSV, getABookingService, getAllBookingsService, getCalendarBookingsService, searchAndFilterBookingsService, sendVoucherToAdminsService, updateBookingService, updateBookingStatusService, updatePaymentStatusService, updateVoucherApprovalService } from "../services/bookings.services.ts";
 import { deleteBookingSchema } from "../validators/data-validators/booking/deleteBooking.ts";
 import { updateBookingParamsSchema } from "../validators/data-validators/booking/updateBookingParam.ts";
 import { updateBookingBodySchema } from "../validators/data-validators/booking/updateBookingBody.ts";
@@ -26,6 +26,8 @@ import { generateCSV } from "../utils/csv/csvGenerator.ts";
 import { getCalendarBookingsSchema } from "../validators/data-validators/booking/getBookingAvailability.ts";
 import { sendVoucherWhatsappSchema } from "../validators/data-validators/automation/whatsapp.ts";
 import { sendVoucherWhatsAppService } from "../services/whatsapp.services.ts";
+import { sendVoucherToAdminsParamsSchema } from "../validators/data-validators/booking/sendVoucherToAdmins.ts";
+import { updateVoucherApprovalBodySchema, updateVoucherApprovalParamsSchema } from "../validators/data-validators/booking/updateVoucherApproval.ts";
 
 // Controller to Add a Booking
 export const addBooking = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -503,4 +505,53 @@ export const sendVoucherWhatsApp = catchAsync(async (req: Request, res: Response
 
   // Success response
   sendSuccess(res, result, "Voucher sent via WhatsApp successfully", 200);
+});
+
+// Controller to Send Booking Voucher to Admins
+export const sendVoucherToAdmins = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { bookingId } = req.params;
+
+  const validation = sendVoucherToAdminsParamsSchema.safeParse({ bookingId });
+  if (!validation.success) {
+    throw new ValidationError("Invalid booking ID");
+  }
+
+  const bookingIdNum = parseInt(validation.data.bookingId);
+
+  const booking = await checkIfBookingExistService(bookingIdNum);
+
+  if (!booking) {
+    throw new NotFoundError("Booking not found");
+  };
+
+  const result = await sendVoucherToAdminsService(bookingIdNum);
+
+  sendSuccess(res, result, "Voucher sent to admins successfully", 200);
+});
+
+// Controller to Update Booking Voucher Approval
+export const updateVoucherApproval = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = updateVoucherApprovalParamsSchema.safeParse(req.params);
+
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid booking ID");
+  };
+
+  const bodyValidation = updateVoucherApprovalBodySchema.safeParse(req.body);
+
+  if (!bodyValidation.success) {
+    throw bodyValidation.error;
+  };
+
+  const bookingId = paramsValidation.data.id;
+  const { approvedBy } = bodyValidation.data;
+  const booking = await checkIfBookingExistService(bookingId);
+
+  if (!booking) {
+    throw new NotFoundError("Booking not found");
+  };
+
+  const updatedBooking = await updateVoucherApprovalService(bookingId, approvedBy);
+
+  sendSuccess(res, updatedBooking, "Voucher approval updated successfully", 200);
 });

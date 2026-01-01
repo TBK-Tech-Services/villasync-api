@@ -12,6 +12,12 @@ model GeneralSetting {
   businessName String   @db.VarChar(255)
   contactEmail String   @db.VarChar(255)
   phoneNumber  String   @db.VarChar(20)
+  admin1Name   String?  @db.VarChar(100)
+  admin1Email  String?  @db.VarChar(255)
+  admin1Phone  String?  @db.VarChar(20)
+  admin2Name   String?  @db.VarChar(100)
+  admin2Email  String?  @db.VarChar(255)
+  admin2Phone  String?  @db.VarChar(20)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -111,33 +117,37 @@ model Villa {
 }
 
 model Booking {
-  id                 Int              @id @default(autoincrement())
-  guestName          String           @db.VarChar(100)
-  guestEmail         String?          @db.VarChar(100)
-  guestPhone         String           @db.VarChar(20)
-  alternatePhone     String?          @db.VarChar(20)
-  villaId            Int
-  checkIn            DateTime
-  checkOut           DateTime
-  totalGuests        Int
-  numberOfNights     Int
-  specialRequest     String?          @db.VarChar(500)
-  bookingStatus      Booking_Status   @default(CONFIRMED)
-  paymentStatus      Payment_Status   @default(PENDING)
-  basePrice          Decimal          @db.Decimal(10, 2)
-  customPrice        Decimal?         @db.Decimal(10, 2)
-  extraPersonCharge  Decimal          @default(0) @db.Decimal(10, 2)
-  discount           Decimal          @default(0) @db.Decimal(10, 2)
-  subTotalAmount     Decimal          @db.Decimal(10, 2)
-  isGSTIncluded      Boolean          @default(false)
-  totalTax           Decimal          @db.Decimal(10, 2)
-  totalPayableAmount Decimal          @db.Decimal(10, 2)
-  advancePaid        Decimal          @default(0) @db.Decimal(10, 2)
-  dueAmount          Decimal          @db.Decimal(10, 2)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  villa              Villa            @relation(fields: [villaId], references: [id], onDelete: Cascade)
-  expenses           BookingExpense[]
+  id                    Int                     @id @default(autoincrement())
+  guestName             String                  @db.VarChar(100)
+  guestEmail            String?                 @db.VarChar(100)
+  guestPhone            String                  @db.VarChar(20)
+  alternatePhone        String?                 @db.VarChar(20)
+  villaId               Int
+  checkIn               DateTime
+  checkOut              DateTime
+  totalGuests           Int
+  numberOfNights        Int
+  specialRequest        String?                 @db.VarChar(500)
+  bookingStatus         Booking_Status          @default(CONFIRMED)
+  paymentStatus         Payment_Status          @default(PENDING)
+  basePrice             Decimal                 @db.Decimal(10, 2)
+  customPrice           Decimal?                @db.Decimal(10, 2)
+  extraPersonCharge     Decimal                 @default(0) @db.Decimal(10, 2)
+  discount              Decimal                 @default(0) @db.Decimal(10, 2)
+  subTotalAmount        Decimal                 @db.Decimal(10, 2)
+  isGSTIncluded         Boolean                 @default(false)
+  totalTax              Decimal                 @db.Decimal(10, 2)
+  totalPayableAmount    Decimal                 @db.Decimal(10, 2)
+  advancePaid           Decimal                 @default(0) @db.Decimal(10, 2)
+  dueAmount             Decimal                 @db.Decimal(10, 2)
+  voucherApprovalStatus Voucher_Approval_Status @default(NOT_APPROVED)
+  voucherApprovedBy     Voucher_Approver?
+  voucherApprovedAt     DateTime?
+  voucherSentToAdminsAt DateTime?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  villa                 Villa                   @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  expenses              BookingExpense[]
 }
 
 model ExpenseCategory {
@@ -203,4 +213,14 @@ enum Expense_Type {
 enum Payment_Status {
   PAID
   PENDING
+}
+
+enum Voucher_Approval_Status {
+  NOT_APPROVED
+  APPROVED
+}
+
+enum Voucher_Approver {
+  PUJA
+  JAIRAJ
 }

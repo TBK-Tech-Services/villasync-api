@@ -3,15 +3,15 @@ import prisma from "../db/DB.ts";
 import type { createUserData } from "../validators/data-validators/settings/createUser.ts";
 import type { AssignRolePermissionsInput } from "../validators/data-validators/settings/assignRolePermissionsInput.ts";
 import type { addGeneralSettingsData } from "../validators/data-validators/settings/addGeneralSettings.ts";
-import { InternalServerError } from "../utils/errors/customErrors.ts";
+import { InternalServerError, NotFoundError } from "../utils/errors/customErrors.ts";
 
 // Service to get All Roles
 export async function getAllRolesService(): Promise<Role[]> {
     try {
         const roles = await prisma.role.findMany();
         return roles;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error fetching all roles: ${error}`);
         throw new InternalServerError("Failed to fetch roles");
     }
@@ -22,8 +22,8 @@ export async function getAllPermissionsService(): Promise<Permission[]> {
     try {
         const permissions = await prisma.permission.findMany();
         return permissions;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error fetching all permissions: ${error}`);
         throw new InternalServerError("Failed to fetch permissions");
     }
@@ -40,7 +40,7 @@ export async function checkRoleExistanceService(role: number, client: PrismaClie
 
         return roleData;
     }
-    catch (error) { 
+    catch (error) {
         console.error(`Error checking role existence: ${error}`);
         throw new InternalServerError("Failed to verify role existence");
     }
@@ -57,7 +57,7 @@ export async function createNewRoleService(role: string, client: PrismaClient | 
 
         return newRole;
     }
-    catch (error) { 
+    catch (error) {
         console.error(`Error creating new role: ${error}`);
         throw new InternalServerError("Failed to create new role");
     }
@@ -74,14 +74,14 @@ export async function checkIfSameRoleNameExistService(role: string, client: Pris
 
         return roleData;
     }
-    catch (error) { 
+    catch (error) {
         console.error(`Error checking role name availability: ${error}`);
         throw new InternalServerError("Failed to check role name availability");
     }
 }
 
 // Service to Create a New User
-export async function createNewUserService({firstName, lastName, email, password, roleId}: createUserData, client: PrismaClient | any = prisma): Promise<User | null> {
+export async function createNewUserService({ firstName, lastName, email, password, roleId }: createUserData, client: PrismaClient | any = prisma): Promise<User | null> {
     try {
         const newUser = await client.user.create({
             data: {
@@ -95,14 +95,14 @@ export async function createNewUserService({firstName, lastName, email, password
 
         return newUser;
     }
-    catch (error) { 
+    catch (error) {
         console.error(`Error creating user: ${error}`);
         throw new InternalServerError("Failed to create user");
     }
 }
 
 // Service to Assign Permissions to a Role
-export async function assignPermissionsToRoleService({roleId, permissionIds}: AssignRolePermissionsInput, client: PrismaClient | any = prisma): Promise<void> {
+export async function assignPermissionsToRoleService({ roleId, permissionIds }: AssignRolePermissionsInput, client: PrismaClient | any = prisma): Promise<void> {
     try {
         if (!permissionIds || permissionIds.length === 0) {
             throw new InternalServerError("At least one permission is required");
@@ -120,7 +120,7 @@ export async function assignPermissionsToRoleService({roleId, permissionIds}: As
             skipDuplicates: true
         });
     }
-    catch (error) { 
+    catch (error) {
         console.error(`Error assigning permissions to role: ${error}`);
         throw new InternalServerError("Failed to assign permissions to role");
     }
@@ -134,8 +134,8 @@ export async function addGeneralSettingsService(validatedData: addGeneralSetting
         });
 
         return generalSetting;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error adding general setting: ${error}`);
         throw new InternalServerError("Failed to create general settings");
     }
@@ -143,7 +143,7 @@ export async function addGeneralSettingsService(validatedData: addGeneralSetting
 
 // Service to check if General Setting Exist
 export async function checkIfGeneralSettingExistService(generalSettingId: number): Promise<GeneralSetting | null> {
-    try {   
+    try {
         const generalSetting = await prisma.generalSetting.findUnique({
             where: {
                 id: generalSettingId
@@ -152,7 +152,7 @@ export async function checkIfGeneralSettingExistService(generalSettingId: number
 
         return generalSetting;
     }
-    catch (error) { 
+    catch (error) {
         console.error(`Error checking general setting existence: ${error}`);
         throw new InternalServerError("Failed to verify general setting existence");
     }
@@ -160,7 +160,7 @@ export async function checkIfGeneralSettingExistService(generalSettingId: number
 
 // Service to Update general Settings
 export async function updateGeneralSettingsService(generalSettingId: number, validatedData: any): Promise<GeneralSetting | null> {
-    try {   
+    try {
         const updatedGeneralSetting = await prisma.generalSetting.update({
             where: {
                 id: generalSettingId
@@ -169,8 +169,8 @@ export async function updateGeneralSettingsService(generalSettingId: number, val
         });
 
         return updatedGeneralSetting;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error updating general setting: ${error}`);
         throw new InternalServerError("Failed to update general settings");
     }
@@ -182,73 +182,73 @@ export async function getGeneralSettingsService(): Promise<GeneralSetting[] | nu
         const generalSettings = await prisma.generalSetting.findMany();
 
         return generalSettings;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error fetching general settings: ${error}`);
         throw new InternalServerError("Failed to fetch general settings");
     }
 }
 
 // Service to check if Owner Exist
-export async function checkIfOwnerExistsService({ownerId}: {ownerId: number}): Promise<User | null> {
+export async function checkIfOwnerExistsService({ ownerId }: { ownerId: number }): Promise<User | null> {
     try {
         const owner = await prisma.user.findUnique({
-            where : {
-                id : ownerId,
+            where: {
+                id: ownerId,
             }
         });
 
         return owner;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error checking if owner exist: ${error}`);
         throw new InternalServerError("Failed to check if owner exist");
     }
 }
 
 // Service to Assign Villas to Owner
-export async function assignVillasToOwnerService({ownerId , villas}: {ownerId: number , villas: number[]}): Promise<{count: number}> {
+export async function assignVillasToOwnerService({ ownerId, villas }: { ownerId: number, villas: number[] }): Promise<{ count: number }> {
     try {
         const villaOwners = await prisma.villa.updateMany({
-            where : {
-                id : {
-                    in : villas
+            where: {
+                id: {
+                    in: villas
                 }
             },
-            data : {
+            data: {
                 ownerId: ownerId
             }
         })
 
         return villaOwners;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error assigning villas to owner: ${error}`);
         throw new InternalServerError("Failed to assign villas to owner");
     }
 }
 
 // Service to Update a Villa Assignment to Owner
-export async function updateOwnerVillaAssignmentsService({ownerId , villas}: {ownerId: number , villas: number[]}): Promise<{count: number}> {
+export async function updateOwnerVillaAssignmentsService({ ownerId, villas }: { ownerId: number, villas: number[] }): Promise<{ count: number }> {
     try {
         const result = await prisma.$transaction(async (tx) => {
             const unassignedVillas = await tx.villa.updateMany({
-                where : {
+                where: {
                     ownerId: ownerId
                 },
-                data : {
-                    ownerId : null
+                data: {
+                    ownerId: null
                 }
             });
 
             const updatedVillas = await tx.villa.updateMany({
-                where : {
-                    id : {
-                        in : villas
+                where: {
+                    id: {
+                        in: villas
                     }
                 },
-                data : {
-                    ownerId : ownerId
+                data: {
+                    ownerId: ownerId
                 }
             });
 
@@ -256,48 +256,48 @@ export async function updateOwnerVillaAssignmentsService({ownerId , villas}: {ow
         });
 
         return result;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error updating villa assignment to owner: ${error}`);
         throw new InternalServerError("Failed to update villa assignment to owner");
     }
 }
 
 // Service to Un-Assign Specific Villa
-export async function unassignSpecificVillaService({villaId , ownerId}: {villaId : number , ownerId : number}): Promise<Villa> {
+export async function unassignSpecificVillaService({ villaId, ownerId }: { villaId: number, ownerId: number }): Promise<Villa> {
     try {
         const unassignedVilla = await prisma.villa.update({
-            where : {
+            where: {
                 id: villaId,
             },
-            data : {
-                ownerId : null
+            data: {
+                ownerId: null
             }
         });
 
         return unassignedVilla;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error unassigning villa: ${error}`);
         throw new InternalServerError("Failed to unassign villa");
     }
 }
 
 // Service to Un-Assign All Villas From Owner
-export async function unassignAllVillasFromOwnerService({ownerId}: {ownerId: number}): Promise<User[]> {
+export async function unassignAllVillasFromOwnerService({ ownerId }: { ownerId: number }): Promise<User[]> {
     try {
         const unassignedVillas = await prisma.villa.updateMany({
-            where : {
+            where: {
                 ownerId: ownerId
             },
-            data : {
-                ownerId : null
+            data: {
+                ownerId: null
             }
         });
 
         return unassignedVillas;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error unassigning all villas from owner: ${error}`);
         throw new InternalServerError("Failed to unassign all villas from owner");
     }
@@ -307,14 +307,14 @@ export async function unassignAllVillasFromOwnerService({ownerId}: {ownerId: num
 export async function getAllUnAssignedVillasService(): Promise<Villa[] | null> {
     try {
         const unassignedVillas = await prisma.villa.findMany({
-            where : {
-                ownerId : null
+            where: {
+                ownerId: null
             }
         })
 
         return unassignedVillas;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error getting un-assigned villas: ${error}`);
         throw new InternalServerError("Error getting un-assigned villas");
     }
@@ -324,16 +324,16 @@ export async function getAllUnAssignedVillasService(): Promise<Villa[] | null> {
 export async function getAllOwnersService(): Promise<User[]> {
     try {
         const owners = await prisma.user.findMany({
-            where : {
+            where: {
                 role: {
-                    name : 'Owner'
+                    name: 'Owner'
                 }
             },
         });
 
         return owners;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error getting all owners: ${error}`);
         throw new InternalServerError("Failed to get all owners");
     }
@@ -343,27 +343,27 @@ export async function getAllOwnersService(): Promise<User[]> {
 export async function getAllOwnersWithVillasService(): Promise<User[]> {
     try {
         const owners = await prisma.user.findMany({
-            where : {
+            where: {
                 role: {
-                    name : 'Owner'
+                    name: 'Owner'
                 }
             },
-            include : {
-                role : true,
-                ownedVillas : true
+            include: {
+                role: true,
+                ownedVillas: true
             }
         });
 
         return owners;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error getting all owners with villas: ${error}`);
         throw new InternalServerError("Failed to get all owners with villas");
     }
 }
 
 // Service to get All Stats
-export async function getVillaOwnerManagementStatsService(): Promise<{totalOwners: number , totalAssignedVillas: number , totalUnassignedVillas: number}> {
+export async function getVillaOwnerManagementStatsService(): Promise<{ totalOwners: number, totalAssignedVillas: number, totalUnassignedVillas: number }> {
     try {
         const result = await prisma.$transaction(async (tx) => {
             const totalOwners = await tx.user.count({
@@ -377,14 +377,14 @@ export async function getVillaOwnerManagementStatsService(): Promise<{totalOwner
             const totalAssignedVillas = await tx.villa.count({
                 where: {
                     ownerId: {
-                        not: null 
+                        not: null
                     }
                 }
             });
 
             const totalUnassignedVillas = await tx.villa.count({
                 where: {
-                    ownerId: null  
+                    ownerId: null
                 }
             });
 
@@ -395,10 +395,38 @@ export async function getVillaOwnerManagementStatsService(): Promise<{totalOwner
             };
         });
 
-        return result;  
-    } 
-    catch (error) { 
+        return result;
+    }
+    catch (error) {
         console.error(`Error getting villa owner management stats: ${error}`);
         throw new InternalServerError("Failed to get villa owner management stats");
     }
 }
+
+// Service to get Admin Contacts
+export async function getAdminContactsService() {
+    try {
+        const settings = await prisma.generalSetting.findFirst();
+
+        if (!settings) {
+            throw new NotFoundError("General settings not found");
+        };
+
+        return {
+            admin1: {
+                name: settings.admin1Name || "Admin 1",
+                email: settings.admin1Email,
+                phone: settings.admin1Phone
+            },
+            admin2: {
+                name: settings.admin2Name || "Admin 2",
+                email: settings.admin2Email,
+                phone: settings.admin2Phone
+            }
+        };
+    }
+    catch (error) {
+        console.error(`Error getting admin contacts: ${error}`);
+        throw new InternalServerError("Failed to get admin contacts");
+    }
+};
