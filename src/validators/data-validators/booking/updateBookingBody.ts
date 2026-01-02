@@ -1,5 +1,8 @@
 import z from 'zod';
 
+const GST_MODES = ["NONE", "ALL", "SELECTIVE"] as const;
+const BOOKING_SOURCES = ["DIRECT", "AIRBNB", "MAKEMYTRIP", "BOOKING_COM", "GOIBIBO", "AGODA", "OTHER"] as const;
+
 export const updateBookingBodySchema = z.object({
     guestName: z.string().min(1, "Guest name is required").max(100, "Guest name must be less than 100 characters").optional(),
     guestEmail: z.string().optional(),
@@ -13,7 +16,15 @@ export const updateBookingBodySchema = z.object({
     }).optional(),
     totalGuests: z.number().int().positive("At least 1 guest required").optional(),
     specialRequest: z.string().max(500, "Special request must be less than 500 characters").optional(),
-    isGSTIncluded: z.boolean().optional(),
+
+    // GST Fields
+    gstMode: z.enum(GST_MODES).optional(),
+    gstOnBasePrice: z.boolean().optional(),
+    gstOnExtraCharge: z.boolean().optional(),
+
+    // Booking Source
+    bookingSource: z.enum(BOOKING_SOURCES).optional().nullable(),
+
     bookingStatus: z.enum(["CONFIRMED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED"]).optional(),
     paymentStatus: z.enum(["PAID", "PENDING"]).optional(),
 });

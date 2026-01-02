@@ -18,9 +18,12 @@ export interface Booking_Data {
     extraPersonCharge: number;
     discount: number;
     subTotalAmount: number;
-    isGSTIncluded: boolean;
+    gstMode: string;
+    gstOnBasePrice: boolean;
+    gstOnExtraCharge: boolean;
     totalTax: number;
     totalPayableAmount: number;
     advancePaid: number;
     dueAmount: number;
+    bookingSource: string | null;
 }
