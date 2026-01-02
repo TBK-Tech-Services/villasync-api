@@ -25,9 +25,22 @@ function formatDateTime(date: Date): string {
   });
 }
 
-// Function to Create Expense Report HTML (No Filters)
+// Function to Create Expense Report HTML (With Filters)
 export function createExpenseReportHTML(data: any) {
-  const { expenses, summary, categoryBreakdown, villaBreakdown } = data;
+  const { expenses, summary, categoryBreakdown, villaBreakdown, appliedFilters } = data;
+
+  // Build filters display HTML
+  const filtersHTML = appliedFilters ? `
+    <div class="filters-applied">
+      <h3>Applied Filters</h3>
+      <div class="filter-tags">
+        ${appliedFilters.period ? `<span class="filter-tag"><strong>Period:</strong> ${appliedFilters.period}</span>` : ''}
+        ${appliedFilters.category ? `<span class="filter-tag"><strong>Category:</strong> ${appliedFilters.category}</span>` : ''}
+        ${appliedFilters.type ? `<span class="filter-tag"><strong>Type:</strong> ${appliedFilters.type}</span>` : ''}
+        ${appliedFilters.villa ? `<span class="filter-tag"><strong>Villa:</strong> ${appliedFilters.villa}</span>` : ''}
+      </div>
+    </div>
+  ` : '';
 
   return `
     <!DOCTYPE html>
@@ -56,6 +69,33 @@ export function createExpenseReportHTML(data: any) {
           margin: 5px 0;
           color: #666;
           font-size: 14px;
+        }
+        .filters-applied {
+          background: #fff8f5;
+          border: 1px solid #FF6B35;
+          border-radius: 8px;
+          padding: 15px;
+          margin-bottom: 25px;
+        }
+        .filters-applied h3 {
+          margin: 0 0 10px 0;
+          color: #FF6B35;
+          font-size: 14px;
+        }
+        .filter-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        .filter-tag {
+          background: #FF6B35;
+          color: white;
+          padding: 5px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+        }
+        .filter-tag strong {
+          margin-right: 4px;
         }
         .summary {
           display: grid;
@@ -131,6 +171,9 @@ export function createExpenseReportHTML(data: any) {
         <h1>TBK Villas - Expense Report</h1>
         <p><strong>Generated On:</strong> ${formatDateTime(new Date())}</p>
       </div>
+
+      <!-- Applied Filters -->
+      ${filtersHTML}
       
       <!-- Summary Cards -->
       <div class="summary">

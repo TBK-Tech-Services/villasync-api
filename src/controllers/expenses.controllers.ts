@@ -1,13 +1,16 @@
 import type { NextFunction, Request, Response } from "express";
 import { addExpenseSchema } from "../validators/data-validators/expense/addExpense.ts";
 import { sendSuccess } from "../utils/general/response.ts";
-import { addExpenseService, calculateExpenseSummary, checkIfExpenseExistService, deleteExpenseService, generateExpenseReportPDF, getAllExpenseCategoriesService, getAllExpensesService, getExpenseService, getFilteredExpenses, groupByCategory, groupByVilla, updateExpenseService } from "../services/expenses.services.ts";
+import { addExpenseService, calculateExpenseSummary, checkIfExpenseExistService, deleteExpenseService, generateExpenseReportPDF, getAllExpenseCategoriesService, getAllExpensesService, getExpenseService, getFilteredExpensesService, groupByCategory, groupByVilla, updateExpenseService } from "../services/expenses.services.ts";
 import { updateExpenseParamsSchema } from "../validators/data-validators/expense/updateExpenseParams.ts";
 import { updateExpenseBodySchema } from "../validators/data-validators/expense/updateExpenseBody.ts";
 import { getExpenseSchema } from "../validators/data-validators/expense/getExpense.ts";
 import { deleteExpenseSchema } from "../validators/data-validators/expense/deleteExpense.ts";
 import catchAsync from "../utils/general/catchAsync.ts";
 import { ValidationError, NotFoundError, InternalServerError } from "../utils/errors/customErrors.ts";
+import prisma from "../db/DB.ts";
+import { expenseReportFiltersSchema } from "../validators/data-validators/expense/expenseReportFilters.ts";
+import { buildAppliedFiltersInfo } from "../utils/report/expenceFilters.ts";
 
 // Controller to Add An Expense
 export const addExpense = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -127,14 +130,49 @@ export const deleteExpense = catchAsync(async (req: Request, res: Response, next
   sendSuccess(res, deletedExpense, "Expense deleted successfully", 200);
 });
 
-// Controller to Generate Expense Report (No Filters)
+// Controller to Generate Expense Report (With Filters)
 export const generateExpenseReport = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  // Fetch ALL expenses (no filters)
-  const expenses = await getAllExpensesService();
+  // Validate query params
+  const validationResult = expenseReportFiltersSchema.safeParse(req.query);
+
+  if (!validationResult.success) {
+    throw new ValidationError("Invalid filter parameters");
+  }
+
+  const filters = validationResult.data;
+
+  // Check if any filters are applied
+  const hasFilters = filters.month || filters.startDate || filters.endDate ||
+    filters.categoryId || filters.type || filters.villaId;
+
+  // Fetch expenses based on filters
+  const expenses = hasFilters
+    ? await getFilteredExpensesService(filters)
+    : await getAllExpensesService();
 
   if (!expenses || expenses.length === 0) {
-    throw new NotFoundError("No expenses found");
+    throw new NotFoundError("No expenses found matching the filters");
   }
+
+  // Fetch metadata for filter labels (category name, villa name)
+  const metadata: any = {};
+
+  if (filters.categoryId) {
+    const category = await prisma.expenseCategory.findUnique({
+      where: { id: filters.categoryId }
+    });
+    metadata.categoryName = category?.name || 'Unknown';
+  }
+
+  if (filters.villaId) {
+    const villa = await prisma.villa.findUnique({
+      where: { id: filters.villaId }
+    });
+    metadata.villaName = villa?.name || 'Unknown';
+  }
+
+  // Build applied filters info for PDF
+  const appliedFilters = buildAppliedFiltersInfo(filters, metadata);
 
   // Calculate summary
   const summary = await calculateExpenseSummary(expenses);
@@ -150,7 +188,8 @@ export const generateExpenseReport = catchAsync(async (req: Request, res: Respon
     expenses,
     summary,
     categoryBreakdown,
-    villaBreakdown
+    villaBreakdown,
+    appliedFilters
   });
 
   if (!pdfBuffer) {

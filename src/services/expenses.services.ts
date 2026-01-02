@@ -5,6 +5,7 @@ import type { addExpenseData } from "../validators/data-validators/expense/addEx
 import type { updateExpenseBodyData } from "../validators/data-validators/expense/updateExpenseBody.ts";
 import { InternalServerError } from "../utils/errors/customErrors.ts";
 import { createExpenseReportHTML } from '../templates/expenseReport.template.ts';
+import type { ExpenseReportFiltersData } from '../validators/data-validators/expense/expenseReportFilters.ts';
 
 // Service to Add An Expense
 export async function addExpenseService(validatedData: addExpenseData): Promise<any | null> {
@@ -277,21 +278,33 @@ export async function deleteExpenseService(expenseId: number): Promise<any | nul
 }
 
 // Service to Get Filtered Expenses
-export async function getFilteredExpenses(filters: any): Promise<any | null> {
+export async function getFilteredExpensesService(filters: ExpenseReportFiltersData): Promise<any | null> {
     try {
         const whereClause: any = {};
 
-        // Date filter
-        if (filters.startDate && filters.endDate) {
-            whereClause.date = {
-                gte: filters.startDate,
-                lte: filters.endDate
-            };
-        }
+        // Date filtering logic
+        if (filters.month) {
+            // Month format: "2025-11"
+            const [year, month] = filters.month.split('-').map(Number);
+            const startOfMonth = new Date(year, month - 1, 1);
+            const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
 
-        // Villa filter
-        if (filters.villaId) {
-            whereClause.villaId = filters.villaId;
+            whereClause.date = {
+                gte: startOfMonth,
+                lte: endOfMonth
+            };
+        } else if (filters.startDate || filters.endDate) {
+            whereClause.date = {};
+
+            if (filters.startDate) {
+                whereClause.date.gte = new Date(filters.startDate);
+            }
+
+            if (filters.endDate) {
+                const endDate = new Date(filters.endDate);
+                endDate.setHours(23, 59, 59, 999);
+                whereClause.date.lte = endDate;
+            }
         }
 
         // Category filter
@@ -304,14 +317,28 @@ export async function getFilteredExpenses(filters: any): Promise<any | null> {
             whereClause.type = filters.type;
         }
 
+        // Villa filter - handles both INDIVIDUAL and SPLIT expenses
+        if (filters.villaId) {
+            whereClause.OR = [
+                { villaId: filters.villaId },
+                {
+                    villas: {
+                        some: {
+                            villaId: filters.villaId
+                        }
+                    }
+                }
+            ];
+        }
+
         const expenses = await prisma.expense.findMany({
             where: whereClause,
             include: {
-                villa: { select: { name: true } },
-                category: { select: { name: true } },
+                category: true,
+                villa: true,
                 villas: {
                     include: {
-                        villa: { select: { name: true } }
+                        villa: true
                     }
                 }
             },
