@@ -12,6 +12,7 @@ import { getAdminContactsService } from "./settings.services.ts";
 import { generateVoucherService } from "./automation.services.ts";
 import { sendVoucherEmailService } from "./email.services.ts";
 import { sendVoucherWhatsAppService } from "./whatsapp.services.ts";
+import { syncAvailabilityOnCreate, syncAvailabilityOnDelete } from "./availabilitySheet.services.ts";
 
 // Service to check if a booking exist
 export async function checkIfBookingExistService(bookingId: number): Promise<Booking | null> {
@@ -193,6 +194,10 @@ export async function createBookingWithSheetSync(bookingData: Booking_Data, vill
             timeout: 15000
         });
 
+        // Sync availability calendar (non-blocking)
+        syncAvailabilityOnCreate(villaName, booking.checkIn, booking.checkOut)
+            .catch(err => console.error("Availability sync failed:", err));
+
         return booking;
     }
     catch (error: any) {
@@ -271,15 +276,27 @@ export async function updatePaymentStatusService({ bookingId, updatedData }: { b
 // Service to Delete a Booking
 export async function deleteBookingService(bookingId: number): Promise<Booking> {
     try {
-        const deletedBooking = await prisma.booking.delete({
-            where: {
-                id: bookingId
-            }
+        // Get booking with villa name before deleting
+        const booking = await prisma.booking.findUnique({
+            where: { id: bookingId },
+            include: { villa: true }
         });
+
+        if (!booking) {
+            throw new NotFoundError("Booking not found");
+        }
+
+        const deletedBooking = await prisma.booking.delete({
+            where: { id: bookingId }
+        });
+
+        // Sync availability calendar (non-blocking)
+        syncAvailabilityOnDelete(booking.villa.name, booking.checkIn, booking.checkOut)
+            .catch(err => console.error("Availability sync failed:", err));
 
         return deletedBooking;
     }
-    catch (error) {
+    catch (error: any) {
         if (error.code === 'P2025') {
             throw new NotFoundError("Booking not found");
         }
