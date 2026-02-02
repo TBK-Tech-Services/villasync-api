@@ -84,6 +84,7 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
             bathrooms: villa.bathrooms,
             description: villa.description,
             status: villa.status,
+            brochureUrl: villa.brochureUrl,
 
             // ✅ Use imageUrl directly from Villa model
             images: villa.imageUrl ? [villa.imageUrl] : [],  // Array with single image

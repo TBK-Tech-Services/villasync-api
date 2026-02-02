@@ -105,6 +105,7 @@ model Villa {
   bathrooms     Int
   description   String         @db.VarChar(1000)
   status        Villa_Status
+  brochureUrl   String?
   imageUrl      String         @db.VarChar(500)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
