@@ -41,7 +41,7 @@ app.use("/settings/v1", settingsRoutes);
 
 // Routes for Owner Dashboard
 app.use("/owner/v1", ownerDashboardRoutes);
-app.use("/owner/v1/calender", ownerCalenderRoutes);
+app.use("/owner/v1/calendar", ownerCalenderRoutes);
 app.use("/owner/v1/analytics", ownerAnalyticsRoutes);
 
 // Routes for Agent Landing Page

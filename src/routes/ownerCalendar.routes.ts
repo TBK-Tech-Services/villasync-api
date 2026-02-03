@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { getOwnerCalendarAvailability } from "../controllers/ownerCalendar.controllers.ts";
+import { getOwnerCalendarBookings } from "../controllers/ownerCalendar.controllers";
 
 const router = Router();
 
 // Owner Calendar Endpoint
-router.get("/availability/:ownerId", getOwnerCalendarAvailability);
+router.get("/bookings/:ownerId", getOwnerCalendarBookings);
 
 export default router;

@@ -1,24 +1,30 @@
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 import catchAsync from "../utils/general/catchAsync.ts";
-import { sendSuccess } from "../utils/general/response.ts";
-import { getOwnerCalendarAvailabilityService } from "../services/ownerCalendar.services.ts";
-import { ValidationError } from "../utils/errors/customErrors.ts";
+import { sendError, sendSuccess } from "../utils/general/response.ts";
+import { getOwnerCalendarBookingsService } from "../services/ownerCalendar.services.ts";
 
-// Controller to Get Owner Calendar Availability
-export const getOwnerCalendarAvailability = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const ownerIdParam = req.params.ownerId;
+// Controller to Get Owner Calendar Bookings
+export const getOwnerCalendarBookings = catchAsync(async (req: Request, res: Response) => {
+    const { ownerId } = req.params;
 
-    if (!ownerIdParam) {
-        throw new ValidationError("Owner ID is required");
+    if (!ownerId) {
+        return sendError(res, "Owner ID is required", 400);
     }
 
-    const ownerId = parseInt(ownerIdParam);
+    const month = req.query.month as string;
+    const year = req.query.year as string;
+    const villaId = req.query.villaId as string | undefined;
 
-    if (isNaN(ownerId)) {
-        throw new ValidationError("Invalid Owner ID");
+    if (!month || !year) {
+        return sendError(res, "Month and Year are required", 400);
     }
 
-    const availability = await getOwnerCalendarAvailabilityService({ ownerId });
+    const bookings = await getOwnerCalendarBookingsService({
+        ownerId: Number(ownerId),
+        month: Number(month),
+        year: Number(year),
+        ...(villaId && { villaId: Number(villaId) })  // Conditionally add villaId
+    });
 
-    sendSuccess(res, availability, "Calendar availability retrieved successfully", 200);
+    sendSuccess(res, bookings, "Owner calendar bookings retrieved", 200);
 });
