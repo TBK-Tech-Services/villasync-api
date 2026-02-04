@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('--- Starting Seed Process ---');
 
-    // 1. Permissions (Mock Data)
+    // 1. Permissions (Mock Data) - Upsert use kiya hai taaki duplicate error na aaye
     const permissions = [
         'view_dashboard', 'manage_villas', 'manage_bookings',
         'manage_users', 'manage_expenses', 'view_reports'
@@ -21,7 +21,7 @@ async function main() {
             })
         )
     );
-    console.log('✅ Permissions created');
+    console.log('✅ Permissions created or verified');
 
     // 2. Roles (Admin, Manager, Staff)
     const roles = ['Admin', 'Manager', 'Staff'];
@@ -34,21 +34,36 @@ async function main() {
             })
         )
     );
-    console.log('✅ Roles created');
+    console.log('✅ Roles created or verified');
 
     // 3. Role-Permission Mapping (Admin gets everything)
-    await Promise.all(
-        createdPermissions.map(p =>
-            prisma.rolePermission.create({
-                data: {
-                    roleId: createdRoles[0].id, // Admin Role
+    // FIX: Array.map par .catch() nahi chalta, isliye loop use kiya hai
+    for (const p of createdPermissions) {
+        try {
+            // Pehle check karo ki mapping hai ya nahi
+            const existingMapping = await prisma.rolePermission.findFirst({
+                where: {
+                    roleId: createdRoles[0].id,
                     permissionId: p.permissionId
                 }
-            })
-        ).catch(() => console.log('⚠️ Permissions mapping already exists'))
-    );
+            });
 
-    // 4. General Settings
+            if (!existingMapping) {
+                await prisma.rolePermission.create({
+                    data: {
+                        roleId: createdRoles[0].id,
+                        permissionId: p.permissionId
+                    }
+                });
+            }
+        } catch (e) {
+            console.log(`⚠️ Mapping skipped for permission: ${p.name}`);
+        }
+    }
+    console.log('✅ Role-Permission mapping completed');
+
+    // 4. General Settings - Purana delete karke naya create (Idempotency)
+    await prisma.generalSetting.deleteMany({});
     await prisma.generalSetting.create({
         data: {
             businessName: 'TBK Villa Management',
@@ -58,39 +73,53 @@ async function main() {
             admin1Email: 'jairaj@tbkvillas.com',
         }
     });
-    console.log('✅ General Settings added');
+    console.log('✅ General Settings updated');
 
     // 5. User Creation (Admin Account)
     const hashedPassword = await bcrypt.hash('TBK@SecurePass#2026', 10);
     const adminUser = await prisma.user.upsert({
         where: { email: 'admin@tbkvillas.com' },
-        update: {},
+        update: {
+            password: hashedPassword, // Password update kar dega agar user pehle se hai
+            roleId: createdRoles[0].id
+        },
         create: {
             firstName: 'Sahil',
             lastName: 'Ladhania',
             email: 'admin@tbkvillas.com',
             password: hashedPassword,
-            roleId: createdRoles[0].id // Linked to Admin Role
+            roleId: createdRoles[0].id
         }
     });
-    console.log('✅ Admin User created');
+    console.log('✅ Admin User created or updated');
 
-    // 6. Amenity Category & Amenities
-    const luxuryCat = await prisma.amenityCategory.create({
-        data: {
+    // 6. Amenity Category & Amenities - Upsert to handle unique name 
+    const luxuryCat = await prisma.amenityCategory.upsert({
+        where: { name: 'Luxury Features' },
+        update: {},
+        create: {
             name: 'Luxury Features',
             icon: 'star',
-            amenities: {
-                create: [
-                    { name: 'Private Pool' },
-                    { name: 'Jacuzzi' }
-                ]
-            }
         }
     });
-    console.log('✅ Amenities created');
 
-    // 7. Mock Villas
+    const mockAmenities = ['Private Pool', 'Jacuzzi'];
+    for (const name of mockAmenities) {
+        await prisma.amenity.upsert({
+            where: {
+                name_categoryId: { name, categoryId: luxuryCat.id }
+            },
+            update: {},
+            create: { name, categoryId: luxuryCat.id }
+        });
+    }
+    console.log('✅ Amenities settled');
+
+    // 7. Mock Villas - Pehle purani mock villas delete karo taaki duplicate na ho
+    await prisma.villa.deleteMany({
+        where: { ownerId: adminUser.id }
+    });
+
     await prisma.villa.createMany({
         data: [
             {
