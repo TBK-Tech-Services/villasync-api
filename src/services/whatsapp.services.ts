@@ -38,18 +38,27 @@ export async function sendVoucherWhatsAppService(
         // 4. Get WhatsApp-compatible phone number (without + sign)
         const whatsappNumber = getWhatsAppNumber(formattedPhone);
 
-        // 5. Send WhatsApp message using hello_world template (FOR DEMO)
-        console.log('📤 Sending WhatsApp with hello_world:');
-        console.log('   To:', whatsappNumber);
-        console.log('   Template:', 'hello_world');
+        // 5. Prepare template parameters (5 variables)
+        const templateParams = [
+            booking.guestName,                           // {{1}} Guest Name
+            booking.villa?.name || 'TBK Villa',          // {{2}} Villa Name
+            `BK${booking.id}`,                           // {{3}} Booking ID
+            formatDateForWhatsApp(booking.checkInDate),  // {{4}} Check-in
+            formatDateForWhatsApp(booking.checkOutDate)  // {{5}} Check-out
+        ];
 
+        console.log('📤 Sending WhatsApp with booking_confirmation_utility:');
+        console.log('   To:', whatsappNumber);
+        console.log('   Params:', templateParams);
+
+        // 6. Send WhatsApp message
         const whatsappResponse = await sendTemplateMessage(
             whatsappNumber,
-            'hello_world',  // ✅ Using hello_world for demo
-            []  // ✅ No parameters for hello_world
+            'booking_confirmation_utility',  // ✅ Your approved template
+            templateParams
         );
 
-        // 6. Validate response and return success
+        // 7. Validate response and return success
         const messageId = whatsappResponse.messages?.[0]?.id;
 
         if (!messageId) {
@@ -62,11 +71,20 @@ export async function sendVoucherWhatsAppService(
             sentTo: formattedPhone,
             guestName: booking.guestName,
             bookingId: booking.id,
-            templateUsed: 'hello_world'
+            templateUsed: 'booking_confirmation_utility'
         };
     }
     catch (error: any) {
         console.error('Error in sendVoucherWhatsAppService:', error);
         throw new Error(error.message || 'Failed to send voucher via WhatsApp');
     }
-};
+}
+
+// Helper function for date formatting
+function formatDateForWhatsApp(date: Date): string {
+    return new Date(date).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    }); // Output: "15 Dec 2025"
+}
