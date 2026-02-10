@@ -1,0 +1,12 @@
+-- CreateTable
+CREATE TABLE `VillaImage` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `url` VARCHAR(500) NOT NULL,
+    `villaId` INTEGER NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `VillaImage` ADD CONSTRAINT `VillaImage_villaId_fkey` FOREIGN KEY (`villaId`) REFERENCES `Villa`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

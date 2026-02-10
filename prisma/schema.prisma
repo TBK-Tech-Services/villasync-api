@@ -107,6 +107,9 @@ model Villa {
   status        Villa_Status
   brochureUrl   String?
   imageUrl      String         @db.VarChar(500)
+  images        VillaImage[]  
+  managers      VillaManager[]
+  caretakers    VillaCaretaker[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   ownerId       Int?
@@ -115,6 +118,30 @@ model Villa {
   expenseVillas ExpenseVilla[]
   owner         User?          @relation(fields: [ownerId], references: [id])
   amenities     VillaAmenity[]
+}
+
+model VillaManager {
+  id        Int      @id @default(autoincrement())
+  phone     String   @db.VarChar(20)
+  villaId   Int
+  villa     Villa    @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model VillaCaretaker {
+  id        Int      @id @default(autoincrement())
+  phone     String   @db.VarChar(20)
+  villaId   Int
+  villa     Villa    @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model VillaImage {
+  id        Int      @id @default(autoincrement())
+  url       String   @db.VarChar(500)
+  villaId   Int
+  villa     Villa    @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model Booking {
