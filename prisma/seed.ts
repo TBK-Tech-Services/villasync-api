@@ -121,9 +121,8 @@ async function main() {
         where: { ownerId: adminUser.id }
     });
 
-    // 8. Villas Data (Order as per document)
+    // 8. Villas Data with Brochure URLs
     const villasData = [
-        // 1. TBK Villa 10
         {
             name: 'TBK Villa 10',
             location: 'https://maps.app.goo.gl/CXTn6bUzGEQ5iNrA8?g_st=iw',
@@ -133,6 +132,7 @@ async function main() {
             bathrooms: 3,
             description: 'Luxury villa with panoramic views.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2024/01/DSC4037-1.jpg',
+            brochureUrl: 'https://drive.google.com/uc?export=download&id=1ZDBd1oNlY66o6kZ7k9BWZiJ0EGOU4z87',
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2024/01/DSC3935-1.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2024/01/DSC3986-1.jpg',
@@ -144,7 +144,6 @@ async function main() {
             managers: ['9147374601'],
             caretakers: ['9732448871'],
         },
-        // 2. TBK Villa 05
         {
             name: 'TBK Villa 05',
             location: 'https://maps.app.goo.gl/CXTn6bUzGEQ5iNrA8?g_st=iw',
@@ -154,6 +153,7 @@ async function main() {
             bathrooms: 3,
             description: 'Spacious villa with private pool and garden.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2024/03/AH0A0734.jpg',
+            brochureUrl: null,
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2024/03/AH0A0740.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2024/03/AH0A0728.jpg',
@@ -165,7 +165,6 @@ async function main() {
             managers: ['9147374601'],
             caretakers: ['7063640999'],
         },
-        // 3. Kibana R4
         {
             name: 'Kibana R4',
             location: 'https://maps.app.goo.gl/UnjUSoctXomcqsgo8?g_st=iw',
@@ -175,6 +174,7 @@ async function main() {
             bathrooms: 2,
             description: 'Compact villa with efficient layout.',
             imageUrl: 'https://placehold.co/800x600/orange/white?text=Kibana+R4',
+            brochureUrl: null,
             images: [
                 'https://placehold.co/800x600/orange/white?text=Kibana+R4+1',
                 'https://placehold.co/800x600/orange/white?text=Kibana+R4+2',
@@ -185,7 +185,6 @@ async function main() {
             managers: ['9147374601'],
             caretakers: ['7821032220', '7319354519'],
         },
-        // 4. TBK Villa 01
         {
             name: 'TBK Villa 01',
             location: 'https://maps.app.goo.gl/C8hFJ4YNE9LkakMr7?g_st=aw',
@@ -195,6 +194,7 @@ async function main() {
             bathrooms: 4,
             description: 'Premium villa with modern amenities and stunning views.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2024/01/AH0A6645-scaled.jpg',
+            brochureUrl: null,
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2026/01/AH0A6977-scaled.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2026/01/AH0A7040-scaled.jpg',
@@ -206,7 +206,6 @@ async function main() {
             managers: ['9147374601'],
             caretakers: ['6398263556', '9369287396'],
         },
-        // 5. Zen Villa
         {
             name: 'Zen Villa',
             location: 'https://maps.app.goo.gl/JGP3geqrbQV7PYLx6?g_st=aw',
@@ -216,6 +215,7 @@ async function main() {
             bathrooms: 4,
             description: 'Peaceful retreat with zen-inspired design.',
             imageUrl: 'https://placehold.co/800x600/orange/white?text=Zen+Villa',
+            brochureUrl: 'https://drive.google.com/uc?export=download&id=1cnEOm8lo2XFbWLlE2DTjskxalpAUbupm',
             images: [
                 'https://placehold.co/800x600/orange/white?text=Zen+Villa+1',
                 'https://placehold.co/800x600/orange/white?text=Zen+Villa+2',
@@ -226,7 +226,6 @@ async function main() {
             managers: ['9147374601'],
             caretakers: ['7428106445'],
         },
-        // 6. Origin Villa
         {
             name: 'Origin Villa',
             location: 'https://maps.app.goo.gl/7zeecADxA1z4jURg7?g_st=aw',
@@ -236,6 +235,7 @@ async function main() {
             bathrooms: 3,
             description: 'Classic villa with authentic Goan charm.',
             imageUrl: 'https://placehold.co/800x600/orange/white?text=Origin+Villa',
+            brochureUrl: null,
             images: [
                 'https://placehold.co/800x600/orange/white?text=Origin+Villa+1',
                 'https://placehold.co/800x600/orange/white?text=Origin+Villa+2',
@@ -246,7 +246,6 @@ async function main() {
             managers: ['9147374601'],
             caretakers: ['9637057239'],
         },
-        // 7. Zorita 06
         {
             name: 'Zorita 06',
             location: 'https://maps.app.goo.gl/ghtVFDh7ZDFcPeCZA?g_st=aw',
@@ -256,6 +255,7 @@ async function main() {
             bathrooms: 3,
             description: 'Contemporary villa with stylish interiors.',
             imageUrl: 'https://placehold.co/800x600/orange/white?text=Zorita+06',
+            brochureUrl: null,
             images: [
                 'https://placehold.co/800x600/orange/white?text=Zorita+06+1',
                 'https://placehold.co/800x600/orange/white?text=Zorita+06+2',
@@ -266,7 +266,6 @@ async function main() {
             managers: ['9147374601'],
             caretakers: ['8972955166'],
         },
-        // 8. TBK Villa 04
         {
             name: 'TBK Villa 04',
             location: 'https://maps.app.goo.gl/DTMew9JezBUCXdhS7?g_st=aw',
@@ -276,6 +275,7 @@ async function main() {
             bathrooms: 3,
             description: 'Cozy villa perfect for family getaways.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2024/02/WhatsApp-Image-2023-11-25-at-10.30.09-1.jpg',
+            brochureUrl: null,
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2024/02/WhatsApp-Image-2023-11-25-at-10.30.07-1.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2024/02/WhatsApp-Image-2023-11-25-at-10.30.03-2.jpg',
@@ -287,7 +287,6 @@ async function main() {
             managers: ['9147374601'],
             caretakers: ['8423789442'],
         },
-        // 9. TBK Villa West View
         {
             name: 'TBK Villa West View',
             location: 'https://maps.app.goo.gl/CgTrwKUT8Tz6JDCy8?g_st=aw',
@@ -297,6 +296,7 @@ async function main() {
             bathrooms: 3,
             description: 'Villa with breathtaking western sunset views.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2025/05/DJI_0933.jpg',
+            brochureUrl: 'https://drive.google.com/uc?export=download&id=1b7LOvw0bCAGqSicJqRqBCShThUSCs9nv',
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2025/05/DSC_7049.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2025/05/DJI_0923.jpg',
@@ -308,7 +308,6 @@ async function main() {
             managers: ['7066487849'],
             caretakers: ['9623856366', '9679477857'],
         },
-        // 10. TBK Villa 08
         {
             name: 'TBK Villa 08',
             location: 'https://maps.app.goo.gl/DTMew9JezBUCXdhS7?g_st=aw',
@@ -318,6 +317,7 @@ async function main() {
             bathrooms: 2,
             description: 'Modern villa with excellent connectivity.',
             imageUrl: 'https://placehold.co/800x600/orange/white?text=TBK+Villa+08',
+            brochureUrl: null,
             images: [
                 'https://placehold.co/800x600/orange/white?text=TBK+Villa+08+1',
                 'https://placehold.co/800x600/orange/white?text=TBK+Villa+08+2',
@@ -328,7 +328,6 @@ async function main() {
             managers: ['7066487849'],
             caretakers: ['7498770339'],
         },
-        // 11. TBK Villa 15
         {
             name: 'TBK Villa 15',
             location: 'https://maps.app.goo.gl/CXTn6bUzGEQ5iNrA8?g_st=iw',
@@ -338,6 +337,7 @@ async function main() {
             bathrooms: 4,
             description: 'Large villa ideal for group stays.',
             imageUrl: 'https://placehold.co/800x600/orange/white?text=TBK+Villa+15',
+            brochureUrl: 'https://drive.google.com/uc?export=download&id=1cTQBS-JuawTloepYbzH_cmYNCJr0rzG7',
             images: [
                 'https://placehold.co/800x600/orange/white?text=TBK+Villa+15+1',
                 'https://placehold.co/800x600/orange/white?text=TBK+Villa+15+2',
@@ -348,7 +348,6 @@ async function main() {
             managers: ['7066487849'],
             caretakers: ['7864861015'],
         },
-        // 12. Kibana Mirai R8
         {
             name: 'Kibana Mirai R8',
             location: 'https://maps.app.goo.gl/UnjUSoctXomcqsgo8?g_st=iw',
@@ -358,6 +357,7 @@ async function main() {
             bathrooms: 4,
             description: 'Futuristic villa with smart home features.',
             imageUrl: 'https://placehold.co/800x600/orange/white?text=Kibana+Mirai+R8',
+            brochureUrl: 'https://drive.google.com/uc?export=download&id=1SseSTbmfTSjM9G-C6bUnURzKNsU5co6s',
             images: [
                 'https://placehold.co/800x600/orange/white?text=Kibana+Mirai+R8+1',
                 'https://placehold.co/800x600/orange/white?text=Kibana+Mirai+R8+2',
@@ -368,7 +368,6 @@ async function main() {
             managers: ['7066487849'],
             caretakers: ['8293987935'],
         },
-        // 13. Kibana Mirai L4
         {
             name: 'Kibana Mirai L4',
             location: 'https://maps.app.goo.gl/UnjUSoctXomcqsgo8?g_st=iw',
@@ -378,6 +377,7 @@ async function main() {
             bathrooms: 3,
             description: 'Modern villa with premium finishes.',
             imageUrl: 'https://placehold.co/800x600/orange/white?text=Kibana+Mirai+L4',
+            brochureUrl: null,
             images: [
                 'https://placehold.co/800x600/orange/white?text=Kibana+Mirai+L4+1',
                 'https://placehold.co/800x600/orange/white?text=Kibana+Mirai+L4+2',
@@ -388,7 +388,6 @@ async function main() {
             managers: ['9147088903'],
             caretakers: ['8597686745'],
         },
-        // 14. Calangute Villa
         {
             name: 'Calangute Villa',
             location: 'https://maps.app.goo.gl/gispovaU1qMHHDtH7?g_st=aw',
@@ -398,6 +397,7 @@ async function main() {
             bathrooms: 4,
             description: 'Beach-side villa near Calangute beach.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2024/01/DSC1514.jpg',
+            brochureUrl: 'https://drive.google.com/uc?export=download&id=158s_5I6pqiCb5ZaOn4zx1oSZZpYFwpEE',
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2024/01/DSC1622.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2024/01/DSC1514.jpg',
@@ -408,7 +408,6 @@ async function main() {
             managers: ['9147088903'],
             caretakers: ['8371918498', '8388087031'],
         },
-        // 15. TBK Villa 103
         {
             name: 'TBK Villa 103',
             location: 'https://maps.app.goo.gl/cGaABtuQs9g4sTw4A?g_st=aw',
@@ -418,6 +417,7 @@ async function main() {
             bathrooms: 4,
             description: 'Premium villa with top-notch facilities.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2024/01/DSC4675.jpg',
+            brochureUrl: 'https://drive.google.com/uc?export=download&id=1bS1zShmlUY14AdpTCprvb9_9IMSMRzER',
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2024/01/DSC4714.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2024/01/DSC4687.jpg',
@@ -429,7 +429,6 @@ async function main() {
             managers: ['9147088903'],
             caretakers: ['9091811361', '7972451548'],
         },
-        // 16. TBK Villa Encanto
         {
             name: 'TBK Villa Encanto',
             location: 'https://maps.app.goo.gl/Xcr7ht3x35ggHRyS6?g_st=aw',
@@ -439,6 +438,7 @@ async function main() {
             bathrooms: 5,
             description: 'Enchanting villa with luxurious amenities.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2026/01/DSC4396-scaled.jpg',
+            brochureUrl: 'https://drive.google.com/uc?export=download&id=17nBflrXvAjd_vU3OAYQUJqoYiyLWPxnw',
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2026/01/DSC4144-scaled.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2026/01/DSC4291-scaled.jpg',
@@ -450,7 +450,6 @@ async function main() {
             managers: ['9147088903'],
             caretakers: ['9284914149'],
         },
-        // 17. TBK Villa 11
         {
             name: 'TBK Villa 11',
             location: 'https://maps.app.goo.gl/DTMew9JezBUCXdhS7?g_st=aw',
@@ -460,6 +459,7 @@ async function main() {
             bathrooms: 3,
             description: 'Beautiful villa with modern interiors.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2024/02/PHOTO-2023-01-30-01-08-451.jpg',
+            brochureUrl: 'https://drive.google.com/uc?export=download&id=1Z7zaXXlOGnGMYh-P7QycHDVTKo1pSpCT',
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2024/02/PHOTO-2023-01-30-01-08-451.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2024/02/PHOTO-2023-01-30-01-08-47.jpg',
@@ -471,7 +471,6 @@ async function main() {
             managers: ['9147088903'],
             caretakers: ['9650840373'],
         },
-        // 18. TBK Villa 09
         {
             name: 'TBK Villa 09',
             location: 'https://maps.app.goo.gl/CXTn6bUzGEQ5iNrA8?g_st=iw',
@@ -481,6 +480,7 @@ async function main() {
             bathrooms: 3,
             description: 'Elegant villa with serene surroundings.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2024/01/WhatsApp-Image-2023-01-23-at-15.55.39-1.jpg',
+            brochureUrl: null,
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2024/01/WhatsApp-Image-2023-01-23-at-15.55.37.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2024/01/WhatsApp-Image-2023-01-23-at-15.55.36.jpg',
@@ -492,7 +492,6 @@ async function main() {
             managers: ['9147088903'],
             caretakers: ['8082528342'],
         },
-        // 19. Kibana Komorebi 01
         {
             name: 'Kibana Komorebi 01',
             location: 'https://maps.app.goo.gl/FBeS9qq19DBCUrQS8?g_st=aw',
@@ -502,6 +501,7 @@ async function main() {
             bathrooms: 3,
             description: 'Nature-inspired villa with forest views.',
             imageUrl: 'https://tbkvillas.com/wp-content/uploads/2026/01/DJI_0257-1-scaled.jpg',
+            brochureUrl: null,
             images: [
                 'https://tbkvillas.com/wp-content/uploads/2026/01/DSC2693-scaled.jpg',
                 'https://tbkvillas.com/wp-content/uploads/2026/01/DSC2819-scaled.jpg',
@@ -515,7 +515,7 @@ async function main() {
         },
     ];
 
-    // Create villas with images, managers, and caretakers
+    // Create villas
     for (const villaData of villasData) {
         const { images, managers, caretakers, ...villaFields } = villaData;
 
@@ -527,31 +527,19 @@ async function main() {
             }
         });
 
-        // Add images
         await prisma.villaImage.createMany({
-            data: images.map(url => ({
-                url,
-                villaId: villa.id
-            }))
+            data: images.map(url => ({ url, villaId: villa.id }))
         });
 
-        // Add managers
         await prisma.villaManager.createMany({
-            data: managers.map(phone => ({
-                phone,
-                villaId: villa.id
-            }))
+            data: managers.map(phone => ({ phone, villaId: villa.id }))
         });
 
-        // Add caretakers
         await prisma.villaCaretaker.createMany({
-            data: caretakers.map(phone => ({
-                phone,
-                villaId: villa.id
-            }))
+            data: caretakers.map(phone => ({ phone, villaId: villa.id }))
         });
 
-        console.log(`✅ ${villaData.name} created with ${images.length} images, ${managers.length} manager(s), ${caretakers.length} caretaker(s)`);
+        console.log(`✅ ${villaData.name} created with Brochure URL`);
     }
 
     console.log('--- Seeding Completed Successfully! ---');

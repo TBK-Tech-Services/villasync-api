@@ -14,8 +14,8 @@ export async function isVillaPresentService({ villaId }: { villaId: number }): P
         });
 
         return villa;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error checking villa existence: ${error}`);
         throw new InternalServerError("Failed to verify villa existence");
     }
@@ -31,8 +31,8 @@ export async function checkIfVillaExistService(villaName: string): Promise<Villa
         });
 
         return villa;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error checking villa name availability: ${error}`);
         throw new InternalServerError("Failed to check villa name availability");
     }
@@ -54,10 +54,10 @@ export async function addVillaService(validatedData: addVillaData): Promise<Vill
                 imageUrl: validatedData.imageUrl,
                 amenities: {
                     create: validatedData.amenities.map((amenityId) => ({
-                        amenity: { 
-                            connect: { 
-                                id: amenityId 
-                            } 
+                        amenity: {
+                            connect: {
+                                id: amenityId
+                            }
                         }
                     }))
                 },
@@ -76,8 +76,8 @@ export async function addVillaService(validatedData: addVillaData): Promise<Vill
         });
 
         return newVilla;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         // Handle foreign key constraint errors (invalid amenity IDs)
         if (error.code === 'P2025') {
             throw new NotFoundError("One or more amenity IDs are invalid");
@@ -108,8 +108,8 @@ export async function getAllVillasService(): Promise<Villa[] | null> {
         });
 
         return villas;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error fetching all villas: ${error}`);
         throw new InternalServerError("Failed to fetch villas");
     }
@@ -121,19 +121,19 @@ export async function getAllAmenityCategoriesService() {
         const amenitiesCategories = await prisma.amenityCategory.findMany({
             include: {
                 amenities: {
-                    orderBy: { 
+                    orderBy: {
                         name: 'asc'
                     }
                 }
             },
-            orderBy: { 
-                name: 'asc' 
+            orderBy: {
+                name: 'asc'
             },
         });
 
         return amenitiesCategories;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error fetching amenity categories: ${error}`);
         throw new InternalServerError("Failed to fetch amenity categories");
     }
@@ -156,22 +156,25 @@ export async function getSingleVillaService(villaId: number): Promise<Villa | nu
                         }
                     }
                 },
+                images: true,
+                managers: true,
+                caretakers: true,
             }
         });
 
         return villa;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error fetching villa details: ${error}`);
         throw new InternalServerError("Failed to fetch villa details");
     }
-}
+};
 
 // Service to Update a Villa
 export async function updateVillaService(villaId: number, updateData: updateVillaBodyData): Promise<Villa | null> {
     try {
         const villaUpdateData: any = {};
-        
+
         if (updateData.villaName !== undefined) {
             villaUpdateData.name = updateData.villaName;
         }
@@ -196,7 +199,7 @@ export async function updateVillaService(villaId: number, updateData: updateVill
         if (updateData.description !== undefined) {
             villaUpdateData.description = updateData.description;
         }
-        if (updateData.imageUrl !== undefined) { 
+        if (updateData.imageUrl !== undefined) {
             villaUpdateData.imageUrl = updateData.imageUrl;
         }
 
@@ -207,16 +210,16 @@ export async function updateVillaService(villaId: number, updateData: updateVill
             data: {
                 ...villaUpdateData,
 
-                ...((updateData.amenities !== undefined) 
-                    && 
-                    {
-                        amenities: {
-                            deleteMany: {},
-                            create: updateData.amenities.map((amenityId) => ({
-                                amenityId
-                            }))
-                        }
-                    }),
+                ...((updateData.amenities !== undefined)
+                    &&
+                {
+                    amenities: {
+                        deleteMany: {},
+                        create: updateData.amenities.map((amenityId) => ({
+                            amenityId
+                        }))
+                    }
+                }),
             },
             include: {
                 amenities: {
@@ -232,18 +235,18 @@ export async function updateVillaService(villaId: number, updateData: updateVill
         });
 
         return updatedVilla;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         // Handle record not found
         if (error.code === 'P2025') {
             throw new NotFoundError("Villa not found");
         }
-        
+
         // Handle foreign key constraint errors (invalid amenity IDs)
         if (error.code === 'P2003') {
             throw new NotFoundError("One or more amenity IDs are invalid");
         }
-        
+
         console.error(`Error updating villa: ${error}`);
         throw new InternalServerError("Failed to update villa");
     }
@@ -260,17 +263,17 @@ export async function deleteVillaService(villaId: number): Promise<Villa | null>
 
         return deletedVilla;
     }
-    catch (error) { 
+    catch (error) {
         // Handle record not found
         if (error.code === 'P2025') {
             throw new NotFoundError("Villa not found");
         }
-        
+
         // Handle foreign key constraint (villa has bookings)
         if (error.code === 'P2003') {
             throw new ConflictError("Cannot delete villa as it has associated bookings");
         }
-        
+
         console.error(`Error deleting villa: ${error}`);
         throw new InternalServerError("Failed to delete villa");
     }
@@ -294,8 +297,8 @@ export async function getVillaRecentBookingsService(villaId: number): Promise<Bo
         });
 
         return villa?.bookings || [];
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error fetching villa recent bookings: ${error}`);
         throw new InternalServerError("Failed to fetch villa recent bookings");
     }
@@ -318,8 +321,8 @@ export async function getVillaBookingsService(villaId: number): Promise<Booking[
         });
 
         return villa?.bookings || [];
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error fetching villa bookings: ${error}`);
         throw new InternalServerError("Failed to fetch villa bookings");
     }
