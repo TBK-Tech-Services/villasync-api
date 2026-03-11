@@ -8,6 +8,8 @@ export interface Booking_Data {
     villaId: number;
     checkIn: Date;
     checkOut: Date;
+    numberOfAdults: number;
+    numberOfChildren: number;
     totalGuests: number;
     numberOfNights: number;
     specialRequest: string | null;

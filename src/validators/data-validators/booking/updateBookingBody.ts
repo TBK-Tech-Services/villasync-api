@@ -14,7 +14,8 @@ export const updateBookingBodySchema = z.object({
     checkOut: z.string().refine(val => !isNaN(Date.parse(val)), {
         message: "Invalid check-out date",
     }).optional(),
-    totalGuests: z.number().int().positive("At least 1 guest required").optional(),
+    numberOfAdults: z.number().int().min(1, "At least 1 adult required").optional(),
+    numberOfChildren: z.number().int().min(0, "Children count cannot be negative").optional(),
     specialRequest: z.string().max(500, "Special request must be less than 500 characters").optional(),
 
     // GST Fields

@@ -47,7 +47,7 @@ export async function addVillaService(validatedData: addVillaData): Promise<Vill
                 location: validatedData.location,
                 bedrooms: validatedData.bedRooms,
                 bathrooms: validatedData.bathRooms,
-                maxGuests: validatedData.maxGuest,
+
                 price: validatedData.pricePerNight,
                 status: validatedData.status,
                 description: validatedData.description,
@@ -187,9 +187,7 @@ export async function updateVillaService(villaId: number, updateData: updateVill
         if (updateData.bathRooms !== undefined) {
             villaUpdateData.bathrooms = updateData.bathRooms;
         }
-        if (updateData.maxGuest !== undefined) {
-            villaUpdateData.maxGuests = updateData.maxGuest;
-        }
+
         if (updateData.pricePerNight !== undefined) {
             villaUpdateData.price = updateData.pricePerNight;
         }

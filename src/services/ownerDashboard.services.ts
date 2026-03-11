@@ -90,7 +90,7 @@ export async function getOwnerVillasService({ ownerId }: { ownerId: number }): P
                 id: true,
                 name: true,
                 location: true,
-                maxGuests: true,
+
                 price: true,
                 status: true,
                 _count: {
@@ -113,7 +113,7 @@ export async function getOwnerVillasService({ ownerId }: { ownerId: number }): P
             id: villa.id,
             name: villa.name,
             location: villa.location,
-            maxGuests: villa.maxGuests,
+
             pricePerNight: villa.price,
             status: villa.status,
             currentBookings: villa._count.bookings

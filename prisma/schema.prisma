@@ -100,7 +100,6 @@ model Villa {
   name          String         @db.VarChar(100)
   location      String         @db.VarChar(500)
   price         Int
-  maxGuests     Int
   bedrooms      Int
   bathrooms     Int
   description   String         @db.VarChar(1000)
@@ -153,6 +152,8 @@ model Booking {
   villaId               Int
   checkIn               DateTime
   checkOut              DateTime
+  numberOfAdults        Int                     @default(1)
+  numberOfChildren      Int                     @default(0)
   totalGuests           Int
   numberOfNights        Int
   specialRequest        String?                 @db.VarChar(500)

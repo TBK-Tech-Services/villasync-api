@@ -43,10 +43,6 @@ export const addBooking = catchAsync(async (req: Request, res: Response, next: N
     throw new NotFoundError("Villa with this ID does not exist");
   };
 
-  if (validatedData.totalGuests > villa.maxGuests) {
-    throw new ValidationError(`Number of guests (${validatedData.totalGuests}) exceeds villa's maximum capacity (${villa.maxGuests})`);
-  };
-
   const { checkInDate, checkOutDate } = parseBookingDates(validatedData.checkIn, validatedData.checkOut);
   if (checkOutDate.getTime() <= checkInDate.getTime()) {
     throw new ValidationError("Check-out date must be after check-in date");
@@ -103,7 +99,9 @@ export const addBooking = catchAsync(async (req: Request, res: Response, next: N
     villaId: validatedData.villaId,
     checkIn: checkInDate,
     checkOut: checkOutDate,
-    totalGuests: validatedData.totalGuests,
+    numberOfAdults: validatedData.numberOfAdults,
+    numberOfChildren: validatedData.numberOfChildren,
+    totalGuests: validatedData.numberOfAdults + validatedData.numberOfChildren,
     numberOfNights,
     specialRequest: validatedData.specialRequest || null,
     bookingStatus: Booking_Status.CONFIRMED,
@@ -158,9 +156,6 @@ export const updateBooking = catchAsync(async (req: Request, res: Response, next
       throw new NotFoundError("Villa with this ID does not exist");
     }
 
-    if (updatedData.totalGuests && updatedData.totalGuests > villa.maxGuests) {
-      throw new ValidationError(`Number of guests (${updatedData.totalGuests}) exceeds villa's maximum capacity (${villa.maxGuests})`);
-    }
   }
 
   let checkInDate, checkOutDate, totalDaysOfStay;
@@ -266,11 +261,15 @@ export const updateBooking = catchAsync(async (req: Request, res: Response, next
     };
   }
 
+  const updatedAdults = updatedData.numberOfAdults ?? (existingBooking as any).numberOfAdults;
+  const updatedChildren = updatedData.numberOfChildren ?? (existingBooking as any).numberOfChildren;
+
   const finalUpdateData = {
     ...updatedData,
     ...calculatedData,
     checkIn: checkInDate,
-    checkOut: checkOutDate
+    checkOut: checkOutDate,
+    totalGuests: updatedAdults + updatedChildren
   };
 
   const updatedBooking = await updateBookingService(bookingId, finalUpdateData);

@@ -15,7 +15,8 @@ export const createBookingSchema = z.object({
     checkOut: z.string().refine(val => !isNaN(Date.parse(val)), {
         message: "Invalid check-out date",
     }),
-    totalGuests: z.coerce.number().int().positive("At least 1 guest required"),
+    numberOfAdults: z.coerce.number().int().min(1, "At least 1 adult required"),
+    numberOfChildren: z.coerce.number().int().min(0, "Children count cannot be negative").default(0),
     specialRequest: z.string().max(500).optional().or(z.literal("")),
 
     // GST Fields

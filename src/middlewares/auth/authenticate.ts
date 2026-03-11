@@ -4,7 +4,7 @@ import { sendError } from "../../utils/general/response.ts";
 import jwt from 'jsonwebtoken';
 import type { JWT_Payload } from "../../types/auth/payload.ts";
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV || 'development'}` });
 
 const SECRET_KEY = process.env.SECRET_KEY;
 

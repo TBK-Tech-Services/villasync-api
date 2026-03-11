@@ -3,7 +3,7 @@ import prisma from "../db/DB.ts";
 import type { createUserData } from "../validators/data-validators/settings/createUser.ts";
 import type { AssignRolePermissionsInput } from "../validators/data-validators/settings/assignRolePermissionsInput.ts";
 import type { addGeneralSettingsData } from "../validators/data-validators/settings/addGeneralSettings.ts";
-import { InternalServerError, NotFoundError } from "../utils/errors/customErrors.ts";
+import { InternalServerError, NotFoundError, ConflictError } from "../utils/errors/customErrors.ts";
 
 // Service to get All Roles
 export async function getAllRolesService(): Promise<Role[]> {
@@ -209,20 +209,32 @@ export async function checkIfOwnerExistsService({ ownerId }: { ownerId: number }
 // Service to Assign Villas to Owner
 export async function assignVillasToOwnerService({ ownerId, villas }: { ownerId: number, villas: number[] }): Promise<{ count: number }> {
     try {
+        const alreadyOwned = await prisma.villa.findMany({
+            where: {
+                id: { in: villas },
+                ownerId: { not: null, notIn: [ownerId] }
+            },
+            select: { id: true, name: true }
+        });
+
+        if (alreadyOwned.length > 0) {
+            const names = alreadyOwned.map(v => v.name).join(", ");
+            throw new ConflictError(`The following villas are already assigned to another owner: ${names}`);
+        }
+
         const villaOwners = await prisma.villa.updateMany({
             where: {
-                id: {
-                    in: villas
-                }
+                id: { in: villas }
             },
             data: {
                 ownerId: ownerId
             }
-        })
+        });
 
         return villaOwners;
     }
     catch (error) {
+        if (error instanceof ConflictError) throw error;
         console.error(`Error assigning villas to owner: ${error}`);
         throw new InternalServerError("Failed to assign villas to owner");
     }
@@ -231,25 +243,28 @@ export async function assignVillasToOwnerService({ ownerId, villas }: { ownerId:
 // Service to Update a Villa Assignment to Owner
 export async function updateOwnerVillaAssignmentsService({ ownerId, villas }: { ownerId: number, villas: number[] }): Promise<{ count: number }> {
     try {
+        const alreadyOwned = await prisma.villa.findMany({
+            where: {
+                id: { in: villas },
+                ownerId: { not: null, notIn: [ownerId] }
+            },
+            select: { id: true, name: true }
+        });
+
+        if (alreadyOwned.length > 0) {
+            const names = alreadyOwned.map(v => v.name).join(", ");
+            throw new ConflictError(`The following villas are already assigned to another owner: ${names}`);
+        }
+
         const result = await prisma.$transaction(async (tx) => {
-            const unassignedVillas = await tx.villa.updateMany({
-                where: {
-                    ownerId: ownerId
-                },
-                data: {
-                    ownerId: null
-                }
+            await tx.villa.updateMany({
+                where: { ownerId: ownerId },
+                data: { ownerId: null }
             });
 
             const updatedVillas = await tx.villa.updateMany({
-                where: {
-                    id: {
-                        in: villas
-                    }
-                },
-                data: {
-                    ownerId: ownerId
-                }
+                where: { id: { in: villas } },
+                data: { ownerId: ownerId }
             });
 
             return updatedVillas;
@@ -258,6 +273,7 @@ export async function updateOwnerVillaAssignmentsService({ ownerId, villas }: { 
         return result;
     }
     catch (error) {
+        if (error instanceof ConflictError) throw error;
         console.error(`Error updating villa assignment to owner: ${error}`);
         throw new InternalServerError("Failed to update villa assignment to owner");
     }

@@ -26,13 +26,6 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
             }
         };
 
-        // Filter by guests
-        if (updatedData.guests) {
-            where.maxGuests = {
-                gte: updatedData.guests
-            }
-        }
-
         // Filter by bedrooms
         if (updatedData.bedrooms) {
             where.bedrooms = {
@@ -79,7 +72,7 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
             name: villa.name,
             location: villa.location,
             price: villa.price,
-            maxGuests: villa.maxGuests,
+
             bedrooms: villa.bedrooms,
             bathrooms: villa.bathrooms,
             description: villa.description,
