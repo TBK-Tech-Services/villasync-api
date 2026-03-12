@@ -5,8 +5,6 @@ export const addVillaSchema = z.object({
     location: z.string().min(1, "Location is required").max(500, "Location must be less than 500 characters"),
     bedRooms: z.number().min(1, "At least 1 bedroom is required").max(20, "Maximum 20 bedrooms allowed"),
     bathRooms: z.number().min(1, "At least 1 bathroom is required").max(20, "Maximum 20 bathrooms allowed"),
-
-    pricePerNight: z.number().min(0, "Price must be greater than or equal to 0").max(1000000, "Price too high"),
     status: z.enum(["AVAILABLE", "OCCUPIED", "MAINTENANCE"], {
         message: "Status must be one of: AVAILABLE, OCCUPIED, MAINTENANCE"
     }),

@@ -23,11 +23,12 @@ export const createBookingSchema = z.object({
     gstMode: z.enum(GST_MODES).default("NONE"),
     gstOnBasePrice: z.boolean().default(false),
     gstOnExtraCharge: z.boolean().default(false),
+    gstDays: z.coerce.number().int().min(0, "GST days cannot be negative").default(0),
 
     // Booking Source
     bookingSource: z.enum(BOOKING_SOURCES).optional().nullable(),
 
-    customPrice: z.coerce.number().min(0, "Price cannot be negative").optional().nullable(),
+    customPrice: z.coerce.number().min(0, "Price cannot be negative").default(0),
     extraPersonCharge: z.coerce.number().min(0, "Extra charge cannot be negative").optional().nullable(),
     discount: z.coerce.number().min(0, "Discount cannot be negative").optional().nullable(),
     advancePaid: z.coerce.number().min(0, "Advance cannot be negative").optional().nullable(),

@@ -71,7 +71,6 @@ export async function filterVillasForLandingService(updatedData: FilterVillasDat
             id: villa.id,
             name: villa.name,
             location: villa.location,
-            price: villa.price,
 
             bedrooms: villa.bedrooms,
             bathrooms: villa.bathrooms,

@@ -15,7 +15,6 @@ export interface Booking_Data {
     specialRequest: string | null;
     bookingStatus: Booking_Status;
     paymentStatus: Payment_Status;
-    basePrice: number;
     customPrice: number | null;
     extraPersonCharge: number;
     discount: number;
@@ -23,6 +22,7 @@ export interface Booking_Data {
     gstMode: string;
     gstOnBasePrice: boolean;
     gstOnExtraCharge: boolean;
+    gstDays: number;
     totalTax: number;
     totalPayableAmount: number;
     advancePaid: number;

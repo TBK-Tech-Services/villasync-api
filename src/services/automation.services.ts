@@ -41,7 +41,7 @@ export async function generateVoucherService({ bookingId }: { bookingId: string 
             checkInDate:    booking.checkIn.toISOString().split('T')[0],
             checkOutDate:   booking.checkOut.toISOString().split('T')[0],
             bookingStatus:  booking.bookingStatus,
-            basePrice:      booking.basePrice.toString(),
+            basePrice:      (booking.customPrice ?? 0).toString(),
             extraCharges:   booking.extraPersonCharge.toString(),
             discount:       booking.discount.toString(),
             taxPercentage:  taxPercentage,

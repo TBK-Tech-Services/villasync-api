@@ -22,6 +22,7 @@ export const updateBookingBodySchema = z.object({
     gstMode: z.enum(GST_MODES).optional(),
     gstOnBasePrice: z.boolean().optional(),
     gstOnExtraCharge: z.boolean().optional(),
+    gstDays: z.number().int().min(0).optional(),
 
     // Booking Source
     bookingSource: z.enum(BOOKING_SOURCES).optional().nullable(),

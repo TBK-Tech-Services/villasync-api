@@ -91,7 +91,6 @@ export async function getOwnerVillasService({ ownerId }: { ownerId: number }): P
                 name: true,
                 location: true,
 
-                price: true,
                 status: true,
                 _count: {
                     select: {
@@ -113,8 +112,6 @@ export async function getOwnerVillasService({ ownerId }: { ownerId: number }): P
             id: villa.id,
             name: villa.name,
             location: villa.location,
-
-            pricePerNight: villa.price,
             status: villa.status,
             currentBookings: villa._count.bookings
         }));

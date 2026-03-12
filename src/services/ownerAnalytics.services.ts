@@ -101,8 +101,7 @@ export async function getVillaPerformanceService({ ownerId }: { ownerId: number 
             },
             select: {
                 id: true,
-                name: true,
-                price: true
+                name: true
             }
         });
 
@@ -138,7 +137,7 @@ export async function getVillaPerformanceService({ ownerId }: { ownerId: number 
                     totalNights += nights;
                 });
 
-                const avgNightlyRate = totalNights > 0 ? Math.round(monthlyRevenue / totalNights) : villa.price;
+                const avgNightlyRate = totalNights > 0 ? Math.round(monthlyRevenue / totalNights) : 0;
                 const occupancyRate = totalNights > 0 ? Math.round((totalNights / daysInMonth) * 100) : 0;
 
                 return {

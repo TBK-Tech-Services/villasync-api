@@ -27,7 +27,6 @@ export async function appendToSheet(booking: Booking, villaName: string): Promis
         numberOfNights: booking.numberOfNights,
         bookingStatus: booking.bookingStatus,
         paymentStatus: booking.paymentStatus,
-        basePrice: booking.basePrice,
         customPrice: booking.customPrice,
         extraPersonCharge: booking.extraPersonCharge,
         discount: booking.discount,
