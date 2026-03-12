@@ -73,19 +73,24 @@ export const addBooking = catchAsync(async (req: Request, res: Response, next: N
   if (gstMode === "ALL" && numberOfNights > 0 && gstDays > 0) {
     totalTax = (subTotalAmount / numberOfNights) * gstDays * 0.18;
   } else if (gstMode === "SELECTIVE") {
-    let gstOnBase = 0;
-    let gstOnExtra = 0;
+    // If no items selected, fall back to ALL mode formula
+    if (!gstOnBasePrice && !gstOnExtraCharge && numberOfNights > 0 && gstDays > 0) {
+      totalTax = (subTotalAmount / numberOfNights) * gstDays * 0.18;
+    } else {
+      let gstOnBase = 0;
+      let gstOnExtra = 0;
 
-    if (gstOnBasePrice && numberOfNights > 0 && gstDays > 0 && grossTotal > 0) {
-      const baseAfterDiscount = (subTotalAmount * (effectivePrice / grossTotal));
-      gstOnBase = (baseAfterDiscount / numberOfNights) * gstDays * 0.18;
+      if (gstOnBasePrice && numberOfNights > 0 && gstDays > 0 && grossTotal > 0) {
+        const baseAfterDiscount = (subTotalAmount * (effectivePrice / grossTotal));
+        gstOnBase = (baseAfterDiscount / numberOfNights) * gstDays * 0.18;
+      }
+
+      if (gstOnExtraCharge) {
+        gstOnExtra = extraPersonCharge * 0.18;
+      }
+
+      totalTax = (gstOnBase + gstOnExtra);
     }
-
-    if (gstOnExtraCharge) {
-      gstOnExtra = extraPersonCharge * 0.18;
-    }
-
-    totalTax = (gstOnBase + gstOnExtra);
   }
 
   const totalPayableAmount = (subTotalAmount + totalTax);
@@ -240,19 +245,24 @@ export const updateBooking = catchAsync(async (req: Request, res: Response, next
     if (gstMode === "ALL" && days > 0 && gstDays > 0) {
       totalTax = (subTotalAmount / days) * gstDays * 0.18;
     } else if (gstMode === "SELECTIVE") {
-      let gstOnBase = 0;
-      let gstOnExtra = 0;
+      // If no items selected, fall back to ALL mode formula
+      if (!gstOnBasePrice && !gstOnExtraCharge && days > 0 && gstDays > 0) {
+        totalTax = (subTotalAmount / days) * gstDays * 0.18;
+      } else {
+        let gstOnBase = 0;
+        let gstOnExtra = 0;
 
-      if (gstOnBasePrice && days > 0 && gstDays > 0 && grossTotal > 0) {
-        const baseAfterDiscount = (subTotalAmount * (effectivePrice / grossTotal));
-        gstOnBase = (baseAfterDiscount / days) * gstDays * 0.18;
+        if (gstOnBasePrice && days > 0 && gstDays > 0 && grossTotal > 0) {
+          const baseAfterDiscount = (subTotalAmount * (effectivePrice / grossTotal));
+          gstOnBase = (baseAfterDiscount / days) * gstDays * 0.18;
+        }
+
+        if (gstOnExtraCharge) {
+          gstOnExtra = extraPersonCharge * 0.18;
+        }
+
+        totalTax = (gstOnBase + gstOnExtra);
       }
-
-      if (gstOnExtraCharge) {
-        gstOnExtra = extraPersonCharge * 0.18;
-      }
-
-      totalTax = (gstOnBase + gstOnExtra);
     }
 
     const totalPayableAmount = (subTotalAmount + totalTax);
