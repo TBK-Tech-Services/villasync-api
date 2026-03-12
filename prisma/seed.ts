@@ -126,7 +126,6 @@ async function main() {
         {
             name: 'TBK Villa 10',
             location: 'https://maps.app.goo.gl/CXTn6bUzGEQ5iNrA8?g_st=iw',
-            price: 23000,
             bedrooms: 4,
             bathrooms: 3,
             description: 'Luxury villa with panoramic views.',
@@ -146,7 +145,6 @@ async function main() {
         {
             name: 'TBK Villa 05',
             location: 'https://maps.app.goo.gl/CXTn6bUzGEQ5iNrA8?g_st=iw',
-            price: 24000,
             bedrooms: 4,
             bathrooms: 3,
             description: 'Spacious villa with private pool and garden.',
@@ -164,9 +162,8 @@ async function main() {
             caretakers: ['7063640999'],
         },
         {
-            name: 'Kibana R4',
+            name: 'TBK Villa Kibana R4',
             location: 'https://maps.app.goo.gl/UnjUSoctXomcqsgo8?g_st=iw',
-            price: 22000,
             bedrooms: 3,
             bathrooms: 2,
             description: 'Compact villa with efficient layout.',
@@ -185,7 +182,6 @@ async function main() {
         {
             name: 'TBK Villa 01',
             location: 'https://maps.app.goo.gl/C8hFJ4YNE9LkakMr7?g_st=aw',
-            price: 25000,
             bedrooms: 4,
             bathrooms: 4,
             description: 'Premium villa with modern amenities and stunning views.',
@@ -203,9 +199,8 @@ async function main() {
             caretakers: ['6398263556', '9369287396'],
         },
         {
-            name: 'Zen Villa',
+            name: 'TBK Villa Zen',
             location: 'https://maps.app.goo.gl/JGP3geqrbQV7PYLx6?g_st=aw',
-            price: 27000,
             bedrooms: 4,
             bathrooms: 4,
             description: 'Peaceful retreat with zen-inspired design.',
@@ -222,9 +217,8 @@ async function main() {
             caretakers: ['7428106445'],
         },
         {
-            name: 'Origin Villa',
+            name: 'TBK Villa Origin',
             location: 'https://maps.app.goo.gl/7zeecADxA1z4jURg7?g_st=aw',
-            price: 24000,
             bedrooms: 3,
             bathrooms: 3,
             description: 'Classic villa with authentic Goan charm.',
@@ -241,9 +235,8 @@ async function main() {
             caretakers: ['9637057239'],
         },
         {
-            name: 'Zorita 06',
+            name: 'TBK Villa Zorita 06',
             location: 'https://maps.app.goo.gl/ghtVFDh7ZDFcPeCZA?g_st=aw',
-            price: 23000,
             bedrooms: 3,
             bathrooms: 3,
             description: 'Contemporary villa with stylish interiors.',
@@ -262,7 +255,6 @@ async function main() {
         {
             name: 'TBK Villa 04',
             location: 'https://maps.app.goo.gl/DTMew9JezBUCXdhS7?g_st=aw',
-            price: 22000,
             bedrooms: 3,
             bathrooms: 3,
             description: 'Cozy villa perfect for family getaways.',
@@ -282,7 +274,6 @@ async function main() {
         {
             name: 'TBK Villa West View',
             location: 'https://maps.app.goo.gl/CgTrwKUT8Tz6JDCy8?g_st=aw',
-            price: 25000,
             bedrooms: 4,
             bathrooms: 3,
             description: 'Villa with breathtaking western sunset views.',
@@ -302,7 +293,6 @@ async function main() {
         {
             name: 'TBK Villa 08',
             location: 'https://maps.app.goo.gl/DTMew9JezBUCXdhS7?g_st=aw',
-            price: 20000,
             bedrooms: 3,
             bathrooms: 2,
             description: 'Modern villa with excellent connectivity.',
@@ -321,7 +311,6 @@ async function main() {
         {
             name: 'TBK Villa 15',
             location: 'https://maps.app.goo.gl/CXTn6bUzGEQ5iNrA8?g_st=iw',
-            price: 26000,
             bedrooms: 5,
             bathrooms: 4,
             description: 'Large villa ideal for group stays.',
@@ -338,9 +327,8 @@ async function main() {
             caretakers: ['7864861015'],
         },
         {
-            name: 'Kibana Mirai R8',
+            name: 'TBK Villa Kibana Mirai R8',
             location: 'https://maps.app.goo.gl/UnjUSoctXomcqsgo8?g_st=iw',
-            price: 26000,
             bedrooms: 4,
             bathrooms: 4,
             description: 'Futuristic villa with smart home features.',
@@ -357,9 +345,8 @@ async function main() {
             caretakers: ['8293987935'],
         },
         {
-            name: 'Kibana Mirai L4',
+            name: 'TBK Villa Kibana Mirai L4',
             location: 'https://maps.app.goo.gl/UnjUSoctXomcqsgo8?g_st=iw',
-            price: 24000,
             bedrooms: 3,
             bathrooms: 3,
             description: 'Modern villa with premium finishes.',
@@ -376,9 +363,8 @@ async function main() {
             caretakers: ['8597686745'],
         },
         {
-            name: 'Calangute Villa',
+            name: 'TBK Villa Calangute',
             location: 'https://maps.app.goo.gl/gispovaU1qMHHDtH7?g_st=aw',
-            price: 28000,
             bedrooms: 5,
             bathrooms: 4,
             description: 'Beach-side villa near Calangute beach.',
@@ -397,7 +383,6 @@ async function main() {
         {
             name: 'TBK Villa 103',
             location: 'https://maps.app.goo.gl/cGaABtuQs9g4sTw4A?g_st=aw',
-            price: 28000,
             bedrooms: 5,
             bathrooms: 4,
             description: 'Premium villa with top-notch facilities.',
@@ -417,7 +402,6 @@ async function main() {
         {
             name: 'TBK Villa Encanto',
             location: 'https://maps.app.goo.gl/Xcr7ht3x35ggHRyS6?g_st=aw',
-            price: 30000,
             bedrooms: 5,
             bathrooms: 5,
             description: 'Enchanting villa with luxurious amenities.',
@@ -437,7 +421,6 @@ async function main() {
         {
             name: 'TBK Villa 11',
             location: 'https://maps.app.goo.gl/DTMew9JezBUCXdhS7?g_st=aw',
-            price: 22000,
             bedrooms: 3,
             bathrooms: 3,
             description: 'Beautiful villa with modern interiors.',
@@ -457,7 +440,6 @@ async function main() {
         {
             name: 'TBK Villa 09',
             location: 'https://maps.app.goo.gl/CXTn6bUzGEQ5iNrA8?g_st=iw',
-            price: 21000,
             bedrooms: 3,
             bathrooms: 3,
             description: 'Elegant villa with serene surroundings.',
@@ -475,9 +457,27 @@ async function main() {
             caretakers: ['8082528342'],
         },
         {
-            name: 'Kibana Komorebi 01',
+            name: 'TBK Villa Kibana Komorebi 01',
             location: 'https://maps.app.goo.gl/FBeS9qq19DBCUrQS8?g_st=aw',
-            price: 25000,
+            bedrooms: 4,
+            bathrooms: 3,
+            description: 'Nature-inspired villa with forest views.',
+            imageUrl: 'https://tbkvillas.com/wp-content/uploads/2026/01/DJI_0257-1-scaled.jpg',
+            brochureUrl: null,
+            images: [
+                'https://tbkvillas.com/wp-content/uploads/2026/01/DSC2693-scaled.jpg',
+                'https://tbkvillas.com/wp-content/uploads/2026/01/DSC2819-scaled.jpg',
+                'https://tbkvillas.com/wp-content/uploads/2026/01/DSC2948-scaled.jpg',
+                'https://tbkvillas.com/wp-content/uploads/2026/01/DSC2975-scaled.jpg',
+                'https://tbkvillas.com/wp-content/uploads/2026/01/DSC2993-scaled.jpg',
+                'https://tbkvillas.com/wp-content/uploads/2026/01/DSC3062-scaled.jpg',
+            ],
+            managers: ['9147088903'],
+            caretakers: ['9609874034'],
+        },
+        {
+            name: 'TBK Villa Kibana Komorebi 02',
+            location: 'https://maps.app.goo.gl/FBeS9qq19DBCUrQS8?g_st=aw',
             bedrooms: 4,
             bathrooms: 3,
             description: 'Nature-inspired villa with forest views.',
