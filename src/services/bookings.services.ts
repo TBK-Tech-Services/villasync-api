@@ -382,9 +382,9 @@ export async function searchAndFilterBookingsService(validatedData: searchAndFil
         };
 
         if (validatedData.checkInDate && validatedData.checkInDate.trim()) {
-            const selectedDate = new Date(validatedData.checkInDate);
-            const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
-            const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+            const [year, month, day] = validatedData.checkInDate.split('-').map(Number) as [number, number, number];
+            const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+            const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
             where.checkIn = {
                 gte: startOfDay,

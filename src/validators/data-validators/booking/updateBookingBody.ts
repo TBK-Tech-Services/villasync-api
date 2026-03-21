@@ -7,6 +7,8 @@ export const updateBookingBodySchema = z.object({
     guestName: z.string().min(1, "Guest name is required").max(100, "Guest name must be less than 100 characters").optional(),
     guestEmail: z.string().optional(),
     guestPhone: z.string().length(10, "Phone number must be 10 digits").optional(),
+    alternatePhone: z.string().optional().nullable(),
+    agentName: z.string().max(100).optional().nullable(),
     villaId: z.number().int().positive("Villa ID must be positive").optional(),
     checkIn: z.string().refine(val => !isNaN(Date.parse(val)), {
         message: "Invalid check-in date",
@@ -17,6 +19,12 @@ export const updateBookingBodySchema = z.object({
     numberOfAdults: z.number().int().min(1, "At least 1 adult required").optional(),
     numberOfChildren: z.number().int().min(0, "Children count cannot be negative").optional(),
     specialRequest: z.string().max(500, "Special request must be less than 500 characters").optional(),
+
+    // Pricing
+    perNightPrice: z.number().min(0).optional().nullable(),
+    customPrice: z.number().min(0).optional(),
+    extraPersonCharge: z.number().min(0).optional(),
+    advancePaid: z.number().min(0).optional(),
 
     // GST Fields
     gstMode: z.enum(GST_MODES).optional(),

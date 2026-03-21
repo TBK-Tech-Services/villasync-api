@@ -14,6 +14,7 @@ import {
   getAllOwnersWithVillas,
   getVillaOwnerManagementStats,
   getAllUnAssignedVillas,
+  deleteUser,
 } from "../controllers/settings.controllers.ts";
 import { authenticate } from "../middlewares/auth/authenticate.ts";
 import { authorize } from "../middlewares/auth/authorize.ts";
@@ -24,6 +25,7 @@ const router = Router();
 router.get("/user-management/roles", authenticate, getAllRoles);
 router.get("/user-management/permissions", authenticate, getAllPermissions);
 router.post("/user-management/invite-user", authenticate, inviteNewUser);
+router.delete("/user-management/users/:id", authenticate, deleteUser);
 router.post("/general", addGeneralSettings);
 router.patch("/general/:id", updateGeneralSettings);
 router.get("/general", getGeneralSettings);

@@ -34,7 +34,7 @@ export async function sendTemplateMessage(
             template: {
                 name: templateName,
                 language: {
-                    code: 'en_US' // Changed from en_US to just en
+                    code: 'en'
                 }
             }
         };

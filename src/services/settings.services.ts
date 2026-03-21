@@ -446,3 +446,27 @@ export async function getAdminContactsService() {
         throw new InternalServerError("Failed to get admin contacts");
     }
 };
+
+// Service to Delete a User
+export async function deleteUserService({ userId } : { userId: number }): Promise<void> {
+    try {
+        const user = await prisma.user.findUnique({
+            where : { id : userId }
+        });
+
+        if (!user) {
+            throw new NotFoundError("User not found");
+        }
+
+        await prisma.user.delete({
+            where : { id : userId }
+        });
+    }
+    catch (error) {
+        if (error instanceof NotFoundError) {
+            throw error;
+        }
+        console.error(`Error deleting user: ${error}`);
+        throw new InternalServerError("Failed to delete user");
+    }
+}

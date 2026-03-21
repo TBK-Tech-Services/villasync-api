@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllOwnersWithVillasService, getAllPermissionsService, getAllRolesService, getAllUnAssignedVillasService, getGeneralSettingsService, getVillaOwnerManagementStatsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService } from "../services/settings.services.ts";
+import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllOwnersWithVillasService, getAllPermissionsService, getAllRolesService, getAllUnAssignedVillasService, getGeneralSettingsService, getVillaOwnerManagementStatsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService, deleteUserService } from "../services/settings.services.ts";
 import { sendSuccess } from "../utils/general/response.ts";
 import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
@@ -8,7 +8,7 @@ import { addGeneralSettingsSchema } from "../validators/data-validators/settings
 import { updateGeneralSettingParamSchema } from "../validators/data-validators/settings/updateGeneralSettingsParam.ts";
 import { updateGeneralSettingBodySchema } from "../validators/data-validators/settings/updateGeneralSettingsBody.ts";
 import catchAsync from "../utils/general/catchAsync.ts";
-import { ValidationError, NotFoundError, ConflictError, InternalServerError } from "../utils/errors/customErrors.ts";
+import { ValidationError, NotFoundError, ConflictError, InternalServerError, UnauthorizedError } from "../utils/errors/customErrors.ts";
 import { assignVillasToOwnerSchema } from "../validators/data-validators/settings/assignVillasToOwner.ts";
 import { updateVillaAssignmentParamSchema } from "../validators/data-validators/settings/updateVillasAssignmentParam.ts";
 import { updateVillaAssignmentBodySchema } from "../validators/data-validators/settings/updateVillasAssignmentBody.ts";
@@ -285,4 +285,46 @@ export const getAllOwnersWithVillas = catchAsync(async (req: Request, res: Respo
 export const getVillaOwnerManagementStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const stats = await getVillaOwnerManagementStatsService();
     return sendSuccess(res, stats, "Successfully get Villa Owner Management Stats", 200);
+});
+// Controller to Delete a User (Admin only)
+export const deleteUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const userId = parseInt(req.params.id as string);
+
+    if (isNaN(userId)) {
+        throw new ValidationError("Valid user ID is required");
+    }
+
+    if (req.user?.role !== 'Admin') {
+        throw new UnauthorizedError("Only Admins can delete users");
+    }
+
+    // Prevent self-deletion by comparing email of user being deleted
+    const userToDelete = await prisma.user.findUnique({
+        where : { id : userId },
+        select : { email : true, role : { select : { name : true } } }
+    });
+
+    if (!userToDelete) {
+        throw new NotFoundError("User not found");
+    }
+
+    if (userToDelete.email === req.user.email) {
+        throw new ValidationError("You cannot delete your own account");
+    }
+
+    // If the user is an Owner, check if they have any villas assigned
+    if (userToDelete.role?.name === 'Owner') {
+        const assignedVilla = await prisma.villa.findFirst({
+            where : { ownerId : userId },
+            select : { id : true }
+        });
+
+        if (assignedVilla) {
+            throw new ConflictError("This owner has villas assigned. Please unassign all villas before deleting.");
+        }
+    }
+
+    await deleteUserService({ userId });
+
+    sendSuccess(res, null, "User deleted successfully", 200);
 });

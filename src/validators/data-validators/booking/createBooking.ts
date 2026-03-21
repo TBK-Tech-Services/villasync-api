@@ -18,6 +18,7 @@ export const createBookingSchema = z.object({
     numberOfAdults: z.coerce.number().int().min(1, "At least 1 adult required"),
     numberOfChildren: z.coerce.number().int().min(0, "Children count cannot be negative").default(0),
     specialRequest: z.string().max(500).optional().or(z.literal("")),
+    agentName: z.string().max(100).optional().or(z.literal("")),
 
     // GST Fields
     gstMode: z.enum(GST_MODES).default("NONE"),
@@ -28,10 +29,13 @@ export const createBookingSchema = z.object({
     // Booking Source
     bookingSource: z.enum(BOOKING_SOURCES).optional().nullable(),
 
-    customPrice: z.coerce.number().min(0, "Price cannot be negative").default(0),
+    perNightPrice: z.coerce.number().min(0, "Per night price cannot be negative").optional().nullable(),
+    customPrice: z.coerce.number().min(0, "Price cannot be negative").optional().nullable(),
     extraPersonCharge: z.coerce.number().min(0, "Extra charge cannot be negative").optional().nullable(),
-    discount: z.coerce.number().min(0, "Discount cannot be negative").optional().nullable(),
     advancePaid: z.coerce.number().min(0, "Advance cannot be negative").optional().nullable(),
-});
+}).refine(
+    (data) => (data.perNightPrice && data.perNightPrice > 0) || (data.customPrice && data.customPrice > 0),
+    { message: "Either Per Night Price or Custom Price must be provided" }
+);
 
 export type createBookingData = z.infer<typeof createBookingSchema>;

@@ -48,27 +48,22 @@ export const addBooking = catchAsync(async (req: Request, res: Response, next: N
     throw new ValidationError("Check-out date must be after check-in date");
   };
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (checkInDate.getTime() < today.getTime()) {
-    throw new ValidationError("Check-in date cannot be in the past");
-  };
-
   const numberOfNights = getTotalDaysOfStay(checkInDate, checkOutDate);
-  const effectivePrice = (validatedData.customPrice || 0);
+  const perNightPrice = (validatedData.perNightPrice || 0);
+  const customPrice = (validatedData.customPrice || 0);
+  const effectivePrice = perNightPrice > 0 ? perNightPrice * numberOfNights : customPrice;
   const extraPersonCharge = (validatedData.extraPersonCharge || 0);
-  const discount = (validatedData.discount || 0);
   const gstDays = Math.min(validatedData.gstDays || 0, numberOfNights);
 
-  // Gross total before discount
-  const grossTotal = (effectivePrice + extraPersonCharge);
-  const subTotalAmount = (grossTotal - discount);
+  // Subtotal (no discount)
+  const subTotalAmount = effectivePrice + extraPersonCharge;
 
   // GST Calculation based on gstMode and gstDays
   let totalTax = 0;
   const gstMode = validatedData.gstMode;
   const gstOnBasePrice = validatedData.gstOnBasePrice;
   const gstOnExtraCharge = validatedData.gstOnExtraCharge;
+  const grossTotal = effectivePrice + extraPersonCharge;
 
   if (gstMode === "ALL" && numberOfNights > 0 && gstDays > 0) {
     totalTax = (subTotalAmount / numberOfNights) * gstDays * 0.18;
@@ -81,8 +76,8 @@ export const addBooking = catchAsync(async (req: Request, res: Response, next: N
       let gstOnExtra = 0;
 
       if (gstOnBasePrice && numberOfNights > 0 && gstDays > 0 && grossTotal > 0) {
-        const baseAfterDiscount = (subTotalAmount * (effectivePrice / grossTotal));
-        gstOnBase = (baseAfterDiscount / numberOfNights) * gstDays * 0.18;
+        const basePortion = subTotalAmount * (effectivePrice / grossTotal);
+        gstOnBase = (basePortion / numberOfNights) * gstDays * 0.18;
       }
 
       if (gstOnExtraCharge) {
@@ -113,9 +108,11 @@ export const addBooking = catchAsync(async (req: Request, res: Response, next: N
     specialRequest: validatedData.specialRequest || null,
     bookingStatus: Booking_Status.CONFIRMED,
     paymentStatus,
+    perNightPrice: perNightPrice > 0 ? perNightPrice : null,
     customPrice: effectivePrice,
     extraPersonCharge,
-    discount,
+    discount: 0,
+    agentName: validatedData.agentName || null,
     subTotalAmount,
     gstMode,
     gstOnBasePrice,
@@ -176,13 +173,6 @@ export const updateBooking = catchAsync(async (req: Request, res: Response, next
       throw new ValidationError("Check-out date must be after check-in date");
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (checkInDate.getTime() < today.getTime()) {
-      throw new ValidationError("Check-in date cannot be in the past");
-    }
-
     totalDaysOfStay = getTotalDaysOfStay(checkInDate, checkOutDate);
 
     const villaId = updatedData.villaId || existingBooking.villaId;
@@ -199,94 +189,97 @@ export const updateBooking = catchAsync(async (req: Request, res: Response, next
     }
   }
 
-  // Check if recalculation needed
-  const needsRecalculation = (
-    updatedData.villaId !== undefined ||
-    updatedData.checkIn !== undefined ||
-    updatedData.checkOut !== undefined ||
-    updatedData.gstMode !== undefined ||
-    updatedData.gstOnBasePrice !== undefined ||
-    updatedData.gstOnExtraCharge !== undefined ||
-    updatedData.gstDays !== undefined
+  // Always recalculate amounts to keep financials consistent
+  const days = totalDaysOfStay || getTotalDaysOfStay(
+    checkInDate || existingBooking.checkIn,
+    checkOutDate || existingBooking.checkOut
   );
 
-  let calculatedData = {};
+  // Resolve pricing values: use updated value if provided, else fall back to existing
+  const updatedPerNightPrice = updatedData.perNightPrice !== undefined
+    ? (updatedData.perNightPrice ?? null)
+    : Number((existingBooking as any).perNightPrice ?? 0);
 
-  if (needsRecalculation) {
-    const villa = updatedData.villaId
-      ? await isVillaPresentService({ villaId: updatedData.villaId })
-      : await isVillaPresentService({ villaId: existingBooking.villaId });
+  const updatedCustomPrice = updatedData.customPrice !== undefined
+    ? updatedData.customPrice
+    : Number((existingBooking as any).customPrice ?? 0);
 
-    if (!villa) {
-      throw new NotFoundError("Villa not found");
-    }
+  const updatedExtraPersonCharge = updatedData.extraPersonCharge !== undefined
+    ? updatedData.extraPersonCharge
+    : Number(existingBooking.extraPersonCharge ?? 0);
 
-    const days = totalDaysOfStay || getTotalDaysOfStay(
-      checkInDate || existingBooking.checkIn,
-      checkOutDate || existingBooking.checkOut
-    );
+  const updatedAdvancePaid = updatedData.advancePaid !== undefined
+    ? updatedData.advancePaid
+    : Number(existingBooking.advancePaid ?? 0);
 
-    const effectivePrice = Number(existingBooking.customPrice) || 0;
-    const extraPersonCharge = Number(existingBooking.extraPersonCharge) || 0;
-    const discount = Number(existingBooking.discount) || 0;
+  // Effective price: per night × days if perNightPrice set, else customPrice
+  const perNightPriceVal = Number(updatedPerNightPrice) || 0;
+  const effectivePrice = perNightPriceVal > 0
+    ? perNightPriceVal * days
+    : Number(updatedCustomPrice) || 0;
 
-    const grossTotal = (effectivePrice + extraPersonCharge);
-    const subTotalAmount = (grossTotal - discount);
+  const extraPersonCharge = Number(updatedExtraPersonCharge) || 0;
+  const grossTotal = effectivePrice + extraPersonCharge;
+  const subTotalAmount = grossTotal;
 
-    // GST values - use updated or existing
-    const gstMode = (updatedData.gstMode !== undefined) ? updatedData.gstMode : existingBooking.gstMode;
-    const gstOnBasePrice = (updatedData.gstOnBasePrice !== undefined) ? updatedData.gstOnBasePrice : existingBooking.gstOnBasePrice;
-    const gstOnExtraCharge = (updatedData.gstOnExtraCharge !== undefined) ? updatedData.gstOnExtraCharge : existingBooking.gstOnExtraCharge;
-    const rawGstDays = (updatedData.gstDays !== undefined) ? updatedData.gstDays : ((existingBooking as any).gstDays || 0);
-    const gstDays = Math.min(rawGstDays, days);
+  // GST values - use updated or existing
+  const gstMode = (updatedData.gstMode !== undefined) ? updatedData.gstMode : existingBooking.gstMode;
+  const gstOnBasePrice = (updatedData.gstOnBasePrice !== undefined) ? updatedData.gstOnBasePrice : existingBooking.gstOnBasePrice;
+  const gstOnExtraCharge = (updatedData.gstOnExtraCharge !== undefined) ? updatedData.gstOnExtraCharge : existingBooking.gstOnExtraCharge;
+  const rawGstDays = (updatedData.gstDays !== undefined) ? updatedData.gstDays : ((existingBooking as any).gstDays || 0);
+  const gstDays = Math.min(rawGstDays, days);
 
-    let totalTax = 0;
+  let totalTax = 0;
 
-    if (gstMode === "ALL" && days > 0 && gstDays > 0) {
+  if (gstMode === "ALL" && days > 0 && gstDays > 0) {
+    totalTax = (subTotalAmount / days) * gstDays * 0.18;
+  } else if (gstMode === "SELECTIVE") {
+    if (!gstOnBasePrice && !gstOnExtraCharge && days > 0 && gstDays > 0) {
       totalTax = (subTotalAmount / days) * gstDays * 0.18;
-    } else if (gstMode === "SELECTIVE") {
-      // If no items selected, fall back to ALL mode formula
-      if (!gstOnBasePrice && !gstOnExtraCharge && days > 0 && gstDays > 0) {
-        totalTax = (subTotalAmount / days) * gstDays * 0.18;
-      } else {
-        let gstOnBase = 0;
-        let gstOnExtra = 0;
+    } else {
+      let gstOnBase = 0;
+      let gstOnExtra = 0;
 
-        if (gstOnBasePrice && days > 0 && gstDays > 0 && grossTotal > 0) {
-          const baseAfterDiscount = (subTotalAmount * (effectivePrice / grossTotal));
-          gstOnBase = (baseAfterDiscount / days) * gstDays * 0.18;
-        }
-
-        if (gstOnExtraCharge) {
-          gstOnExtra = extraPersonCharge * 0.18;
-        }
-
-        totalTax = (gstOnBase + gstOnExtra);
+      if (gstOnBasePrice && days > 0 && gstDays > 0 && grossTotal > 0) {
+        const basePortion = subTotalAmount * (effectivePrice / grossTotal);
+        gstOnBase = (basePortion / days) * gstDays * 0.18;
       }
+
+      if (gstOnExtraCharge) {
+        gstOnExtra = extraPersonCharge * 0.18;
+      }
+
+      totalTax = gstOnBase + gstOnExtra;
     }
-
-    const totalPayableAmount = (subTotalAmount + totalTax);
-
-    calculatedData = {
-      subTotalAmount,
-      gstMode,
-      gstOnBasePrice,
-      gstOnExtraCharge,
-      gstDays,
-      totalTax,
-      totalPayableAmount
-    };
   }
+
+  const totalPayableAmount = subTotalAmount + totalTax;
+  const advancePaid = Number(updatedAdvancePaid) || 0;
+  const dueAmount = totalPayableAmount - advancePaid;
+  const paymentStatus: Payment_Status = dueAmount <= 0 ? Payment_Status.PAID : Payment_Status.PENDING;
 
   const updatedAdults = updatedData.numberOfAdults ?? (existingBooking as any).numberOfAdults;
   const updatedChildren = updatedData.numberOfChildren ?? (existingBooking as any).numberOfChildren;
 
   const finalUpdateData = {
     ...updatedData,
-    ...calculatedData,
     checkIn: checkInDate,
     checkOut: checkOutDate,
-    totalGuests: updatedAdults + updatedChildren
+    numberOfNights: days,
+    totalGuests: updatedAdults + updatedChildren,
+    perNightPrice: perNightPriceVal > 0 ? perNightPriceVal : null,
+    customPrice: effectivePrice,
+    extraPersonCharge,
+    advancePaid,
+    dueAmount,
+    paymentStatus,
+    subTotalAmount,
+    gstMode,
+    gstOnBasePrice,
+    gstOnExtraCharge,
+    gstDays,
+    totalTax,
+    totalPayableAmount,
   };
 
   const updatedBooking = await updateBookingService(bookingId, finalUpdateData);

@@ -15,9 +15,11 @@ export interface Booking_Data {
     specialRequest: string | null;
     bookingStatus: Booking_Status;
     paymentStatus: Payment_Status;
+    perNightPrice: number | null;
     customPrice: number | null;
     extraPersonCharge: number;
     discount: number;
+    agentName: string | null;
     subTotalAmount: number;
     gstMode: string;
     gstOnBasePrice: boolean;
