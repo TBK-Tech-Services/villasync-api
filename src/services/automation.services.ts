@@ -36,6 +36,8 @@ export async function generateVoucherService({ bookingId }: { bookingId: string 
             guestPhone:     booking.guestPhone,
             guestEmail:     booking.guestEmail || 'N/A',
             numberOfGuests: booking.totalGuests,
+            numberOfAdults:   booking.numberOfAdults,    
+            numberOfChildren: booking.numberOfChildren,          
             villaName:      booking.villa.name,
             villaLocation:  booking.villa.location,
             checkInDate:    booking.checkIn.toISOString().split('T')[0],
