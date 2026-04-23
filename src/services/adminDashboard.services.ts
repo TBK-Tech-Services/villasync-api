@@ -31,16 +31,17 @@ export async function getTotalRevenueService(): Promise<number | null> {
     try {
         const totalRevenue = await prisma.booking.aggregate({
             where: {
-                paymentStatus: 'PAID'
+                paymentStatus: 'PAID',
+                bookingStatus: { not: 'CANCELLED' }
             },
             _sum: {
                 totalPayableAmount: true
             }
         });
 
-        return totalRevenue._sum.totalPayableAmount;
-    } 
-    catch (error) { 
+        return Number(totalRevenue._sum.totalPayableAmount) || 0;
+    }
+    catch (error) {
         console.error(`Error getting total revenue: ${error}`);
         throw new InternalServerError("Failed to calculate total revenue");
     }
@@ -68,7 +69,7 @@ export async function getPendingBookingsCountService(): Promise<number | null> {
     try {
         const totalPendingBookings = await prisma.booking.aggregate({
             where: {
-                bookingStatus: 'CONFIRMED'
+                paymentStatus: 'PENDING'
             },
             _count: {
                 id: true
@@ -76,8 +77,8 @@ export async function getPendingBookingsCountService(): Promise<number | null> {
         });
 
         return totalPendingBookings._count.id;
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error getting pending bookings count: ${error}`);
         throw new InternalServerError("Failed to fetch pending bookings count");
     }
@@ -150,10 +151,10 @@ export async function getTodaysCheckinsService(): Promise<{ count: number, total
 
         return {
             count: result._count.id || 0,
-            totalIncome: result._sum.totalPayableAmount || 0
+            totalIncome: Number(result._sum.totalPayableAmount) || 0
         };
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error getting today's checkins: ${error}`);
         throw new InternalServerError("Failed to fetch today's checkins data");
     }
@@ -186,10 +187,10 @@ export async function getTomorrowsCheckinsService(): Promise<{ count: number, to
 
         return {
             count: result._count.id || 0,
-            totalIncome: result._sum.totalPayableAmount || 0
+            totalIncome: Number(result._sum.totalPayableAmount) || 0
         };
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error getting tomorrow's checkins: ${error}`);
         throw new InternalServerError("Failed to fetch tomorrow's checkins data");
     }
@@ -226,10 +227,10 @@ export async function getWeeksCheckinsService(): Promise<{ count: number, totalI
 
         return {
             count: result._count.id || 0,
-            totalIncome: result._sum.totalPayableAmount || 0
+            totalIncome: Number(result._sum.totalPayableAmount) || 0
         };
-    } 
-    catch (error) { 
+    }
+    catch (error) {
         console.error(`Error getting week's checkins: ${error}`);
         throw new InternalServerError("Failed to fetch this week's checkins data");
     }
@@ -249,20 +250,21 @@ export async function getCurrentMonthRevenueService(): Promise<number> {
         const currentMonthRevenue = await prisma.booking.aggregate({
             where: {
                 paymentStatus: 'PAID',
+                bookingStatus: { not: 'CANCELLED' },
                 OR: [
-                    { 
-                        checkIn: { 
-                            gte: startOfMonth, 
-                            lte: endOfMonth 
-                        } 
+                    {
+                        checkIn: {
+                            gte: startOfMonth,
+                            lte: endOfMonth
+                        }
                     },
-                    { 
-                        checkOut: { 
-                            gte: startOfMonth, 
-                            lte: endOfMonth 
-                        } 
+                    {
+                        checkOut: {
+                            gte: startOfMonth,
+                            lte: endOfMonth
+                        }
                     },
-                    { 
+                    {
                         checkIn: { lte: startOfMonth },
                         checkOut: { gte: endOfMonth }
                     }
@@ -273,7 +275,7 @@ export async function getCurrentMonthRevenueService(): Promise<number> {
             }
         });
 
-        return currentMonthRevenue._sum.totalPayableAmount || 0;
+        return Number(currentMonthRevenue._sum.totalPayableAmount) || 0;
     }
     catch (error) { 
         console.error(`Error getting current month revenue: ${error}`);
@@ -295,20 +297,21 @@ export async function getLastMonthRevenueService(): Promise<number> {
         const lastMonthRevenue = await prisma.booking.aggregate({
             where: {
                 paymentStatus: 'PAID',
+                bookingStatus: { not: 'CANCELLED' },
                 OR: [
-                    { 
-                        checkIn: { 
-                            gte: startDateForLastMonth, 
-                            lte: endDateForLastMonth 
-                        } 
+                    {
+                        checkIn: {
+                            gte: startDateForLastMonth,
+                            lte: endDateForLastMonth
+                        }
                     },
-                    { 
-                        checkOut: { 
-                            gte: startDateForLastMonth, 
-                            lte: endDateForLastMonth 
-                        } 
+                    {
+                        checkOut: {
+                            gte: startDateForLastMonth,
+                            lte: endDateForLastMonth
+                        }
                     },
-                    { 
+                    {
                         checkIn: { lte: startDateForLastMonth },
                         checkOut: { gte: endDateForLastMonth }
                     }
@@ -319,7 +322,7 @@ export async function getLastMonthRevenueService(): Promise<number> {
             }
         });
 
-        return lastMonthRevenue._sum.totalPayableAmount || 0;
+        return Number(lastMonthRevenue._sum.totalPayableAmount) || 0;
     } 
     catch (error) {
         console.error(`Error getting last month revenue: ${error}`);

@@ -40,6 +40,8 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
             where.villaId = filters.villaId;
         }
 
+        where.bookingStatus = { not: 'CANCELLED' };
+
         const totalIncomeResult = await prisma.booking.aggregate({
             where: where,
             _sum: {
@@ -47,7 +49,7 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
             }
         });
 
-        const currentTotalIncome = totalIncomeResult._sum.totalPayableAmount || 0;
+        const currentTotalIncome = Number(totalIncomeResult._sum.totalPayableAmount) || 0;
 
         let previousWhere: any = {};
 
@@ -101,6 +103,8 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
             previousWhere.villaId = filters.villaId;
         }
 
+        previousWhere.bookingStatus = { not: 'CANCELLED' };
+
         const previousIncomeResult = await prisma.booking.aggregate({
             where: previousWhere,
             _sum: {
@@ -108,7 +112,7 @@ export async function getTotalIncomeService(filters: getFinanceQueryParamsData):
             }
         });
 
-        const previousTotalIncome = previousIncomeResult._sum.totalPayableAmount || 0;
+        const previousTotalIncome = Number(previousIncomeResult._sum.totalPayableAmount) || 0;
 
         let growthPercentage = 0;
         if (previousTotalIncome > 0) {
@@ -197,7 +201,8 @@ export async function getTotalExpenseService(filters: getFinanceQueryParamsData)
 
         const splitTotal = splitExpenses._sum.amount || 0;
 
-        const currentTotalExpense = individualTotal + splitTotal;
+        // Divide by 100: expenses are stored in paise, return in rupees
+        const currentTotalExpense = (individualTotal + splitTotal) / 100;
 
         // Previous period calculation
         let previousWhere: any = {};
@@ -278,7 +283,8 @@ export async function getTotalExpenseService(filters: getFinanceQueryParamsData)
 
         const prevSplitTotal = prevSplitResult._sum.amount || 0;
 
-        const previousTotalExpense = prevIndividualTotal + prevSplitTotal;
+        // Divide by 100: expenses are stored in paise, return in rupees
+        const previousTotalExpense = (prevIndividualTotal + prevSplitTotal) / 100;
 
         // Growth calculation
         let growthPercentage = 0;
@@ -406,7 +412,8 @@ export async function getMonthlyIncomeExpenseChartService(filters: getFinanceQue
                 checkIn: {
                     gte: monthStart,
                     lte: monthEnd
-                }
+                },
+                bookingStatus: { not: 'CANCELLED' }
             };
 
             if (filters.villaId) {
@@ -447,8 +454,9 @@ export async function getMonthlyIncomeExpenseChartService(filters: getFinanceQue
                 _sum: { amount: true }
             });
 
-            const monthIncome = incomeResult._sum.totalPayableAmount || 0;
-            const monthExpense = (individualExpense._sum.amount || 0) + (splitExpense._sum.amount || 0);
+            const monthIncome = Number(incomeResult._sum.totalPayableAmount) || 0;
+            // Divide by 100: expenses stored in paise, return in rupees
+            const monthExpense = ((individualExpense._sum.amount || 0) + (splitExpense._sum.amount || 0)) / 100;
 
             result.push({
                 month: months[i],
@@ -600,7 +608,8 @@ export async function getExpenseBreakdownService(filters: getFinanceQueryParamsD
                 _sum: { amount: true }
             });
 
-            const categoryAmount = (individualResult._sum.amount || 0) + (splitResult._sum.amount || 0);
+            // Divide by 100: expenses stored in paise, return in rupees
+            const categoryAmount = ((individualResult._sum.amount || 0) + (splitResult._sum.amount || 0)) / 100;
 
             if (categoryAmount > 0) {
                 breakdown.push({
@@ -807,18 +816,21 @@ export async function getExpensesInRange(filters: getFinanceQueryParamsData): Pr
 // Service to Calculate Financial Metrics
 export async function calculateFinancialMetrics(bookings: any, expenses: any): Promise<any> {
     try {
-        // Calculate total income
-        const totalIncome = bookings.reduce((sum: number, b: any) =>
-            sum + Number(b.totalPayableAmount), 0
+        // Exclude cancelled bookings from all income calculations
+        const incomeBookings = bookings.filter((b: any) => b.bookingStatus !== 'CANCELLED');
+
+        // Multiply by 100: PDF template's formatAmount divides by 100, so all amounts must be in paise
+        const totalIncome = incomeBookings.reduce((sum: number, b: any) =>
+            sum + Math.round(Number(b.totalPayableAmount) * 100), 0
         );
 
-        const paidAmount = bookings
+        const paidAmount = incomeBookings
             .filter((b: any) => b.paymentStatus === 'PAID')
-            .reduce((sum: number, b: any) => sum + Number(b.totalPayableAmount), 0);
+            .reduce((sum: number, b: any) => sum + Math.round(Number(b.totalPayableAmount) * 100), 0);
 
-        const pendingAmount = bookings
+        const pendingAmount = incomeBookings
             .filter((b: any) => b.paymentStatus === 'PENDING')
-            .reduce((sum: number, b: any) => sum + Number(b.dueAmount), 0);
+            .reduce((sum: number, b: any) => sum + Math.round(Number(b.dueAmount) * 100), 0);
 
         const confirmedBookings = bookings.filter((b: any) =>
             b.bookingStatus === 'CONFIRMED' || b.bookingStatus === 'CHECKED_IN'
@@ -828,9 +840,9 @@ export async function calculateFinancialMetrics(bookings: any, expenses: any): P
             b.bookingStatus === 'CANCELLED'
         ).length;
 
-        const totalGuests = bookings.reduce((sum: number, b: any) => sum + b.totalGuests, 0);
+        const totalGuests = incomeBookings.reduce((sum: number, b: any) => sum + b.totalGuests, 0);
 
-        // Calculate total expenses (INDIVIDUAL + SPLIT)
+        // Expenses are already stored in paise — keep as-is for the PDF template
         const individualExpenses = expenses
             .filter((e: any) => e.type === 'INDIVIDUAL')
             .reduce((sum: number, e: any) => sum + e.amount, 0);
@@ -844,7 +856,7 @@ export async function calculateFinancialMetrics(bookings: any, expenses: any): P
 
         const totalExpenses = individualExpenses + splitExpenses;
 
-        // Calculate profit metrics
+        // Both in paise — arithmetic is valid
         const netProfit = totalIncome - totalExpenses;
         const profitMargin = totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(2) : '0.00';
 
@@ -852,7 +864,7 @@ export async function calculateFinancialMetrics(bookings: any, expenses: any): P
             totalIncome,
             paidAmount,
             pendingAmount,
-            averageBookingValue: bookings.length > 0 ? Math.round(totalIncome / bookings.length) : 0,
+            averageBookingValue: incomeBookings.length > 0 ? Math.round(totalIncome / incomeBookings.length) : 0,
             totalBookings: bookings.length,
             confirmedBookings,
             cancelledBookings,
@@ -876,8 +888,11 @@ export async function calculateVillaPerformance(bookings: any, expenses: any): P
     try {
         const villaMap = new Map();
 
-        // Calculate income per villa
+        // Calculate income per villa — only confirmed/non-cancelled bookings
+        // Multiply by 100: PDF template's formatAmount divides by 100, all amounts must be in paise
         bookings.forEach((booking: any) => {
+            if (booking.bookingStatus === 'CANCELLED') return;
+
             const villaName = booking.villa.name;
             const villaId = booking.villaId;
 
@@ -892,11 +907,11 @@ export async function calculateVillaPerformance(bookings: any, expenses: any): P
             }
 
             const villa = villaMap.get(villaId);
-            villa.income += Number(booking.totalPayableAmount);
+            villa.income += Math.round(Number(booking.totalPayableAmount) * 100);
             villa.bookingCount += 1;
         });
 
-        // Add expenses per villa
+        // Expenses are already in paise — keep as-is
         expenses.forEach((expense: any) => {
             if (expense.type === 'INDIVIDUAL' && expense.villa) {
                 const villaId = expense.villaId;
@@ -964,14 +979,15 @@ export async function calculateMonthlyTrends(bookings: any, expenses: any, filte
             const monthStart = new Date(year, i, 1);
             const monthEnd = new Date(year, i + 1, 0);
 
-            // Filter bookings for this month
+            // Filter bookings for this month, excluding cancelled
+            // Multiply by 100: PDF template's formatAmount divides by 100, all amounts must be in paise
             const monthBookings = bookings.filter((b: any) => {
                 const checkInDate = new Date(b.checkIn);
-                return checkInDate >= monthStart && checkInDate <= monthEnd;
+                return checkInDate >= monthStart && checkInDate <= monthEnd && b.bookingStatus !== 'CANCELLED';
             });
 
             const monthIncome = monthBookings.reduce((sum: number, b: any) =>
-                sum + Number(b.totalPayableAmount), 0
+                sum + Math.round(Number(b.totalPayableAmount) * 100), 0
             );
 
             // Filter expenses for this month
