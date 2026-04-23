@@ -154,9 +154,9 @@ export async function getRecentBookingsService({ ownerId }: { ownerId: number })
                 }
             },
             orderBy: {
-                createdAt: 'desc'
+                checkIn: 'desc'
             },
-            take: 5
+            take: 10
         });
 
         const totalCount = bookings.length;
