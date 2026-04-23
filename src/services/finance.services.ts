@@ -1071,3 +1071,125 @@ export async function generateFinanceReportPDF(data: any): Promise<any> {
         throw new Error(`Error while generating finance report PDF : ${message}`);
     }
 }
+
+// Service: Get Net Revenue Dashboard Data
+export async function getNetRevenueDashboardService(filters: getFinanceQueryParamsData): Promise<any> {
+    try {
+        if (filters.villaId) {
+            const villa = await isVillaPresentService({ villaId: filters.villaId });
+            if (!villa) throw new Error(`Villa with ID ${filters.villaId} not found`);
+        }
+
+        // 1. Filtered period net revenue (respects all active filters)
+        const [periodIncomeData, periodExpenseData] = await Promise.all([
+            getTotalIncomeService(filters),
+            getTotalExpenseService(filters)
+        ]);
+
+        const periodIncome = periodIncomeData.totalIncome;
+        const periodExpenses = periodExpenseData.totalExpenses;
+        const periodNetRevenue = periodIncome - periodExpenses;
+        const margin = periodIncome > 0
+            ? Math.round((periodNetRevenue / periodIncome) * 10000) / 100
+            : 0;
+
+        // 2. Current calendar-month net revenue (villa filter only — always shows current month)
+        const now = new Date();
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        let cmIncomeWhere: any = {
+            checkIn: { gte: currentMonthStart, lte: currentMonthEnd },
+            bookingStatus: { not: 'CANCELLED' }
+        };
+        if (filters.villaId) cmIncomeWhere.villaId = filters.villaId;
+
+        const cmIncomeResult = await prisma.booking.aggregate({
+            where: cmIncomeWhere,
+            _sum: { totalPayableAmount: true }
+        });
+        const currentMonthIncome = Number(cmIncomeResult._sum.totalPayableAmount) || 0;
+
+        let cmIndExpWhere: any = { date: { gte: currentMonthStart, lte: currentMonthEnd }, type: 'INDIVIDUAL' };
+        if (filters.villaId) cmIndExpWhere.villaId = filters.villaId;
+
+        const [cmIndExp, cmSplitExp] = await Promise.all([
+            prisma.expense.aggregate({ where: cmIndExpWhere, _sum: { amount: true } }),
+            prisma.expenseVilla.aggregate({
+                where: {
+                    expense: { date: { gte: currentMonthStart, lte: currentMonthEnd }, type: 'SPLIT' },
+                    ...(filters.villaId ? { villaId: filters.villaId } : {})
+                },
+                _sum: { amount: true }
+            })
+        ]);
+        const currentMonthExpenses = ((cmIndExp._sum.amount || 0) + (cmSplitExp._sum.amount || 0)) / 100;
+        const currentMonthNetRevenue = currentMonthIncome - currentMonthExpenses;
+
+        // 3. Last 12 months monthly breakdown (villa filter only — date range ignored so trend always shows context)
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthly = [];
+
+        for (let i = 11; i >= 0; i--) {
+            const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const year = monthDate.getFullYear();
+            const monthIndex = monthDate.getMonth();
+            const monthStart = new Date(year, monthIndex, 1);
+            const monthEnd = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+
+            let mIncomeWhere: any = {
+                checkIn: { gte: monthStart, lte: monthEnd },
+                bookingStatus: { not: 'CANCELLED' }
+            };
+            if (filters.villaId) mIncomeWhere.villaId = filters.villaId;
+
+            let mIndExpWhere: any = { date: { gte: monthStart, lte: monthEnd }, type: 'INDIVIDUAL' };
+            if (filters.villaId) mIndExpWhere.villaId = filters.villaId;
+
+            const [mIncomeResult, mIndExp, mSplitExp] = await Promise.all([
+                prisma.booking.aggregate({ where: mIncomeWhere, _sum: { totalPayableAmount: true } }),
+                prisma.expense.aggregate({ where: mIndExpWhere, _sum: { amount: true } }),
+                prisma.expenseVilla.aggregate({
+                    where: {
+                        expense: { date: { gte: monthStart, lte: monthEnd }, type: 'SPLIT' },
+                        ...(filters.villaId ? { villaId: filters.villaId } : {})
+                    },
+                    _sum: { amount: true }
+                })
+            ]);
+
+            const mIncome = Number(mIncomeResult._sum.totalPayableAmount) || 0;
+            const mExpenses = ((mIndExp._sum.amount || 0) + (mSplitExp._sum.amount || 0)) / 100;
+
+            monthly.push({
+                month: MONTHS[monthIndex],
+                year,
+                income: mIncome,
+                expenses: mExpenses,
+                netRevenue: mIncome - mExpenses
+            });
+        }
+
+        return {
+            filteredPeriod: {
+                income: periodIncome,
+                expenses: periodExpenses,
+                netRevenue: periodNetRevenue,
+                margin,
+                isPositive: periodNetRevenue >= 0
+            },
+            currentMonth: {
+                income: currentMonthIncome,
+                expenses: currentMonthExpenses,
+                netRevenue: currentMonthNetRevenue,
+                isPositive: currentMonthNetRevenue >= 0
+            },
+            monthly
+        };
+    }
+    catch (error) {
+        const message = error instanceof Error ? (error.message) : String(error);
+        console.error(`Error while getting net revenue data : ${message}`);
+        throw new Error(`Error while getting net revenue data : ${message}`);
+    }
+}

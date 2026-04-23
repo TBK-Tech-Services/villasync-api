@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { getFinanceQueryParamsSchema } from "../validators/data-validators/finance/getFinanceParams.ts";
 import { sendError, sendSuccess } from "../utils/general/response.ts";
-import { calculateFinancialMetrics, calculateMonthlyTrends, calculateVillaPerformance, generateFinanceReportPDF, getBookingsInRange, getExpensesInRange, getFinanceDashboardService } from "../services/finance.services.ts";
+import { calculateFinancialMetrics, calculateMonthlyTrends, calculateVillaPerformance, generateFinanceReportPDF, getBookingsInRange, getExpensesInRange, getFinanceDashboardService, getNetRevenueDashboardService } from "../services/finance.services.ts";
 
 // Update controller to validate query params
 export async function getFinanceDashboard(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -15,6 +15,18 @@ export async function getFinanceDashboard(req: Request, res: Response, next: Nex
     }
 
     return sendSuccess(res, financeDashboardData, "Successfully Got Data For Finance Dashboard!", 200);
+  }
+  catch (error) {
+    next(error);
+  }
+}
+
+// Controller to Get Net Revenue Dashboard
+export async function getNetRevenueDashboard(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const validatedParams = getFinanceQueryParamsSchema.parse(req.query);
+    const data = await getNetRevenueDashboardService(validatedParams);
+    return sendSuccess(res, data, "Successfully got net revenue data", 200);
   }
   catch (error) {
     next(error);
