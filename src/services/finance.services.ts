@@ -405,8 +405,11 @@ export async function getMonthlyIncomeExpenseChartService(filters: getFinanceQue
         const result = [];
 
         for (let i = startMonth; i <= endMonth; i++) {
-            const monthStart = new Date(year, i, 1);
-            const monthEnd = new Date(year, i + 1, 0);
+            // Clamp to actual filter boundaries so chart matches KPI data exactly
+            const rawMonthStart = new Date(year, i, 1);
+            const rawMonthEnd = new Date(year, i + 1, 0, 23, 59, 59, 999);
+            const monthStart = (filters.startDate && i === startMonth) ? filters.startDate : rawMonthStart;
+            const monthEnd = (filters.endDate && i === endMonth) ? filters.endDate : rawMonthEnd;
 
             let incomeWhere: any = {
                 checkIn: {
