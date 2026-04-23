@@ -319,3 +319,145 @@ export async function getVillaBookingsService(villaId: number): Promise<Booking[
         throw new InternalServerError("Failed to fetch villa bookings");
     }
 }
+
+// Service to get Villa KPI Stats
+export async function getVillaStatsService(villaId: number): Promise<any> {
+    try {
+        const MS_PER_DAY = 1000 * 60 * 60 * 24;
+        const now = new Date();
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        yearStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(now);
+        todayEnd.setHours(23, 59, 59, 999);
+
+        // Total Bookings — all non-cancelled
+        const totalBookings = await prisma.booking.count({
+            where: {
+                villaId,
+                bookingStatus: { not: 'CANCELLED' }
+            }
+        });
+
+        // Total Revenue — sum of all non-cancelled booking amounts
+        const revenueResult = await prisma.booking.aggregate({
+            where: {
+                villaId,
+                bookingStatus: { not: 'CANCELLED' }
+            },
+            _sum: { totalPayableAmount: true }
+        });
+        const totalRevenue = Number(revenueResult._sum.totalPayableAmount) || 0;
+
+        // Occupancy Rate — YTD (Jan 1 → today)
+        const availableNights = Math.max(1, Math.floor((todayEnd.getTime() - yearStart.getTime()) / MS_PER_DAY));
+
+        const occupancyBookings = await prisma.booking.findMany({
+            where: {
+                villaId,
+                bookingStatus: { not: 'CANCELLED' },
+                checkIn: { lt: todayEnd },
+                checkOut: { gt: yearStart }
+            },
+            select: { checkIn: true, checkOut: true }
+        });
+
+        let bookedNights = 0;
+        for (const b of occupancyBookings) {
+            const start = Math.max(b.checkIn.getTime(), yearStart.getTime());
+            const end = Math.min(b.checkOut.getTime(), todayEnd.getTime());
+            if (end > start) {
+                bookedNights += Math.round((end - start) / MS_PER_DAY);
+            }
+        }
+        const occupancyRate = Math.min(100, Math.round((bookedNights / availableNights) * 100));
+
+        // Avg Stay — average nights per non-cancelled booking
+        const stayBookings = await prisma.booking.findMany({
+            where: {
+                villaId,
+                bookingStatus: { not: 'CANCELLED' }
+            },
+            select: { checkIn: true, checkOut: true }
+        });
+
+        const totalNights = stayBookings.reduce((sum, b) => {
+            return sum + Math.round((b.checkOut.getTime() - b.checkIn.getTime()) / MS_PER_DAY);
+        }, 0);
+        const avgStay = stayBookings.length > 0 ? Math.round(totalNights / stayBookings.length) : 0;
+
+        return { totalBookings, totalRevenue, occupancyRate, avgStay };
+    }
+    catch (error) {
+        console.error(`Error fetching villa stats: ${error}`);
+        throw new InternalServerError("Failed to fetch villa stats");
+    }
+}
+
+// Service to get Villa Revenue Data
+export async function getVillaRevenueService(villaId: number): Promise<any> {
+    try {
+        const MS_PER_DAY = 1000 * 60 * 60 * 24;
+        const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const now = new Date();
+
+        // Lifetime revenue
+        const lifetimeResult = await prisma.booking.aggregate({
+            where: {
+                villaId,
+                bookingStatus: { not: 'CANCELLED' }
+            },
+            _sum: { totalPayableAmount: true },
+            _count: { id: true }
+        });
+        const lifetimeRevenue = Number(lifetimeResult._sum.totalPayableAmount) || 0;
+        const totalBookings = lifetimeResult._count.id || 0;
+        const avgRevenuePerBooking = totalBookings > 0 ? Math.round(lifetimeRevenue / totalBookings) : 0;
+
+        // Current month revenue
+        const cmStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const cmEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        const cmResult = await prisma.booking.aggregate({
+            where: {
+                villaId,
+                bookingStatus: { not: 'CANCELLED' },
+                checkIn: { gte: cmStart, lte: cmEnd }
+            },
+            _sum: { totalPayableAmount: true }
+        });
+        const currentMonthRevenue = Number(cmResult._sum.totalPayableAmount) || 0;
+
+        // Last 12 months monthly breakdown
+        const monthly = [];
+        for (let i = 11; i >= 0; i--) {
+            const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const year = monthDate.getFullYear();
+            const monthIndex = monthDate.getMonth();
+            const monthStart = new Date(year, monthIndex, 1);
+            const monthEnd = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+
+            const result = await prisma.booking.aggregate({
+                where: {
+                    villaId,
+                    bookingStatus: { not: 'CANCELLED' },
+                    checkIn: { gte: monthStart, lte: monthEnd }
+                },
+                _sum: { totalPayableAmount: true },
+                _count: { id: true }
+            });
+
+            monthly.push({
+                month: MONTH_NAMES[monthIndex],
+                year,
+                revenue: Number(result._sum.totalPayableAmount) || 0,
+                bookingCount: result._count.id || 0
+            });
+        }
+
+        return { lifetimeRevenue, currentMonthRevenue, avgRevenuePerBooking, monthly };
+    }
+    catch (error) {
+        console.error(`Error fetching villa revenue: ${error}`);
+        throw new InternalServerError("Failed to fetch villa revenue");
+    }
+}

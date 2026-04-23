@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addVillaService, checkIfVillaExistService, deleteVillaService, getAllAmenityCategoriesService, getAllVillasService, getSingleVillaService, getVillaBookingsService, getVillaRecentBookingsService, isVillaPresentService, updateVillaService } from "../services/villas.services.ts";
+import { addVillaService, checkIfVillaExistService, deleteVillaService, getAllAmenityCategoriesService, getAllVillasService, getSingleVillaService, getVillaBookingsService, getVillaRecentBookingsService, getVillaRevenueService, getVillaStatsService, isVillaPresentService, updateVillaService } from "../services/villas.services.ts";
 import { addVillaSchema } from "../validators/data-validators/villa/addVilla.ts";
 import { sendSuccess } from "../utils/general/response.ts";
 import { getVillaSchema } from "../validators/data-validators/villa/getVilla.ts";
@@ -170,6 +170,42 @@ export const getVillaRecentBookings = catchAsync(async (req: Request, res: Respo
   }
 
   sendSuccess(res, recentBookings, "Villa recent bookings retrieved successfully", 200);
+});
+
+// Controller to get Villa KPI Stats
+export const getVillaStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = getVillaIdSchema.safeParse(req.params);
+
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid villa ID format");
+  }
+
+  const villaId = paramsValidation.data.id;
+
+  const villa = await isVillaPresentService({ villaId });
+  if (!villa) throw new NotFoundError("Villa with this ID does not exist");
+
+  const stats = await getVillaStatsService(villaId);
+
+  sendSuccess(res, stats, "Villa stats retrieved successfully", 200);
+});
+
+// Controller to get Villa Revenue Data
+export const getVillaRevenue = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const paramsValidation = getVillaIdSchema.safeParse(req.params);
+
+  if (!paramsValidation.success) {
+    throw new ValidationError("Invalid villa ID format");
+  }
+
+  const villaId = paramsValidation.data.id;
+
+  const villa = await isVillaPresentService({ villaId });
+  if (!villa) throw new NotFoundError("Villa with this ID does not exist");
+
+  const revenue = await getVillaRevenueService(villaId);
+
+  sendSuccess(res, revenue, "Villa revenue retrieved successfully", 200);
 });
 
 // Controller to get All Bookings of a Villa

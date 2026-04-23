@@ -7,7 +7,9 @@ import {
   getVillaRecentBookings,
   getAllAmenityCategories,
   deleteVilla,
-  getVillaBookings
+  getVillaBookings,
+  getVillaStats,
+  getVillaRevenue
 } from "../controllers/villas.controllers.ts";
 
 const router = Router();
@@ -19,7 +21,9 @@ router.delete("/:id", deleteVilla);
 router.get("/", getAllVillas);  
 router.get("/:id", getSingleVilla);
 router.get("/amenities/categories", getAllAmenityCategories);
-router.get("/:id/recent-bookings", getVillaRecentBookings);  
-router.get("/:id/bookings", getVillaBookings);  
+router.get("/:id/recent-bookings", getVillaRecentBookings);
+router.get("/:id/bookings", getVillaBookings);
+router.get("/:id/stats", getVillaStats);
+router.get("/:id/revenue", getVillaRevenue);
 
 export default router;
