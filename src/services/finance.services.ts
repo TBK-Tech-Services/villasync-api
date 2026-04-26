@@ -1075,9 +1075,15 @@ export async function generateFinanceReportPDF(data: any): Promise<any> {
 // Service: Get Net Revenue Dashboard Data
 export async function getNetRevenueDashboardService(filters: getFinanceQueryParamsData): Promise<any> {
     try {
+        let managementFeePercent = 0;
+
         if (filters.villaId) {
             const villa = await isVillaPresentService({ villaId: filters.villaId });
             if (!villa) throw new Error(`Villa with ID ${filters.villaId} not found`);
+            if (villa.ownerId) {
+                const owner = await prisma.user.findUnique({ where: { id: villa.ownerId }, select: { managementFeePercent: true } });
+                managementFeePercent = Number(owner?.managementFeePercent) || 0;
+            }
         }
 
         // 1. Filtered period net revenue (respects all active filters)
@@ -1088,7 +1094,8 @@ export async function getNetRevenueDashboardService(filters: getFinanceQueryPara
 
         const periodIncome = periodIncomeData.totalIncome;
         const periodExpenses = periodExpenseData.totalExpenses;
-        const periodNetRevenue = periodIncome - periodExpenses;
+        const periodManagementFee = Math.round((managementFeePercent / 100) * periodIncome * 100) / 100;
+        const periodNetRevenue = periodIncome - periodManagementFee - periodExpenses;
         const margin = periodIncome > 0
             ? Math.round((periodNetRevenue / periodIncome) * 10000) / 100
             : 0;
@@ -1124,7 +1131,8 @@ export async function getNetRevenueDashboardService(filters: getFinanceQueryPara
             })
         ]);
         const currentMonthExpenses = ((cmIndExp._sum.amount || 0) + (cmSplitExp._sum.amount || 0)) / 100;
-        const currentMonthNetRevenue = currentMonthIncome - currentMonthExpenses;
+        const currentMonthManagementFee = Math.round((managementFeePercent / 100) * currentMonthIncome * 100) / 100;
+        const currentMonthNetRevenue = currentMonthIncome - currentMonthManagementFee - currentMonthExpenses;
 
         // 3. Last 12 months monthly breakdown (villa filter only — date range ignored so trend always shows context)
         const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -1160,20 +1168,24 @@ export async function getNetRevenueDashboardService(filters: getFinanceQueryPara
 
             const mIncome = Number(mIncomeResult._sum.totalPayableAmount) || 0;
             const mExpenses = ((mIndExp._sum.amount || 0) + (mSplitExp._sum.amount || 0)) / 100;
+            const mManagementFee = Math.round((managementFeePercent / 100) * mIncome * 100) / 100;
 
             monthly.push({
                 month: MONTHS[monthIndex],
                 year,
                 income: mIncome,
                 expenses: mExpenses,
-                netRevenue: mIncome - mExpenses
+                managementFee: mManagementFee,
+                netRevenue: mIncome - mManagementFee - mExpenses
             });
         }
 
         return {
+            managementFeePercent,
             filteredPeriod: {
                 income: periodIncome,
                 expenses: periodExpenses,
+                managementFee: periodManagementFee,
                 netRevenue: periodNetRevenue,
                 margin,
                 isPositive: periodNetRevenue >= 0
@@ -1181,6 +1193,7 @@ export async function getNetRevenueDashboardService(filters: getFinanceQueryPara
             currentMonth: {
                 income: currentMonthIncome,
                 expenses: currentMonthExpenses,
+                managementFee: currentMonthManagementFee,
                 netRevenue: currentMonthNetRevenue,
                 isPositive: currentMonthNetRevenue >= 0
             },

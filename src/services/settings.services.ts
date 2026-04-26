@@ -447,6 +447,21 @@ export async function getAdminContactsService() {
     }
 };
 
+// Service to Update Owner Management Fee
+export async function updateOwnerManagementFeeService({ ownerId, managementFeePercent }: { ownerId: number, managementFeePercent: number }): Promise<User> {
+    try {
+        const updatedUser = await prisma.user.update({
+            where: { id: ownerId },
+            data: { managementFeePercent }
+        });
+        return updatedUser;
+    }
+    catch (error) {
+        console.error(`Error updating owner management fee: ${error}`);
+        throw new InternalServerError("Failed to update owner management fee");
+    }
+}
+
 // Service to Delete a User
 export async function deleteUserService({ userId } : { userId: number }): Promise<void> {
     try {

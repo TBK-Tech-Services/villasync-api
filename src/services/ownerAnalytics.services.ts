@@ -222,14 +222,15 @@ export async function getOwnerPerformanceService({ ownerId }: { ownerId: number 
 // Service to Get Owner Net Revenue
 export async function getOwnerNetRevenueService({ ownerId }: { ownerId: number }) {
     try {
-        const villas = await prisma.villa.findMany({
-            where: { ownerId },
-            select: { id: true }
-        });
-        const villaIds = villas.map(v => v.id);
+        const [villaRows, ownerData] = await Promise.all([
+            prisma.villa.findMany({ where: { ownerId }, select: { id: true } }),
+            prisma.user.findUnique({ where: { id: ownerId }, select: { managementFeePercent: true } })
+        ]);
+        const villaIds = villaRows.map(v => v.id);
+        const feePercent = Number(ownerData?.managementFeePercent) || 0;
 
         if (villaIds.length === 0) {
-            return { lifetimeNetRevenue: 0, lifetimeIncome: 0, lifetimeExpenses: 0, currentMonth: { income: 0, expenses: 0, netRevenue: 0, isPositive: true }, monthly: [], margin: 0, isPositive: true };
+            return { lifetimeNetRevenue: 0, lifetimeIncome: 0, lifetimeExpenses: 0, lifetimeManagementFee: 0, managementFeePercent: feePercent, currentMonth: { income: 0, expenses: 0, managementFee: 0, netRevenue: 0, isPositive: true }, monthly: [], margin: 0, isPositive: true };
         }
 
         // Lifetime income
@@ -238,6 +239,7 @@ export async function getOwnerNetRevenueService({ ownerId }: { ownerId: number }
             _sum: { totalPayableAmount: true }
         });
         const lifetimeIncome = Number(lifetimeIncomeResult._sum.totalPayableAmount) || 0;
+        const lifetimeManagementFee = Math.round((feePercent / 100) * lifetimeIncome * 100) / 100;
 
         // Lifetime expenses: INDIVIDUAL + SPLIT
         const [ltIndExp, ltSplitExp] = await Promise.all([
@@ -251,7 +253,7 @@ export async function getOwnerNetRevenueService({ ownerId }: { ownerId: number }
             })
         ]);
         const lifetimeExpenses = ((Number(ltIndExp._sum.amount) || 0) + (Number(ltSplitExp._sum.amount) || 0)) / 100;
-        const lifetimeNetRevenue = lifetimeIncome - lifetimeExpenses;
+        const lifetimeNetRevenue = lifetimeIncome - lifetimeManagementFee - lifetimeExpenses;
         const margin = lifetimeIncome > 0 ? Math.round((lifetimeNetRevenue / lifetimeIncome) * 10000) / 100 : 0;
 
         // Current month
@@ -274,8 +276,9 @@ export async function getOwnerNetRevenueService({ ownerId }: { ownerId: number }
             })
         ]);
         const currentMonthIncome = Number(cmIncome._sum.totalPayableAmount) || 0;
+        const currentMonthManagementFee = Math.round((feePercent / 100) * currentMonthIncome * 100) / 100;
         const currentMonthExpenses = ((Number(cmIndExp._sum.amount) || 0) + (Number(cmSplitExp._sum.amount) || 0)) / 100;
-        const currentMonthNetRevenue = currentMonthIncome - currentMonthExpenses;
+        const currentMonthNetRevenue = currentMonthIncome - currentMonthManagementFee - currentMonthExpenses;
 
         // Last 12 months breakdown
         const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -304,16 +307,19 @@ export async function getOwnerNetRevenueService({ ownerId }: { ownerId: number }
             ]);
 
             const mInc = Number(mIncome._sum.totalPayableAmount) || 0;
+            const mFee = Math.round((feePercent / 100) * mInc * 100) / 100;
             const mExp = ((Number(mIndExp._sum.amount) || 0) + (Number(mSplitExp._sum.amount) || 0)) / 100;
 
-            monthly.push({ month: MONTHS[monthIndex], year, income: mInc, expenses: mExp, netRevenue: mInc - mExp });
+            monthly.push({ month: MONTHS[monthIndex], year, income: mInc, managementFee: mFee, expenses: mExp, netRevenue: mInc - mFee - mExp });
         }
 
         return {
+            managementFeePercent: feePercent,
             lifetimeNetRevenue,
             lifetimeIncome,
             lifetimeExpenses,
-            currentMonth: { income: currentMonthIncome, expenses: currentMonthExpenses, netRevenue: currentMonthNetRevenue, isPositive: currentMonthNetRevenue >= 0 },
+            lifetimeManagementFee,
+            currentMonth: { income: currentMonthIncome, expenses: currentMonthExpenses, managementFee: currentMonthManagementFee, netRevenue: currentMonthNetRevenue, isPositive: currentMonthNetRevenue >= 0 },
             monthly,
             margin,
             isPositive: lifetimeNetRevenue >= 0

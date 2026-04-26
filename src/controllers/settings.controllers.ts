@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllOwnersWithVillasService, getAllPermissionsService, getAllRolesService, getAllUnAssignedVillasService, getGeneralSettingsService, getVillaOwnerManagementStatsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerVillaAssignmentsService, deleteUserService } from "../services/settings.services.ts";
+import { addGeneralSettingsService, assignPermissionsToRoleService, assignVillasToOwnerService, checkIfGeneralSettingExistService, checkIfOwnerExistsService, checkIfSameRoleNameExistService, checkRoleExistanceService, createNewRoleService, createNewUserService, getAllOwnersService, getAllOwnersWithVillasService, getAllPermissionsService, getAllRolesService, getAllUnAssignedVillasService, getGeneralSettingsService, getVillaOwnerManagementStatsService, unassignAllVillasFromOwnerService, unassignSpecificVillaService, updateGeneralSettingsService, updateOwnerManagementFeeService, updateOwnerVillaAssignmentsService, deleteUserService } from "../services/settings.services.ts";
 import { sendSuccess } from "../utils/general/response.ts";
 import { getUserService } from "../services/auth.services.ts";
 import { hashPassword } from "../utils/auth/hashPassword.ts";
@@ -39,7 +39,7 @@ export const getAllPermissions = catchAsync(async (req: Request, res: Response, 
 
 // Controller to Invite a New User
 export const inviteNewUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { firstName, lastName, email, password, role, permissions } = req.body;
+    const { firstName, lastName, email, password, role, permissions, managementFeePercent } = req.body;
 
     if (!firstName || !lastName || !email || !password || !role || role < 0) {
         throw new ValidationError("All fields are required: firstName, lastName, email, password, role");
@@ -66,6 +66,13 @@ export const inviteNewUser = catchAsync(async (req: Request, res: Response, next
             }
 
             const newUser = await createNewUserService({ firstName, lastName, email, password: hashedPassword, roleId: role }, tx);
+
+            if (managementFeePercent !== undefined && managementFeePercent !== null && newUser) {
+                const fee = Number(managementFeePercent);
+                if (!isNaN(fee) && fee >= 0 && fee <= 100) {
+                    await tx.user.update({ where: { id: newUser.id }, data: { managementFeePercent: fee } });
+                }
+            }
 
             return { newUser, message: "User created successfully" };
         }
@@ -103,6 +110,27 @@ export const inviteNewUser = catchAsync(async (req: Request, res: Response, next
     }
 
     sendSuccess(res, result.newUser, result.message, 201);
+});
+
+// Controller to Update Owner Management Fee
+export const updateOwnerFee = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const ownerId = parseInt(req.params.ownerId);
+    if (isNaN(ownerId)) throw new ValidationError("Invalid owner ID");
+
+    const { managementFeePercent } = req.body;
+    if (managementFeePercent === undefined || managementFeePercent === null) {
+        throw new ValidationError("managementFeePercent is required");
+    }
+    const fee = Number(managementFeePercent);
+    if (isNaN(fee) || fee < 0 || fee > 100) {
+        throw new ValidationError("managementFeePercent must be a number between 0 and 100");
+    }
+
+    const owner = await checkIfOwnerExistsService({ ownerId });
+    if (!owner) throw new NotFoundError("Owner not found");
+
+    const updatedOwner = await updateOwnerManagementFeeService({ ownerId, managementFeePercent: fee });
+    return sendSuccess(res, updatedOwner, "Management fee updated successfully", 200);
 });
 
 // Controller to Add General Settings 

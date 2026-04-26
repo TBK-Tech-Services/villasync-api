@@ -15,6 +15,7 @@ import {
   getVillaOwnerManagementStats,
   getAllUnAssignedVillas,
   deleteUser,
+  updateOwnerFee,
 } from "../controllers/settings.controllers.ts";
 import { authenticate } from "../middlewares/auth/authenticate.ts";
 import { authorize } from "../middlewares/auth/authorize.ts";
@@ -37,5 +38,6 @@ router.get("/villa-owner-management/unassigned/villas", getAllUnAssignedVillas);
 router.get("/villa-owner-management/owners", getAllOwners);
 router.get("/villa-owner-management/owners-with-villas", getAllOwnersWithVillas);
 router.get("/villa-owner-management/stats", getVillaOwnerManagementStats);
+router.patch("/villa-owner-management/owner/:ownerId/fee", authenticate, updateOwnerFee);
 
 export default router;
