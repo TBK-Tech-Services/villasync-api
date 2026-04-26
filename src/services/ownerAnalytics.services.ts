@@ -162,6 +162,169 @@ export async function getVillaPerformanceService({ ownerId }: { ownerId: number 
     }
 }
 
+// Service to Get Aggregate Performance KPIs
+export async function getOwnerPerformanceService({ ownerId }: { ownerId: number }) {
+    try {
+        const now = new Date();
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+        const villas = await prisma.villa.findMany({
+            where: { ownerId },
+            select: { id: true }
+        });
+        const villaIds = villas.map(v => v.id);
+        const villaCount = villaIds.length;
+
+        if (villaCount === 0) {
+            return { occupancyRate: 0, revPAR: 0, avgStayLength: 0, bookingSourceBreakdown: [], totalNightsBooked: 0, totalAvailableNights: 0, totalBookings: 0 };
+        }
+
+        const totalAvailableNights = daysInMonth * villaCount;
+
+        const bookings = await prisma.booking.findMany({
+            where: {
+                villaId: { in: villaIds },
+                checkIn: { gte: currentMonthStart, lte: currentMonthEnd },
+                bookingStatus: { not: 'CANCELLED' }
+            },
+            select: { totalPayableAmount: true, checkIn: true, checkOut: true, bookingSource: true }
+        });
+
+        let totalNightsBooked = 0;
+        let totalRevenue = 0;
+        const sourceMap: Record<string, number> = {};
+
+        for (const booking of bookings) {
+            const nights = Math.ceil((new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) / (1000 * 60 * 60 * 24));
+            totalNightsBooked += nights;
+            totalRevenue += Number(booking.totalPayableAmount);
+            const src = booking.bookingSource || 'Direct';
+            sourceMap[src] = (sourceMap[src] || 0) + 1;
+        }
+
+        const occupancyRate = parseFloat(((totalNightsBooked / totalAvailableNights) * 100).toFixed(1));
+        const revPAR = totalAvailableNights > 0 ? Math.round(totalRevenue / totalAvailableNights) : 0;
+        const avgStayLength = bookings.length > 0 ? parseFloat((totalNightsBooked / bookings.length).toFixed(1)) : 0;
+        const bookingSourceBreakdown = Object.entries(sourceMap)
+            .map(([source, count]) => ({ source, count }))
+            .sort((a, b) => b.count - a.count);
+
+        return { occupancyRate, revPAR, avgStayLength, bookingSourceBreakdown, totalNightsBooked, totalAvailableNights, totalBookings: bookings.length };
+    }
+    catch (error) {
+        console.error(`Error while getting owner performance: ${error}`);
+        throw new InternalServerError("Failed to retrieve owner performance");
+    }
+}
+
+// Service to Get Owner Net Revenue
+export async function getOwnerNetRevenueService({ ownerId }: { ownerId: number }) {
+    try {
+        const villas = await prisma.villa.findMany({
+            where: { ownerId },
+            select: { id: true }
+        });
+        const villaIds = villas.map(v => v.id);
+
+        if (villaIds.length === 0) {
+            return { lifetimeNetRevenue: 0, lifetimeIncome: 0, lifetimeExpenses: 0, currentMonth: { income: 0, expenses: 0, netRevenue: 0, isPositive: true }, monthly: [], margin: 0, isPositive: true };
+        }
+
+        // Lifetime income
+        const lifetimeIncomeResult = await prisma.booking.aggregate({
+            where: { villaId: { in: villaIds }, bookingStatus: { not: 'CANCELLED' } },
+            _sum: { totalPayableAmount: true }
+        });
+        const lifetimeIncome = Number(lifetimeIncomeResult._sum.totalPayableAmount) || 0;
+
+        // Lifetime expenses: INDIVIDUAL + SPLIT
+        const [ltIndExp, ltSplitExp] = await Promise.all([
+            prisma.expense.aggregate({
+                where: { villaId: { in: villaIds }, type: 'INDIVIDUAL' },
+                _sum: { amount: true }
+            }),
+            prisma.expenseVilla.aggregate({
+                where: { villaId: { in: villaIds }, expense: { type: 'SPLIT' } },
+                _sum: { amount: true }
+            })
+        ]);
+        const lifetimeExpenses = ((Number(ltIndExp._sum.amount) || 0) + (Number(ltSplitExp._sum.amount) || 0)) / 100;
+        const lifetimeNetRevenue = lifetimeIncome - lifetimeExpenses;
+        const margin = lifetimeIncome > 0 ? Math.round((lifetimeNetRevenue / lifetimeIncome) * 10000) / 100 : 0;
+
+        // Current month
+        const now = new Date();
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        const [cmIncome, cmIndExp, cmSplitExp] = await Promise.all([
+            prisma.booking.aggregate({
+                where: { villaId: { in: villaIds }, checkIn: { gte: currentMonthStart, lte: currentMonthEnd }, bookingStatus: { not: 'CANCELLED' } },
+                _sum: { totalPayableAmount: true }
+            }),
+            prisma.expense.aggregate({
+                where: { villaId: { in: villaIds }, date: { gte: currentMonthStart, lte: currentMonthEnd }, type: 'INDIVIDUAL' },
+                _sum: { amount: true }
+            }),
+            prisma.expenseVilla.aggregate({
+                where: { villaId: { in: villaIds }, expense: { date: { gte: currentMonthStart, lte: currentMonthEnd }, type: 'SPLIT' } },
+                _sum: { amount: true }
+            })
+        ]);
+        const currentMonthIncome = Number(cmIncome._sum.totalPayableAmount) || 0;
+        const currentMonthExpenses = ((Number(cmIndExp._sum.amount) || 0) + (Number(cmSplitExp._sum.amount) || 0)) / 100;
+        const currentMonthNetRevenue = currentMonthIncome - currentMonthExpenses;
+
+        // Last 12 months breakdown
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthly = [];
+
+        for (let i = 11; i >= 0; i--) {
+            const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const year = monthDate.getFullYear();
+            const monthIndex = monthDate.getMonth();
+            const monthStart = new Date(year, monthIndex, 1);
+            const monthEnd = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+
+            const [mIncome, mIndExp, mSplitExp] = await Promise.all([
+                prisma.booking.aggregate({
+                    where: { villaId: { in: villaIds }, checkIn: { gte: monthStart, lte: monthEnd }, bookingStatus: { not: 'CANCELLED' } },
+                    _sum: { totalPayableAmount: true }
+                }),
+                prisma.expense.aggregate({
+                    where: { villaId: { in: villaIds }, date: { gte: monthStart, lte: monthEnd }, type: 'INDIVIDUAL' },
+                    _sum: { amount: true }
+                }),
+                prisma.expenseVilla.aggregate({
+                    where: { villaId: { in: villaIds }, expense: { date: { gte: monthStart, lte: monthEnd }, type: 'SPLIT' } },
+                    _sum: { amount: true }
+                })
+            ]);
+
+            const mInc = Number(mIncome._sum.totalPayableAmount) || 0;
+            const mExp = ((Number(mIndExp._sum.amount) || 0) + (Number(mSplitExp._sum.amount) || 0)) / 100;
+
+            monthly.push({ month: MONTHS[monthIndex], year, income: mInc, expenses: mExp, netRevenue: mInc - mExp });
+        }
+
+        return {
+            lifetimeNetRevenue,
+            lifetimeIncome,
+            lifetimeExpenses,
+            currentMonth: { income: currentMonthIncome, expenses: currentMonthExpenses, netRevenue: currentMonthNetRevenue, isPositive: currentMonthNetRevenue >= 0 },
+            monthly,
+            margin,
+            isPositive: lifetimeNetRevenue >= 0
+        };
+    }
+    catch (error) {
+        console.error(`Error while getting owner net revenue: ${error}`);
+        throw new InternalServerError("Failed to retrieve owner net revenue");
+    }
+}
+
 // Service to Get Monthly Revenue
 export async function getMonthlyRevenueService({ ownerId }: { ownerId: number }) {
     try {
