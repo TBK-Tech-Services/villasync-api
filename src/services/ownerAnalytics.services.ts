@@ -233,30 +233,65 @@ export async function getOwnerNetRevenueService({ ownerId }: { ownerId: number }
             return { lifetimeNetRevenue: 0, lifetimeIncome: 0, lifetimeExpenses: 0, lifetimeManagementFee: 0, managementFeePercent: feePercent, currentMonth: { income: 0, expenses: 0, managementFee: 0, netRevenue: 0, isPositive: true }, monthly: [], margin: 0, isPositive: true };
         }
 
-        // Lifetime income
-        const lifetimeIncomeResult = await prisma.booking.aggregate({
-            where: { villaId: { in: villaIds }, bookingStatus: { not: 'CANCELLED' } },
-            _sum: { totalPayableAmount: true }
-        });
-        const lifetimeIncome = Number(lifetimeIncomeResult._sum.totalPayableAmount) || 0;
-        const lifetimeManagementFee = Math.round((feePercent / 100) * lifetimeIncome * 100) / 100;
-
-        // Lifetime expenses: INDIVIDUAL + SPLIT
-        const [ltIndExp, ltSplitExp] = await Promise.all([
-            prisma.expense.aggregate({
-                where: { villaId: { in: villaIds }, type: 'INDIVIDUAL' },
-                _sum: { amount: true }
+        // Fetch ALL bookings and expenses in 3 queries, group by month in memory.
+        // This guarantees sum(monthly) == lifetime KPI exactly, and captures future
+        // confirmed bookings that a fixed 12-month backward window would miss.
+        const [allBookings, allIndExp, allSplitExp] = await Promise.all([
+            prisma.booking.findMany({
+                where: { villaId: { in: villaIds }, bookingStatus: { not: 'CANCELLED' } },
+                select: { totalPayableAmount: true, checkIn: true }
             }),
-            prisma.expenseVilla.aggregate({
+            prisma.expense.findMany({
+                where: { villaId: { in: villaIds }, type: 'INDIVIDUAL' },
+                select: { amount: true, date: true }
+            }),
+            prisma.expenseVilla.findMany({
                 where: { villaId: { in: villaIds }, expense: { type: 'SPLIT' } },
-                _sum: { amount: true }
+                select: { amount: true, expense: { select: { date: true } } }
             })
         ]);
-        const lifetimeExpenses = ((Number(ltIndExp._sum.amount) || 0) + (Number(ltSplitExp._sum.amount) || 0)) / 100;
+
+        const monthKey = (d: Date) =>
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+        // Group income by checkIn month
+        const incomeByMonth: Record<string, number> = {};
+        for (const b of allBookings) {
+            const key = monthKey(new Date(b.checkIn));
+            incomeByMonth[key] = (incomeByMonth[key] || 0) + Number(b.totalPayableAmount);
+        }
+
+        // Group expenses by date month (paise)
+        const expByMonth: Record<string, number> = {};
+        for (const e of allIndExp) {
+            const key = monthKey(new Date(e.date));
+            expByMonth[key] = (expByMonth[key] || 0) + e.amount;
+        }
+        for (const e of allSplitExp) {
+            const key = monthKey(new Date(e.expense.date));
+            expByMonth[key] = (expByMonth[key] || 0) + e.amount;
+        }
+
+        // Build monthly array sorted chronologically over ALL months with any data
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const allKeys = [...new Set([...Object.keys(incomeByMonth), ...Object.keys(expByMonth)])].sort();
+
+        const monthly = allKeys.map(key => {
+            const [yr, mo] = key.split('-').map(Number);
+            const mInc = incomeByMonth[key] || 0;
+            const mFee = Math.round((feePercent / 100) * mInc * 100) / 100;
+            const mExp = (expByMonth[key] || 0) / 100;
+            return { month: MONTHS[mo - 1], year: yr, income: mInc, managementFee: mFee, expenses: mExp, netRevenue: mInc - mFee - mExp };
+        });
+
+        // Lifetime totals derived from monthly — guaranteed to match graph sum
+        const lifetimeIncome = monthly.reduce((s, m) => s + m.income, 0);
+        const lifetimeExpenses = monthly.reduce((s, m) => s + m.expenses, 0);
+        const lifetimeManagementFee = monthly.reduce((s, m) => s + m.managementFee, 0);
         const lifetimeNetRevenue = lifetimeIncome - lifetimeManagementFee - lifetimeExpenses;
         const margin = lifetimeIncome > 0 ? Math.round((lifetimeNetRevenue / lifetimeIncome) * 10000) / 100 : 0;
 
-        // Current month
+        // Current month (precise real-time query for the KPI card)
         const now = new Date();
         const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -279,39 +314,6 @@ export async function getOwnerNetRevenueService({ ownerId }: { ownerId: number }
         const currentMonthManagementFee = Math.round((feePercent / 100) * currentMonthIncome * 100) / 100;
         const currentMonthExpenses = ((Number(cmIndExp._sum.amount) || 0) + (Number(cmSplitExp._sum.amount) || 0)) / 100;
         const currentMonthNetRevenue = currentMonthIncome - currentMonthManagementFee - currentMonthExpenses;
-
-        // Last 12 months breakdown
-        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const monthly = [];
-
-        for (let i = 11; i >= 0; i--) {
-            const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const year = monthDate.getFullYear();
-            const monthIndex = monthDate.getMonth();
-            const monthStart = new Date(year, monthIndex, 1);
-            const monthEnd = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
-
-            const [mIncome, mIndExp, mSplitExp] = await Promise.all([
-                prisma.booking.aggregate({
-                    where: { villaId: { in: villaIds }, checkIn: { gte: monthStart, lte: monthEnd }, bookingStatus: { not: 'CANCELLED' } },
-                    _sum: { totalPayableAmount: true }
-                }),
-                prisma.expense.aggregate({
-                    where: { villaId: { in: villaIds }, date: { gte: monthStart, lte: monthEnd }, type: 'INDIVIDUAL' },
-                    _sum: { amount: true }
-                }),
-                prisma.expenseVilla.aggregate({
-                    where: { villaId: { in: villaIds }, expense: { date: { gte: monthStart, lte: monthEnd }, type: 'SPLIT' } },
-                    _sum: { amount: true }
-                })
-            ]);
-
-            const mInc = Number(mIncome._sum.totalPayableAmount) || 0;
-            const mFee = Math.round((feePercent / 100) * mInc * 100) / 100;
-            const mExp = ((Number(mIndExp._sum.amount) || 0) + (Number(mSplitExp._sum.amount) || 0)) / 100;
-
-            monthly.push({ month: MONTHS[monthIndex], year, income: mInc, managementFee: mFee, expenses: mExp, netRevenue: mInc - mFee - mExp });
-        }
 
         return {
             managementFeePercent: feePercent,
