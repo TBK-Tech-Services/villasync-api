@@ -94,7 +94,6 @@ export async function getOwnerVillasService({ ownerId }: { ownerId: number }): P
                 imageUrl: true,
                 bedrooms: true,
                 bathrooms: true,
-                maxGuests: true,
                 description: true,
                 amenities: {
                     select: {
@@ -127,7 +126,6 @@ export async function getOwnerVillasService({ ownerId }: { ownerId: number }): P
             imageUrl: villa.imageUrl ?? null,
             bedrooms: villa.bedrooms ?? null,
             bathrooms: villa.bathrooms ?? null,
-            maxGuests: villa.maxGuests ?? null,
             description: villa.description ?? null,
             amenities: villa.amenities.map(a => a.amenity.name),
             currentBookings: villa._count.bookings
