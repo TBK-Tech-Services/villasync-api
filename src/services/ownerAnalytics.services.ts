@@ -335,7 +335,7 @@ export async function getOwnerNetRevenueService({ ownerId }: { ownerId: number }
 export async function getMonthlyRevenueService({ ownerId }: { ownerId: number }) {
     try {
         const now = new Date();
-        const monthsToFetch = 3;
+        const monthsToFetch = 12;
         const monthsData = [];
 
         for (let i = 0; i < monthsToFetch; i++) {
