@@ -1,39 +1,18 @@
-import { google } from 'googleapis';
-import { Readable } from 'stream';
+import fs from 'fs';
+import path from 'path';
 
 export async function uploadPdfToDrive(pdfBuffer: Buffer, fileName: string) {
-    const credentials = JSON.parse(
-        Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!, 'base64').toString('utf8')
-    );
+    const vouchersDir = path.join(process.cwd(), 'public', 'vouchers');
+    fs.mkdirSync(vouchersDir, { recursive: true });
 
-    const auth = new google.auth.GoogleAuth({
-        credentials,
-        scopes: ['https://www.googleapis.com/auth/drive'],
-    });
+    const filePath = path.join(vouchersDir, fileName);
+    fs.writeFileSync(filePath, pdfBuffer);
 
-    const drive = google.drive({ version: 'v3', auth });
-
-    const file = await drive.files.create({
-        requestBody: {
-            name: fileName,
-            parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!],
-            mimeType: 'application/pdf',
-        },
-        media: {
-            mimeType: 'application/pdf',
-            body: Readable.from(Buffer.from(pdfBuffer)),
-        },
-        fields: 'id, name, webViewLink',
-    });
-
-    await drive.permissions.create({
-        fileId: file.data.id!,
-        requestBody: { role: 'reader', type: 'anyone' },
-    });
+    const fileUrl = `${process.env.API_BASE_URL}/vouchers/${fileName}`;
 
     return {
-        fileId:   file.data.id!,
-        fileUrl:  file.data.webViewLink!,
-        fileName: file.data.name!,
+        fileId:   fileName,
+        fileUrl,
+        fileName,
     };
 }
