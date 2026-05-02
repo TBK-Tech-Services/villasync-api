@@ -2,11 +2,12 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 
 export async function uploadPdfToDrive(pdfBuffer: Buffer, fileName: string) {
+    const credentials = JSON.parse(
+        Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!, 'base64').toString('utf8')
+    );
+
     const auth = new google.auth.GoogleAuth({
-        credentials: {
-            client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-            private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        },
+        credentials,
         scopes: ['https://www.googleapis.com/auth/drive'],
     });
 
