@@ -18,7 +18,7 @@ export async function uploadPdfToDrive(pdfBuffer: Buffer, fileName: string) {
         },
         media: {
             mimeType: 'application/pdf',
-            body: Readable.from(pdfBuffer),
+            body: Readable.from(Buffer.from(pdfBuffer)),
         },
         fields: 'id, name, webViewLink',
     });
